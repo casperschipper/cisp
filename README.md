@@ -1,7 +1,8 @@
-# This will be a library alowing you to use a Scheme like syntax to do 
-non-standard synthesis.
+### This will be a library alowing you to use a Scheme like syntax to do non-standard synthesis.
 
 For example
+
+(step-synth [amp] [time])
 
 (step-synth 
   (rv -1 1) 
@@ -10,4 +11,12 @@ For example
 (step-synth
   (seq -1 1)
   (seq 10 11 12 11 100 1100))
+
+### easy bus
+
+(~ casper (rv 1 100)) creates a bus
+
+(~ casper) to read
+
+
 
