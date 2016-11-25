@@ -1,0 +1,40 @@
+function call :: SEQ ( LIST )
+
+LIST :: EMPTY
+LIST :: VALUE ( VALUE)*  
+
+seq([1,2,3,4,5])
+
+seq([1,2,10],true)
+
+fun Stream function {
+	
+}
+
+~ {
+	seq([-1,1]) ~> amp;
+	st(1) ~> time;
+}
+
+would convert to:
+
+class M extends st {
+	seq([-1,1]) @=> Stream @ amp;
+	st(1) @=> Stream @ time;
+
+	StepSynth s => Safe safe => dac;
+
+	s.init(
+	amp, 
+	time
+	);
+}
+M m;
+
+hour => now;
+
+
+
+
+
+

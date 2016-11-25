@@ -1,0 +1,21 @@
+# My Chuck Tools
+
+## Writing Lexer, Parser and Compilers
+
+### Lexer
+
+Lexer is a simple state machine that goes through a program text letter for letter and returns tokens.
+A token can be for example '=', '+', '*', seq, '(' etc... . The tokens are than interpreted by an interpreter.
+Digits like 12 , 134, 1024 are interpreted as a group and turned into a integer.
+
+Tokens thus have two fields, their type and their value.
+
+### Parser
+
+A parser is based o n the grammer of programming language. As an example lets look at a simple calculator language:
+
+* fact -> INTEGER | LPAR expr RPAR  
+* term -> fact ((MUL|DIV) fact)*   
+* expr -> term ((PLUS|MINUS) fact)*  
+
+The hierarchy 
