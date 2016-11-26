@@ -111,27 +111,29 @@ def caspArray( seq ):
 def standard_env():
     "An environment with some Scheme standard procedures."
     env = Env()
+    inf = 'inf'
+
     env.update({
-        'seq': 'st.seq',
-        'rv': 'st.rv',
-        'line' : 'st.line',
-        'ch' : 'st.ch',
-        'index' : 'st.index',
-        'walk' : 'st.walk',
-        'boundedWalk' : 'st.boundedWalk',
-        'bouncyWalk' : 'st.bouncyWalk',
-        'boundedListWalk' : 'st.boundedListWalk',
-        't':'st.t',
-        'count' : 'st.count',
-        'list' : 'list',
-        'st' : 'st.st' ,
-        '+' : 'st.sum',
-        '-' : 'st.sub',
-        '*' : 'st.mup',
-        '/' : 'st.div',
-        'step-gen' : 'stepgen',
-        'bus' : 'st.bus',
-        '~' : 'st.bus',
+        'seq': {'name':'st.seq','args':inf},
+        'rv' : {'name': 'st.rv','args': 2},
+        'line' : {'name': 'st.line','args':2},
+        'ch' : { 'name' : 'st.ch','args':inf},
+        'index' : { 'name' : 'st.index', 'args':2},
+        'walk' : { 'name' : 'st.walk','args':2 },
+        'boundedWalk' : { 'name' : 'st.boundedWalk','args':3 },
+        'bouncyWalk' : { 'name' : 'st.bouncyWalk', 'args':3 },
+        'boundedListWalk' : { 'name' : 'st.boundedListWalk', 'args': 3 },
+        't': {'name':'st.t','args': 2 },
+        'count' : { 'name' : 'st.count','args': 1  },
+        'list' : { 'name' : 'list', 'args': inf },
+        'st' : { 'name' : 'st.st' , 'args' : 1 },
+        '+' : { 'name' : 'st.sum', 'args' : inf },
+        '-' : { 'name' : 'st.sub', 'args' : inf },
+        '*' : { 'name' : 'st.mup', 'args' : inf },
+        '/' : { 'name' : 'st.div', 'args' : inf },
+        'step-gen' : { 'name' : 'stepgen', 'args' : 2 },
+        'bus' : { 'name' : 'st.bus', 'args': 1 },
+        '~' : { 'name' : 'st.bus', 'args' : 1 },
     })
     return env
 
@@ -151,14 +153,13 @@ class Procedure(object):
     def __call__(self, *args): 
         return eval(self.body, Env(self.parms, args, self.env))
 
-
-
 def eval(x, env=global_env, depth = 0):
-    env = global_env
+    #env = global_env
     "Evaluate an expression in an environment."
     
     if isinstance(x, Symbol):      # variable reference
-        return env.find(x)[x]
+        symbol_object = env.find(x)[x] # return the name
+        return symbol_object['name']
     elif isinstance(x, Number):
         return str(x)
     elif not isinstance(x, List):  # constant literal
@@ -172,21 +173,33 @@ def eval(x, env=global_env, depth = 0):
     elif x[0] == 'fun':
         if len(x) > 3:
             (_, var, arg, body) = x
+            env[var] = {}
+            env[var]['name'] = var
+            for item in arg:
+                env[item] = {'name':item} # also store parms in env
+            env[var]['args'] = len(arg) # store the number of args in env
         else:
             (_, var, body) = x
+            env[var] = {}
+            env[var]['name'] = var
             arg = None
-        env[var] = var
-        for item in arg:
-            env[item] = item 
+
+
         body = eval(body,env)
         return makeFunction(var,arg,body)      
     else:
         proc = eval(x[0], env, depth+1)
+        # check the amount of args ?
+        numOfArgs = (env.find(x[0])[x[0]])['args']
+        cdr = x[1:]
+        if len(cdr) != numOfArgs:
+            print ( 'function:'+ proc + ' has '+str(len(cdr)) + ' args, expects: '+str(numOfArgs))
         args = [eval(exp, env, depth+1) for exp in x[1:]] # here should be the check
-        string = '\n'+('    '*depth)+streamFunc( proc , args ) 
+        string = '\n'+('  '*depth)+streamFunc( proc , args ) 
         return string
-        
-Cisp("(index (10 11 12 13) (count 3))")
-#Cisp("(casper (st 10) (st 22) (st 100))")
+
+Cisp("(fun casper (a b) (rv a b))")        
+Cisp("(casper (st 10) (st 100))")
+Cisp("(casper (st 10) (st 22) (st 100))")
 
 
