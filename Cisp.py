@@ -5,11 +5,24 @@ Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
 Number = (int, float) # A Scheme Number is implemented as a Python int or float
 
+class FileIO(object):
+    def __init__(self,fileInName,fileOutName):
+        self.inFile = open(fileIn,'w')
+        self.outFile = open(fileOut,'w')
+
+    def writeLine(self,line):
+        self.outFile.writeLine(line)
+
+    def processInfile(self):
+        for line in self.inFile:
+            self.writeLine(Cisp(line))
+        print( ' done ')
+
 class Cisp(object):
     def __init__(self,text):
         print( self.parse(text) )
         print( eval(self.parse(text)))
-    
+
     def tokenize(self,chars):
         "Convert a string of characters into a list of tokens."
         return chars.replace('(', ' ( ').replace(')', ' ) ').split()
@@ -100,7 +113,7 @@ s.init("""+amp+'\n,'+timer+"""\n\n);
     return formatString.format(args = arguments,funcname = name)
 
 def caspArray( seq ):
-    # never used
+    # is used ?
     seq = [str(x) for x in seq]
     seq = seqMixedTypeFix(seq)
     seq = ",".join(seq)
@@ -198,8 +211,6 @@ def eval(x, env=global_env, depth = 0):
         string = '\n'+('  '*depth)+streamFunc( proc , args ) 
         return string
 
-Cisp("(fun casper (a b) (rv a b))")        
-Cisp("(casper (st 10) (st 100))")
-Cisp("(casper (st 10) (st 22) (st 100))")
+
 
 
