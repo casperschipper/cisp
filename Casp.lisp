@@ -59,10 +59,18 @@ st.bus("casper", rv(1,10) );
 st.rv(1,10) @=> Stream casper;
 
 
-(fun casper (rv 1 10))
+(f casper (rv 1 10))
 
 fun Stream casper () {
 	return st.rv(1,10);
 }
+
+(defun casper (a b) (rv a b))
+
+fun Stream casper(Stream a, Stream b) {
+	return st.rv(a,b);
+}
+
+'fun Stream' + name + '() { return st.rv(1,10)'
 
 (loop (boundedMupWalk 100 100 seq((foo foo foo foo)))

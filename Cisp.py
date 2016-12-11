@@ -1,27 +1,48 @@
 import math
 import operator as op
+import re
+import os
+import time
+
+# THERE IS SOMETHING WRONG WITH SUPERCHUCK !
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
 Number = (int, float) # A Scheme Number is implemented as a Python int or float
 
+userFunctions = []
+
 class FileIO(object):
     def __init__(self,fileInName,fileOutName):
-        self.inFile = open(fileIn,'w')
-        self.outFile = open(fileOut,'w')
+        self.inFile = open(fileInName,'r')
+        self.outFile = open(fileOutName,'w')
+        self.processInfile()
 
     def writeLine(self,line):
-        self.outFile.writeLine(line)
+        self.outFile.write(line)
+
 
     def processInfile(self):
+        fullLine = ''
         for line in self.inFile:
-            self.writeLine(Cisp(line))
-        print( ' done ')
+            if line != '\n':
+                fullLine = fullLine + line
+            else:
+                parser = Cisp(fullLine)
+                result = parser.result()
+                self.writeLine(result)
+                print( result )
+                fullLine = ''
+        self.outFile.close()
 
 class Cisp(object):
     def __init__(self,text):
-        print( self.parse(text) )
-        print( eval(self.parse(text)))
+        cleanedText = self.remove_comments(text)
+        self.parsedText = self.parse(cleanedText)
+        self.evaluatedText = eval(self.parsedText)
+
+    def result(self):
+        return self.evaluatedText
 
     def tokenize(self,chars):
         "Convert a string of characters into a list of tokens."
@@ -58,6 +79,20 @@ class Cisp(object):
     def Symbol(self,token):
         return token
 
+    def remove_comments(self,string):
+        pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
+        # first group captures quoted strings (double or single)
+        # second group captures comments (//single-line or /* multi-line */)
+        regex = re.compile(pattern, re.MULTILINE|re.DOTALL)
+        def _replacer(match):
+            # if the 2nd group (capturing comments) is not None,
+            # it means we have captured a non-quoted (real) comment string.
+            if match.group(2) is not None:
+                return "" # so we will return empty to remove the comment
+            else: # otherwise, we will return the 1st group
+                return match.group(1) # captured quoted-string
+        return regex.sub(_replacer, string)
+
 Env = dict          # An environment is a mapping of {variable: value}
 
 class Env(dict):
@@ -79,11 +114,17 @@ def seqMixedTypeFix(seq):
 def makeStream( arg ):
     return 'st.st('+arg+')'
 
-def makeFunction( functionName, arguments, body ): # something is wrong here !!!
+def makeFunction( functionName, arguments, body ): 
     if arguments == None:
         arguments = [];
     arguments = ",".join(["Stream "+x for x in arguments])
-    return "fun Stream ("+arguments+") {\n" + "return "+body+";\n}\n"
+    return "fun Stream "+ functionName + " ("+arguments+") {\n" + "return "+body+";\n}\n"
+
+def makeNewBus ( busName, body ):
+    return "st.bus("+body+",\""+busName+"\")"
+
+def returnOldBus ( busName ):
+    return "st.bus("+busName+")"
 
 def streamFunc(name,arguments):
     if (name in ['st.seq','st.ch'] ):
@@ -103,7 +144,13 @@ def streamFunc(name,arguments):
 StepSynth s => Safe safe => dac;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
+
+day => now;
 """
+
+    elif(name == 'sci'):
+        print(arguments)
+        return SuperChuckInst(*arguments) 
         
     else:
         arguments = ",".join(arguments)
@@ -111,6 +158,21 @@ s.init("""+amp+'\n,'+timer+"""\n\n);
     
     
     return formatString.format(args = arguments,funcname = name)
+
+def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
+    print( 'instrumentname' + instrumentName )
+    return """
+SuperChuck sc;
+sc.instrument(\""""+instrumentName+"""\");
+sc.timer("""+st_timer+""");
+sc.freq("""+st_freq+""");
+sc.duration("""+st_dur+""");
+sc.amp("""+st_amp+""");
+sc.start();
+
+day => now;
+
+"""
 
 def caspArray( seq ):
     # is used ?
@@ -133,9 +195,12 @@ def standard_env():
         'ch' : { 'name' : 'st.ch','args':inf},
         'index' : { 'name' : 'st.index', 'args':2},
         'walk' : { 'name' : 'st.walk','args':2 },
+        'hold' : {'name' : 'st.hold', 'args':2},
+        'line' : {'name' : 'st.line', 'args':2},
         'boundedWalk' : { 'name' : 'st.boundedWalk','args':3 },
         'bouncyWalk' : { 'name' : 'st.bouncyWalk', 'args':3 },
         'boundedListWalk' : { 'name' : 'st.boundedListWalk', 'args': 3 },
+        'boundedMupWalk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
         'list' : { 'name' : 'list', 'args': inf },
@@ -145,8 +210,9 @@ def standard_env():
         '*' : { 'name' : 'st.mup', 'args' : inf },
         '/' : { 'name' : 'st.div', 'args' : inf },
         'step-gen' : { 'name' : 'stepgen', 'args' : 2 },
-        'bus' : { 'name' : 'st.bus', 'args': 1 },
-        '~' : { 'name' : 'st.bus', 'args' : 1 },
+        'sci' : { 'name' : 'sci', 'args' : [2,3] },
+        'bus' : { 'name' : 'st.bus', 'args': 2 },
+        '~' : { 'name' : 'st.bus', 'args' : 2 },
     })
     return env
 
@@ -169,7 +235,7 @@ class Procedure(object):
 def eval(x, env=global_env, depth = 0):
     #env = global_env
     "Evaluate an expression in an environment."
-    
+    print (x)
     if isinstance(x, Symbol):      # variable reference
         symbol_object = env.find(x)[x] # return the name
         return symbol_object['name']
@@ -187,30 +253,43 @@ def eval(x, env=global_env, depth = 0):
         if len(x) > 3:
             (_, var, arg, body) = x
             env[var] = {}
-            env[var]['name'] = var
+            env[var]['name'] = var 
             for item in arg:
                 env[item] = {'name':item} # also store parms in env
             env[var]['args'] = len(arg) # store the number of args in env
-        else:
+        else: # no arguments
             (_, var, body) = x
             env[var] = {}
-            env[var]['name'] = var
+            env[var]['name'] = var+ '()'
             arg = None
-
-
         body = eval(body,env)
-        return makeFunction(var,arg,body)      
+        return makeFunction(var,arg,body)
+    elif x[0] == 'bus':
+        if len(x[1:]) > 1:
+            return makeNewBus(x[1],eval(x[2])) + ';'
+        else:
+            len(x[1:]) == 1
+            return returnOldBus(x[1]) + ';'
     else:
         proc = eval(x[0], env, depth+1)
         # check the amount of args ?
         numOfArgs = (env.find(x[0])[x[0]])['args']
+        if type(numOfArgs) == type(1):
+            numOfArgs = [numOfArgs] 
         cdr = x[1:]
-        if len(cdr) != numOfArgs:
+        if not  'inf' in numOfArgs and len(cdr) in numOfArgs:
             print ( 'function:'+ proc + ' has '+str(len(cdr)) + ' args, expects: '+str(numOfArgs))
-        args = [eval(exp, env, depth+1) for exp in x[1:]] # here should be the check
+        if x[0] == 'sci':
+            args = [x[1]] + [eval(exp, env, depth+1) for exp in x[2:]] # evaluate everything but the name of the instrument
+        else:
+            args = [eval(exp, env, depth+1) for exp in x[1:]] # here should be the check
         string = '\n'+('  '*depth)+streamFunc( proc , args ) 
         return string
 
 
+
+FileIO('test.lisp','output.ck')
+os.system("chuck --remove.all")
+os.system("chuck + output.ck") 
 
 
