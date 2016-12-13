@@ -2,9 +2,15 @@ import math
 import operator as op
 import re
 import os
-import time
+import random
 
-# THERE IS SOMETHING WRONG WITH SUPERCHUCK !
+# TODO
+#
+# keyword arguments can be implemented as methods in a class.
+# for example:
+# seq([11,12,13,14,15,16]).max(line(seq(0,3),st(100))
+# would translate to:
+# (seq 11 12 13 14 15 16 :max (line (seq 0 3) (st 100)))
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
@@ -12,7 +18,9 @@ Number = (int, float) # A Scheme Number is implemented as a Python int or float
 
 userFunctions = []
 
+# usage: FileIO( inputFile, outputFile) 
 class FileIO(object):
+    "File input output module"
     def __init__(self,fileInName,fileOutName):
         self.inFile = open(fileInName,'r')
         self.outFile = open(fileOutName,'w')
@@ -23,22 +31,50 @@ class FileIO(object):
 
 
     def processInfile(self):
-        fullLine = ''
-        for line in self.inFile:
+        "Stack all the lines together, process each line"
+        fullLine = '' 
+        for line in self.inFile:            
             if line != '\n':
-                fullLine = fullLine + line
+                # if an expression is multiline, combine it
+                fullLine += line 
             else:
+                # if empty line, start parsing what has been harvested
                 parser = Cisp(fullLine)
                 result = parser.result()
                 self.writeLine(result)
-                print( result )
+                print( result ) # print the parsed result
                 fullLine = ''
+        if (fullLine != ''):
+            parser = Cisp(fullLine)
+            result = parser.result()
+            self.writeLine(result)
+            print( result ) # print the parsed result
+        self.outFile.write('\nday => now;') # this ends every file with time passing, just to avoid it closing.
         self.outFile.close()
+
+
+class UniqueName(object):
+    "creates unique names with a prefix"
+    def __init__(self):
+        self.prefixDict = {}
+
+    def name(self,prefix):
+        "returns a unique name based on a prefix, if used before adds _2 _3 etc.."
+        if prefix in self.prefixDict.keys():
+            self.prefixDict[prefix] += 1
+            return prefix+"_" + str(self.prefixDict[prefix])
+        else:
+            self.prefixDict[prefix] = 1
+            return prefix+"_1"
+
+unique = UniqueName()
 
 class Cisp(object):
     def __init__(self,text):
         cleanedText = self.remove_comments(text)
+        # lex the text, convert S-expressions to python lists
         self.parsedText = self.parse(cleanedText)
+        # evaluate the python lists to chuck code
         self.evaluatedText = eval(self.parsedText)
 
     def result(self):
@@ -49,7 +85,7 @@ class Cisp(object):
         return chars.replace('(', ' ( ').replace(')', ' ) ').split()
 
     def parse(self,program):
-        "Read a Scheme expression from a string."
+        "Read a Cisp expression from a string."
         return self.read_from_tokens(self.tokenize(program))
 
     def read_from_tokens(self,tokens):
@@ -105,6 +141,7 @@ class Env(dict):
         return self if (var in self) else self.outer.find(var)
 
 def seqMixedTypeFix(seq):
+    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
     mask = [is_number(x) for x in seq]
     if True in mask and False in mask:
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
@@ -112,21 +149,26 @@ def seqMixedTypeFix(seq):
 
 
 def makeStream( arg ):
+    "make a static value stream"
     return 'st.st('+arg+')'
 
-def makeFunction( functionName, arguments, body ): 
+def makeFunction( functionName, arguments, body ):
+    "make a chuck Stream function, only stream arguments allowed"
     if arguments == None:
         arguments = [];
     arguments = ",".join(["Stream "+x for x in arguments])
     return "fun Stream "+ functionName + " ("+arguments+") {\n" + "return "+body+";\n}\n"
 
 def makeNewBus ( busName, body ):
+    " Make a Chuck Stream Bus, a bus is a shared stream. When a caller gets a new value it updates the state inside"
     return "st.bus("+body+",\""+busName+"\")"
 
 def returnOldBus ( busName ):
+    " Return a new value "
     return "st.bus("+busName+")"
 
 def streamFunc(name,arguments):
+    " This deals with various types of functions, making sure the arguments are typed right "
     if (name in ['st.seq','st.ch'] ):
         arguments = seqMixedTypeFix(arguments)
         arguments = ",".join(arguments)
@@ -139,14 +181,19 @@ def streamFunc(name,arguments):
     elif(name == 'stepgen'):
         if len(arguments) != 2:
             print('error, stepgen wrong number of args')
-        amp, timer = arguments;
-        return """
+        amp, timer = arguments
+        sparkName = unique.name('shred')
+        return 
+        """
+function void"""+sparkName+"""() {
 StepSynth s => Safe safe => dac;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
 
 day => now;
-"""
+}
+spork ~ """+sparkName+"""();
+""" # creates a function sparkname and immediately executse 
 
     elif(name == 'sci'):
         print(arguments)
@@ -160,19 +207,20 @@ day => now;
     return formatString.format(args = arguments,funcname = name)
 
 def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
-    print( 'instrumentname' + instrumentName )
-    return """
-SuperChuck sc;
-sc.instrument(\""""+instrumentName+"""\");
-sc.timer("""+st_timer+""");
-sc.freq("""+st_freq+""");
-sc.duration("""+st_dur+""");
-sc.amp("""+st_amp+""");
-sc.start();
-
-day => now;
-
+    funcName = unique.name('superChuckFunc')
+    return """function void """+funcName+"""() { 
+    SuperChuck sc;
+    sc.instrument(\""""+instrumentName+"""\");
+    sc.timer("""+st_timer+""");
+    sc.freq("""+st_freq+""");
+    sc.duration("""+st_dur+""");
+    sc.amp("""+st_amp+""");
+    sc.start();
+    day => now;
+}
+spork ~ """+funcName+"""();
 """
+
 
 def caspArray( seq ):
     # is used ?
@@ -213,6 +261,7 @@ def standard_env():
         'sci' : { 'name' : 'sci', 'args' : [2,3] },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
+        'collect' : {'name' : 'cs.collect', 'args' : 2}
     })
     return env
 
