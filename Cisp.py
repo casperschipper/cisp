@@ -129,6 +129,8 @@ class Cisp(object):
                 return match.group(1) # captured quoted-string
         return regex.sub(_replacer, string)
 
+    def macro
+
 Env = dict          # An environment is a mapping of {variable: value}
 
 class Env(dict):
@@ -141,7 +143,7 @@ class Env(dict):
         return self if (var in self) else self.outer.find(var)
 
 def seqMixedTypeFix(seq):
-    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
+    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present. For example seq([10,20,30,rv(1,10)]) should become seq([st(10),st(20),st(30)]) "
     mask = [is_number(x) for x in seq]
     if True in mask and False in mask:
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
