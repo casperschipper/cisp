@@ -1,0 +1,25 @@
+<h1 id="this-leads-to-the-issue-of-keywords-in-general">this leads to the issue of keywords in general:</h1>
+<p>A keyword is notated with a :key value. From the <a href="http://www.gigamonkeys.com/book/functions.html">page</a>:</p>
+<pre><code>To give a function keyword parameters, after any required, &amp;optional, and &amp;rest parameters you include the symbol &amp;key and then any number of keyword parameter specifiers, which work like optional parameter specifiers. Here&#39;s a function that has only keyword parameters:
+
+(defun foo (&amp;key a b c) (list a b c))
+When this function is called, each keyword parameters is bound to the value immediately following a keyword of the same name. Recall from Chapter 4 that keywords are names that start with a colon and that they&#39;re automatically defined as self-evaluating constants.
+
+If a given keyword doesn&#39;t appear in the argument list, then the corresponding parameter is assigned its default value, just like an optional parameter. Because the keyword arguments are labeled, they can be passed in any order as long as they follow any required arguments. For instance, foo can be invoked as follows:
+
+(foo)                ==&gt; (NIL NIL NIL)
+(foo :a 1)           ==&gt; (1 NIL NIL)
+(foo :b 1)           ==&gt; (NIL 1 NIL)
+(foo :c 1)           ==&gt; (NIL NIL 1)
+(foo :a 1 :c 3)      ==&gt; (1 NIL 3)
+(foo :a 1 :b 2 :c 3) ==&gt; (1 2 3)
+(foo :a 1 :c 3 :b 2) ==&gt; (1 2 3)</code></pre>
+<h1 id="repeating-a-function">Repeating a function</h1>
+<ul>
+<li>It would be useful to be able to repeat a synth definition, both the supercollider variety and the stepgen. There are currently two possible options:</li>
+</ul>
+<ol style="list-style-type: decimal">
+<li><p>Have it as a type of built-in function ie: (repeat (sci ping :freq (seq 10 20 30) :amp (seq 10 20 30) :dur (seq 1 2 3)))</p></li>
+<li><p>Have it as a keyword to such functions. This keyword would be limited to integer values only.</p></li>
+</ol>
+<p>(sci ping :freq (seq 100 200 300) :amp (seq 10 20 30) :dur (seq 1 2 3) :repeat 10)</p>
