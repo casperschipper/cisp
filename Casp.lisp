@@ -58,6 +58,12 @@ st.bus("casper", rv(1,10) );
 
 st.rv(1,10) @=> Stream casper;
 
+(~ amp (+ 3 1 4))
+
+(stepgen 
+	(~ amp) 
+	(~ time))
+
 
 (f casper (rv 1 10))
 

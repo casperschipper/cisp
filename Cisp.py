@@ -18,6 +18,14 @@ Number = (int, float) # A Scheme Number is implemented as a Python int or float
 
 userFunctions = []
 
+class StreamCall:
+    def __init__(self,'name'):
+        self.name = 'name'
+        self.arguments = 'none'
+    
+    def __string__(self):
+        return ""
+
 # usage: FileIO( inputFile, outputFile) 
 class FileIO(object):
     "File input output module"
@@ -129,8 +137,6 @@ class Cisp(object):
                 return match.group(1) # captured quoted-string
         return regex.sub(_replacer, string)
 
-    def macro
-
 Env = dict          # An environment is a mapping of {variable: value}
 
 class Env(dict):
@@ -143,7 +149,7 @@ class Env(dict):
         return self if (var in self) else self.outer.find(var)
 
 def seqMixedTypeFix(seq):
-    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present. For example seq([10,20,30,rv(1,10)]) should become seq([st(10),st(20),st(30)]) "
+    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
     mask = [is_number(x) for x in seq]
     if True in mask and False in mask:
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
@@ -158,7 +164,7 @@ def makeFunction( functionName, arguments, body ):
     "make a chuck Stream function, only stream arguments allowed"
     if arguments == None:
         arguments = [];
-    arguments = ",".join(["Stream "+x for x in arguments])
+    arguments = ",".join(["Stream "+x for x in arguments]) # add Stream type before all values. Join with ',' .
     return "fun Stream "+ functionName + " ("+arguments+") {\n" + "return "+body+";\n}\n"
 
 def makeNewBus ( busName, body ):
@@ -171,15 +177,23 @@ def returnOldBus ( busName ):
 
 def streamFunc(name,arguments):
     " This deals with various types of functions, making sure the arguments are typed right "
-    if (name in ['st.seq','st.ch'] ):
+
+    if (name in ['st.seq','st.ch','st.series'] ):
+        # check if the last argument is 'true', than use holdMode
+        if arguments[-1] == 'true':
+            arguments = arguments[:-1]
+            holdMode = ',true'
+        else:
+            holdMode = ''
+        
         arguments = seqMixedTypeFix(arguments)
+        
         arguments = ",".join(arguments)
-        formatString = '{funcname}([ {args} ])'
+        formatString = '{funcname}([ {args} ]'+holdMode+')'
     elif(name == 'list'):
         arguments = seqMixedTypeFix(arguments)
         arguments = ",".join(arguments)
-        formatString = '['+arguments+']'
-        return formatString
+        formatString = '[ {args} ]'
     elif(name == 'stepgen'):
         if len(arguments) != 2:
             print('error, stepgen wrong number of args')
@@ -239,6 +253,7 @@ def standard_env():
     inf = 'inf'
 
     env.update({
+        'true' : {'name':'true','args':0}, #this is a literal
         'seq': {'name':'st.seq','args':inf},
         'rv' : {'name': 'st.rv','args': 2},
         'line' : {'name': 'st.line','args':2},
