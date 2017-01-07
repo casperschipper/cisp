@@ -202,16 +202,17 @@ spork ~ """+sparkName+"""();
     return formatString.format(args = arguments,funcname = name)
 
 def StreamFunc2(name,args):
+    "New style StreamFunc, more compact code"
     if name in ['st.seq','st.choice','st.series']:
         return ListStreamCall(name,args)
     elif name == 'list':
         return ListStream(name,args)
-    elif name == 'stepgen':
-        return 
+    elif name in ['stepgen','pulsesynth','linesynth']:
+        return DirectSynth(name,args)
     elif name == 'sci':
         return SuperChuckInst(name,args)
-
-
+    else: # default 
+        return StreamCall(name,args)
 
 def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
     funcName = unique.name('superChuckFunc')
@@ -228,23 +229,22 @@ def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st
 spork ~ """+funcName+"""();
 """
 
-
-
-
 def standard_env():
-    "An environment with some Scheme standard procedures."
+    "Here are most of the standard functions"
     env = Env()
     inf = 'inf'
 
     env.update({
-        'true' : {'name':'true','args':0}, #this is a literal
-        'seq': {'name':'st.seq','args':inf},
-        'rv' : {'name': 'st.rv','args': 2},
+        'true' : {'name':'true',    'args':0,           'class':Literal}, #this is a literal
+        'seq': {'name':'st.seq',    'args':inf,         'class':ListStreamCall},
+        'rv' : {'name': 'st.rv',    'args': 2 },
         'line' : {'name': 'st.line','args':2},
-        'ch' : { 'name' : 'st.ch','args':inf},
-        'index' : { 'name' : 'st.index', 'args':2},
+        'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
+        'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
+
+        'index' : { 'name' : 'st.index', 'args':2,      'class':IndexStreamCall},
         'walk' : { 'name' : 'st.walk','args':2 },
-        'hold' : {'name' : 'st.hold', 'args':2},
+        'hold' : {'name' : 'st.hold', 'args':2,''},
         'line' : {'name' : 'st.line', 'args':2},
         'boundedWalk' : { 'name' : 'st.boundedWalk','args':3 },
         'bouncyWalk' : { 'name' : 'st.bouncyWalk', 'args':3 },
@@ -258,7 +258,7 @@ def standard_env():
         '-' : { 'name' : 'st.sub', 'args' : inf },
         '*' : { 'name' : 'st.mup', 'args' : inf },
         '/' : { 'name' : 'st.div', 'args' : inf },
-        'step-gen' : { 'name' : 'stepgen', 'args' : 2 },
+        'step-gen' : { 'name' : 'stepgen', 'args' : 2, 'class': DirectSynth },
         'sci' : { 'name' : 'sci', 'args' : [2,3] },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
@@ -353,12 +353,30 @@ class ListStreamCall(StreamCall):
             holdMode = ''
         return '[' + mixedTypeListFix(self.arguments) + ']' + holdMode
 
-class StepGenCall(StreamCall):
+class DirectSynth(StreamCall):
+    "A function that calls a non-standard synth"
+    
+    # translator of names: 
+    synthDict = {
+        'StepGen' : 'StepSynth',
+        'PulseGen' : 'PulseSynth',
+        'LineGen' : 'LineSynth',
+    }
+
     def __repr__.(self):
+        # generate a name, lookup synth name, construct a Synth shred, spork it.
+        sparkName = unique.name('shred')
+
+        self.generatorName = synthDict.get(self.name)
+        if self.generatorName == None:
+            raise(Exception("unkown generatorName" + self.generatorName))
+
+        amp, timer = self.arguments
+
         return 
         """
 function void"""+sparkName+"""() {
-StepSynth s => Safe safe => dac;
+"""+self.generatorName+""" s => Safe safe => dac;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
 
@@ -372,9 +390,6 @@ spork ~ """+sparkName+"""();
             print("error, stepgen wrong number of args (should be 2): "+len(self.arguments))
             return False
         return True
-
-    def printArguments(self):
-        
 
 def caspArray( seq ):
     # is used ?
@@ -430,6 +445,17 @@ class SuperChuckInst(StreamCall):
     }
     spork ~ """+funcName+"""();
     """
+
+class Literal(object):
+    # very simple object
+    def __init__(self,string):
+        self.value = string
+
+    def __repr__(self):
+        return self.value
+        
+    def __str__(self):
+        return self.__repr__()
 
 
 
