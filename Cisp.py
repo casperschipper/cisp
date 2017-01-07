@@ -7,11 +7,9 @@ import six #  to test for string
 
 # TODO
 #
-# keyword arguments can be implemented as methods in a class.
-# for example:
-# seq([11,12,13,14,15,16]).max(line(seq(0,3),st(100))
-# would translate to:
-# (seq 11 12 13 14 15 16 :max (line (seq 0 3) (st 100)))
+# Could a user define ListStreamCalls (stream calls that use arrays of stream as argument ?)
+
+
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
@@ -493,6 +491,10 @@ def eval(x, env=global_env, depth = 0):
         
         numOfArgs = (env.find(x[0])[x[0]])['args']
         streamType = (env.find(x[0])[x[0]])['class']
+        
+        if streamType == None:
+            # catch default
+            streamType = StreamCall
         
         if x[0] == 'sci':
             args = [x[1]] + [eval(exp, env, depth+1) for exp in x[2:]] # evaluate everything but the name of the instrument
