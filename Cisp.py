@@ -3,6 +3,7 @@ import operator as op
 import re
 import os
 import random
+import six #  to test for string
 
 # TODO
 #
@@ -15,16 +16,6 @@ import random
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
 Number = (int, float) # A Scheme Number is implemented as a Python int or float
-
-userFunctions = []
-
-class StreamCall:
-    def __init__(self,'name'):
-        self.name = 'name'
-        self.arguments = 'none'
-    
-    def __string__(self):
-        return ""
 
 # usage: FileIO( inputFile, outputFile) 
 class FileIO(object):
@@ -148,18 +139,6 @@ class Env(dict):
         "Find the innermost Env where var appears."
         return self if (var in self) else self.outer.find(var)
 
-def seqMixedTypeFix(seq):
-    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
-    mask = [is_number(x) for x in seq]
-    if True in mask and False in mask:
-        return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
-    return seq
-
-
-def makeStream( arg ):
-    "make a static value stream"
-    return 'st.st('+arg+')'
-
 def makeFunction( functionName, arguments, body ):
     "make a chuck Stream function, only stream arguments allowed"
     if arguments == None:
@@ -186,12 +165,12 @@ def streamFunc(name,arguments):
         else:
             holdMode = ''
         
-        arguments = seqMixedTypeFix(arguments)
+        arguments = mixedTypeListFix(arguments)
         
         arguments = ",".join(arguments)
         formatString = '{funcname}([ {args} ]'+holdMode+')'
     elif(name == 'list'):
-        arguments = seqMixedTypeFix(arguments)
+        arguments = mixedTypeListFix(arguments)
         arguments = ",".join(arguments)
         formatString = '[ {args} ]'
     elif(name == 'stepgen'):
@@ -222,6 +201,18 @@ spork ~ """+sparkName+"""();
     
     return formatString.format(args = arguments,funcname = name)
 
+def StreamFunc2(name,args):
+    if name in ['st.seq','st.choice','st.series']:
+        return ListStreamCall(name,args)
+    elif name == 'list':
+        return ListStream(name,args)
+    elif name == 'stepgen':
+        return 
+    elif name == 'sci':
+        return SuperChuckInst(name,args)
+
+
+
 def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
     funcName = unique.name('superChuckFunc')
     return """function void """+funcName+"""() { 
@@ -238,14 +229,7 @@ spork ~ """+funcName+"""();
 """
 
 
-def caspArray( seq ):
-    # is used ?
-    seq = [str(x) for x in seq]
-    seq = seqMixedTypeFix(seq)
-    seq = ",".join(seq)
-    string = '['+seq+']'
-    string.replace('\n','')
-    return string
+
 
 def standard_env():
     "An environment with some Scheme standard procedures."
@@ -291,12 +275,186 @@ def is_number(s):
     except ValueError:
         return False
 
-class Procedure(object):
-    "A user-defined Scheme procedure."
-    def __init__(self, parms, body, env):
-        self.parms, self.body, self.env = parms, body, env
-    def __call__(self, *args): 
-        return eval(self.body, Env(self.parms, args, self.env))
+class StreamCall(object):
+    def __init__(self,name,arguments,environment,depth):
+        self.name = name
+        self.arguments = arguments # including the keyed args
+        self.splitKeyed()
+
+        self.env = environment
+        self.depth = depth
+    
+    def __str__(self):
+        return self.__repr__()
+
+    def __repr__(self):
+        if(self.checkArgs()): # checks number and correctness of ars
+            return self.name + "(" + self.printArguments() + ")" + self.setters() +';'
+        else:
+            return ""
+
+    def checkArgs(self):
+        # doesn't matter
+        return True
+
+    def splitKeyed(self):
+        "Strip the keyed arguments (:key values)  from the arguments list"
+        def snext(iterator):
+            # safe next, returns false instead of raising error
+            return next(iterator,False)
+
+        def isKey(string):
+            # returns key if starts with ':'
+            if isinstance(string,str):
+                if string[0] == ':':
+                    return string[1:]
+            return False
+
+        self.extra = {}
+        normalArgs = []
+        
+        iterator = iter(self.arguments)
+        item = snext(iterator)
+        isKeyedArg = False
+        while(item):
+            key = isKey(item)
+            if key:
+                # move to next arg
+                item = snext(iterator)
+                # add the arg to the key
+                self.extra[key] = eval(item,self.env,self.depth)
+                # move forward and loop on
+                item = snext(iterator)
+            else:
+                #normal args
+                normalArgs.append(item)
+                item = snext(iterator)
+        self.arguments = normalArgs       
+
+    def printArguments(self):
+        return ",".join(self.arguments)
+
+    def setters(self):
+        return "".join(['.'+str(key)+'(' + str(value) + ')' for key,value in self.extra.items()])
+
+class ListStream(StreamCall):
+    def printArguments(self):
+        args = ','.join(self.arguments)
+        return  '[' + mixedTypeListFix( args ) + ']'
+
+class ListStreamCall(StreamCall):
+    # this should be used for Seq and Index
+    def printArguments(self):
+        # checks if true, adds that to the end of the arguments, after the list
+        if self.arguments[-1] == 'true':
+            self.arguments = self.arguments[:-1]
+            holdMode = ',true'
+        else:
+            holdMode = ''
+        return '[' + mixedTypeListFix(self.arguments) + ']' + holdMode
+
+class StepGenCall(StreamCall):
+    def __repr__.(self):
+        return 
+        """
+function void"""+sparkName+"""() {
+StepSynth s => Safe safe => dac;
+
+s.init("""+amp+'\n,'+timer+"""\n\n);
+
+day => now;
+}
+spork ~ """+sparkName+"""();
+""" # creates a function sparkname and immediately executse 
+
+    def checkArgs(self):
+        if len(self.arguments) != 2:
+            print("error, stepgen wrong number of args (should be 2): "+len(self.arguments))
+            return False
+        return True
+
+    def printArguments(self):
+        
+
+def caspArray( seq ):
+    # is used ?
+    seq = [str(x) for x in seq]
+    seq = mixedTypeListFix(seq)
+    seq = ",".join(seq)
+    string = '['+seq+']'
+    string.replace('\n','')
+    return string
+
+class StepGen(StreamCall):
+    def checkArgs(self):
+        if len(self.arguments != 2):
+            print("StepGen wrong number of args")
+            return False
+        return True
+
+    def printArguments(self):
+        args = self.arguments
+        amp, timer = args
+        sparkName = unique.name('shred')
+        return 
+        """
+function void"""+sparkName+"""() {
+StepSynth s => Safe safe => dac;
+
+s.init("""+amp+'\n,'+timer+"""\n\n);
+
+day => now;
+}
+spork ~ """+sparkName+"""();
+""" # creates a function sparkname and immediately executes 
+
+
+
+class SuperChuckInst(StreamCall):
+    def printArguments(self):
+        self.arguments = ','.join(self.arguments)
+        return SuperChuckInstStr(*self.arguments)
+
+    def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
+        "creates a little SuperChuck inst"
+        funcName = unique.name('superChuckFunc')
+        return """function void """+funcName+"""() { 
+        SuperChuck sc;
+        sc.instrument(\""""+instrumentName+"""\");
+        sc.timer("""+st_timer+""");
+        sc.freq("""+st_freq+""");
+        sc.duration("""+st_dur+""");
+        sc.amp("""+st_amp+""");
+        sc.start();
+        day => now;
+    }
+    spork ~ """+funcName+"""();
+    """
+
+
+
+def mixedTypeListFix(seq):
+    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
+    mask = [is_number(x) for x in seq]
+    if True in mask and False in mask:
+        return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
+    return seq
+
+
+def makeStream( arg ):
+    "make a static value stream"
+    return 'st.st('+arg+')'
+
+
+
+
+# class Procedure(object):
+#     "A user-defined Scheme procedure."
+#     def __init__(self, parms, body, env):
+#         self.parms, self.body, self.env = parms, body, env
+#     def __call__(self, *args): 
+#         return eval(self.body, Env(self.parms, args, self.env))
+
 
 def eval(x, env=global_env, depth = 0):
     #env = global_env
