@@ -201,19 +201,6 @@ spork ~ """+sparkName+"""();
     
     return formatString.format(args = arguments,funcname = name)
 
-def StreamFunc2(name,args):
-    "New style StreamFunc, more compact code"
-    if name in ['st.seq','st.choice','st.series']:
-        return ListStreamCall(name,args)
-    elif name == 'list':
-        return ListStream(name,args)
-    elif name in ['stepgen','pulsesynth','linesynth']:
-        return DirectSynth(name,args)
-    elif name == 'sci':
-        return SuperChuckInst(name,args)
-    else: # default 
-        return StreamCall(name,args)
-
 def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
     funcName = unique.name('superChuckFunc')
     return """function void """+funcName+"""() { 
@@ -258,8 +245,9 @@ def standard_env():
         '-' : { 'name' : 'st.sub', 'args' : inf },
         '*' : { 'name' : 'st.mup', 'args' : inf },
         '/' : { 'name' : 'st.div', 'args' : inf },
-        'step-gen' : { 'name' : 'stepgen', 'args' : 2, 'class': DirectSynth },
-        'sci' : { 'name' : 'sci', 'args' : [2,3] },
+        'step-gen' : { 'name' : 'StepSynth', 'args' : 2, 'class': DirectSynth },
+        'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2, 'class' : DirectSynth },
+        'sci' : { 'name' : 'sci', 'args' : [2,3], 'class' : SuperChuckInst },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
         'collect' : {'name' : 'cs.collect', 'args' : 2}
@@ -276,26 +264,29 @@ def is_number(s):
         return False
 
 class StreamCall(object):
-    def __init__(self,name,arguments,environment,depth):
+    def __init__(self,name,arguments,numOfArgs,environment,depth):
         self.name = name
         self.arguments = arguments # including the keyed args
+        self.numOfArgs = numOfArgs
         self.splitKeyed()
 
-        self.env = environment
+        self.env = environment # a bit nasty to do it like this but okay
         self.depth = depth
     
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        if(self.checkArgs()): # checks number and correctness of ars
-            return self.name + "(" + self.printArguments() + ")" + self.setters() +';'
-        else:
-            return ""
+        self.checkArgs(): # checks number and correctness of ars
+        return self.name + "(" + self.printArguments() + ")" + self.setters() +';'
 
     def checkArgs(self):
-        # doesn't matter
-        return True
+        numOfArgs = self.numOfArgs
+        
+        if type(numOfArgs) == type(1):
+            numOfArgs = [numOfArgs] 
+        if not  'inf' in numOfArgs and len(self.arguments) in numOfArgs:
+            raise Exception('function:'+ proc + ' has '+str(len(self.arguments)) + ' args, expects: '+str(numOfArgs))
 
     def splitKeyed(self):
         "Strip the keyed arguments (:key values)  from the arguments list"
@@ -400,31 +391,6 @@ def caspArray( seq ):
     string.replace('\n','')
     return string
 
-class StepGen(StreamCall):
-    def checkArgs(self):
-        if len(self.arguments != 2):
-            print("StepGen wrong number of args")
-            return False
-        return True
-
-    def printArguments(self):
-        args = self.arguments
-        amp, timer = args
-        sparkName = unique.name('shred')
-        return 
-        """
-function void"""+sparkName+"""() {
-StepSynth s => Safe safe => dac;
-
-s.init("""+amp+'\n,'+timer+"""\n\n);
-
-day => now;
-}
-spork ~ """+sparkName+"""();
-""" # creates a function sparkname and immediately executes 
-
-
-
 class SuperChuckInst(StreamCall):
     def printArguments(self):
         self.arguments = ','.join(self.arguments)
@@ -522,18 +488,21 @@ def eval(x, env=global_env, depth = 0):
             return returnOldBus(x[1]) + ';'
     else:
         proc = eval(x[0], env, depth+1)
+        
         # check the amount of args ?
+        
         numOfArgs = (env.find(x[0])[x[0]])['args']
-        if type(numOfArgs) == type(1):
-            numOfArgs = [numOfArgs] 
-        cdr = x[1:]
-        if not  'inf' in numOfArgs and len(cdr) in numOfArgs:
-            print ( 'function:'+ proc + ' has '+str(len(cdr)) + ' args, expects: '+str(numOfArgs))
+        streamType = (env.find(x[0])[x[0]])['class']
+        
         if x[0] == 'sci':
             args = [x[1]] + [eval(exp, env, depth+1) for exp in x[2:]] # evaluate everything but the name of the instrument
         else:
             args = [eval(exp, env, depth+1) for exp in x[1:]] # here should be the check
-        string = '\n'+('  '*depth)+streamFunc( proc , args ) 
+
+        calledStream = str( streamType(proc, args) ) 
+
+        string = '\n'+('  '*depth) + calledStream
+        
         return string
 
 
