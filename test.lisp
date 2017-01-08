@@ -1,1 +1,1 @@
-(seq 1 2 3 4 true)
+(step-gen (rv -1 1) (st 100))

@@ -3,7 +3,6 @@ import operator as op
 import re
 import os
 import random
-import six #  to test for string
 
 # TODO
 #
@@ -199,67 +198,6 @@ spork ~ """+sparkName+"""();
     
     return formatString.format(args = arguments,funcname = name)
 
-def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
-    funcName = unique.name('superChuckFunc')
-    return """function void """+funcName+"""() { 
-    SuperChuck sc;
-    sc.instrument(\""""+instrumentName+"""\");
-    sc.timer("""+st_timer+""");
-    sc.freq("""+st_freq+""");
-    sc.duration("""+st_dur+""");
-    sc.amp("""+st_amp+""");
-    sc.start();
-    day => now;
-}
-spork ~ """+funcName+"""();
-"""
-
-def standard_env():
-    "Here are most of the standard functions"
-    env = Env()
-    inf = 'inf'
-
-    env.update({
-        'true' : {'name':'true',    'args':0,           'class':Literal}, #this is a literal
-        'seq': {'name':'st.seq',    'args':inf,         'class':ListStreamCall},
-        'rv' : {'name': 'st.rv',    'args': 2 },
-        'line' : {'name': 'st.line','args':2},
-        'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
-        'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
-
-        'index' : { 'name' : 'st.index', 'args':2,      'class':IndexStreamCall},
-        'walk' : { 'name' : 'st.walk','args':2 },
-        'hold' : {'name' : 'st.hold', 'args':2,''},
-        'line' : {'name' : 'st.line', 'args':2},
-        'boundedWalk' : { 'name' : 'st.boundedWalk','args':3 },
-        'bouncyWalk' : { 'name' : 'st.bouncyWalk', 'args':3 },
-        'boundedListWalk' : { 'name' : 'st.boundedListWalk', 'args': 3 },
-        'boundedMupWalk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
-        't': {'name':'st.t','args': 2 },
-        'count' : { 'name' : 'st.count','args': 1  },
-        'list' : { 'name' : 'list', 'args': inf },
-        'st' : { 'name' : 'st.st' , 'args' : 1 },
-        '+' : { 'name' : 'st.sum', 'args' : inf },
-        '-' : { 'name' : 'st.sub', 'args' : inf },
-        '*' : { 'name' : 'st.mup', 'args' : inf },
-        '/' : { 'name' : 'st.div', 'args' : inf },
-        'step-gen' : { 'name' : 'StepSynth', 'args' : 2, 'class': DirectSynth },
-        'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2, 'class' : DirectSynth },
-        'sci' : { 'name' : 'sci', 'args' : [2,3], 'class' : SuperChuckInst },
-        'bus' : { 'name' : 'st.bus', 'args': 2 },
-        '~' : { 'name' : 'st.bus', 'args' : 2 },
-        'collect' : {'name' : 'cs.collect', 'args' : 2}
-    })
-    return env
-
-global_env = standard_env()
-
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
 
 class StreamCall(object):
     def __init__(self,name,arguments,numOfArgs,environment,depth):
@@ -270,21 +208,24 @@ class StreamCall(object):
 
         self.env = environment # a bit nasty to do it like this but okay
         self.depth = depth
+
+        self.checkArgs() # checks number and correctness of ars
+
     
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        self.checkArgs(): # checks number and correctness of ars
-        return self.name + "(" + self.printArguments() + ")" + self.setters() +';'
+        return self.name + "(" + self.printArguments() + ")" + self.setters()
 
     def checkArgs(self):
         numOfArgs = self.numOfArgs
         
         if type(numOfArgs) == type(1):
             numOfArgs = [numOfArgs] 
-        if not  'inf' in numOfArgs and len(self.arguments) in numOfArgs:
-            raise Exception('function:'+ proc + ' has '+str(len(self.arguments)) + ' args, expects: '+str(numOfArgs))
+            print('it is now this:'+ str(numOfArgs))
+        if not  'inf' in numOfArgs and not len(self.arguments) in numOfArgs:
+            raise Exception('function:'+ self.name + ' has '+str(len(self.arguments)) + ' args, expects: '+str(numOfArgs))
 
     def splitKeyed(self):
         "Strip the keyed arguments (:key values)  from the arguments list"
@@ -340,31 +281,30 @@ class ListStreamCall(StreamCall):
             holdMode = ',true'
         else:
             holdMode = ''
-        return '[' + mixedTypeListFix(self.arguments) + ']' + holdMode
+        return '[' + ','.join(mixedTypeListFix(self.arguments)) + ']' + holdMode
 
 class DirectSynth(StreamCall):
     "A function that calls a non-standard synth"
-    
     # translator of names: 
     synthDict = {
-        'StepGen' : 'StepSynth',
-        'PulseGen' : 'PulseSynth',
-        'LineGen' : 'LineSynth',
+        'step-gen' : 'StepSynth',
+        'pulse-gen' : 'PulseSynth',
+        'line-gen' : 'LineSynth',
     }
 
-    def __repr__.(self):
+    def __repr__(self):
         # generate a name, lookup synth name, construct a Synth shred, spork it.
         sparkName = unique.name('shred')
 
-        self.generatorName = synthDict.get(self.name)
+        self.generatorName = DirectSynth.synthDict.get(self.name)
+
         if self.generatorName == None:
             raise(Exception("unkown generatorName" + self.generatorName))
 
         amp, timer = self.arguments
 
-        return 
-        """
-function void"""+sparkName+"""() {
+        chuckCode = """
+fun void """+sparkName+"""() {
 """+self.generatorName+""" s => Safe safe => dac;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
@@ -373,6 +313,8 @@ day => now;
 }
 spork ~ """+sparkName+"""();
 """ # creates a function sparkname and immediately executse 
+        return chuckCode
+        
 
     def checkArgs(self):
         if len(self.arguments) != 2:
@@ -380,13 +322,13 @@ spork ~ """+sparkName+"""();
             return False
         return True
 
-def caspArray( seq ):
+def streamArray( seq ):
     # is used ?
     seq = [str(x) for x in seq]
     seq = mixedTypeListFix(seq)
     seq = ",".join(seq)
     string = '['+seq+']'
-    string.replace('\n','')
+    string = string.replace('\n','')
     return string
 
 class SuperChuckInst(StreamCall):
@@ -410,17 +352,10 @@ class SuperChuckInst(StreamCall):
     spork ~ """+funcName+"""();
     """
 
-class Literal(object):
-    # very simple object
-    def __init__(self,string):
-        self.value = string
-
+class MakeTable(StreamCall):
     def __repr__(self):
-        return self.value
-        
-    def __str__(self):
-        return self.__repr__()
-
+        generator, tablemame = self.arguments
+        return  generator + '@=>' + tableName + ';'
 
 
 def mixedTypeListFix(seq):
@@ -435,6 +370,86 @@ def makeStream( arg ):
     "make a static value stream"
     return 'st.st('+arg+')'
 
+
+
+def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
+    funcName = unique.name('superChuckFunc')
+    return """funct void """+funcName+"""() { 
+    SuperChuck sc;
+    sc.instrument(\""""+instrumentName+"""\");
+    sc.timer("""+st_timer+""");
+    sc.freq("""+st_freq+""");
+    sc.duration("""+st_dur+""");
+    sc.amp("""+st_amp+""");
+    sc.start();
+    day => now;
+}
+spork ~ """+funcName+"""();
+"""
+
+class Literal(object):
+    # very simple object
+    def __init__(self,string):
+        self.value = string
+
+    def __repr__(self):
+        return self.value
+        
+    def __str__(self):
+        return self.__repr__()
+
+def standard_env():
+    "Here are most of the standard functions"
+    env = Env()
+    inf = 'inf'
+
+    env.update({
+        'true' : {'name':'true',    'args':0,           'class':Literal}, #this is a literal
+        'seq': {'name':'st.seq',    'args':inf,         'class':ListStreamCall},
+        'rv' : {'name': 'st.rv',    'args': 2 },
+        'line' : {'name': 'st.line','args':2},
+        'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
+        'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
+
+        'index' : { 'name' : 'st.index', 'args':2 },
+        'walk' : { 'name' : 'st.walk','args':2 },
+        'hold' : {'name' : 'st.hold', 'args':2},
+        'line' : {'name' : 'st.line', 'args':2},
+        'boundedWalk' : { 'name' : 'st.boundedWalk','args':3 },
+        'bouncyWalk' : { 'name' : 'st.bouncyWalk', 'args':3 },
+        'boundedListWalk' : { 'name' : 'st.boundedListWalk', 'args': 3 },
+        'boundedMupWalk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
+        't': {'name':'st.t','args': 2 },
+        'count' : { 'name' : 'st.count','args': 1  },
+        'list' : { 'name' : 'list', 'args': inf },
+        'st' : { 'name' : 'st.st' , 'args' : 1 },
+        '+' : { 'name' : 'st.sum', 'args' : inf },
+        '-' : { 'name' : 'st.sub', 'args' : inf },
+        '*' : { 'name' : 'st.mup', 'args' : inf },
+        '/' : { 'name' : 'st.div', 'args' : inf },
+        'step-gen' : { 'name' : 'step-gen', 'args' : 2,        'class':DirectSynth },
+        'pulse-gen' : { 'name' : 'pulse-gen', 'args' : 2,      'class':DirectSynth },
+        'line-gen' : { 'name' : 'line-gen', 'args' : 2,      'class':DirectSynth },
+
+        'sci' : { 'name' : 'sci', 'args' : [2,3],               'class':SuperChuckInst },
+        'bus' : { 'name' : 'st.bus', 'args': 2 },
+        '~' : { 'name' : 'st.bus', 'args' : 2 },
+        'collect' : {'name' : 'cs.collect', 'args' : 2},
+
+        'fill' : {'name':'cs.fill', 'args' : 3 }
+        '#' : {'name' : 'makeTable', 'args' : 2 , 'class' : MakeTable }
+
+    })
+    return env
+
+global_env = standard_env()
+
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 
 
@@ -461,7 +476,7 @@ def eval(x, env=global_env, depth = 0):
         (_, exp) = x
         return exp
     elif is_number(x[0]) or isinstance(x[0],List): # if list with numbers or streams
-        string = caspArray(x)
+        string = streamArray(x)
         return string
     elif x[0] == 'fun':
         if len(x) > 3:
@@ -478,7 +493,7 @@ def eval(x, env=global_env, depth = 0):
             arg = None
         body = eval(body,env)
         return makeFunction(var,arg,body)
-    elif x[0] == 'bus':
+    elif x[0] in ['bus','~']:
         if len(x[1:]) > 1:
             return makeNewBus(x[1],eval(x[2])) + ';'
         else:
@@ -486,11 +501,16 @@ def eval(x, env=global_env, depth = 0):
             return returnOldBus(x[1]) + ';'
     else:
         proc = eval(x[0], env, depth+1)
+
+        print("this is the proc:"+proc)
         
         # check the amount of args ?
         
-        numOfArgs = (env.find(x[0])[x[0]])['args']
-        streamType = (env.find(x[0])[x[0]])['class']
+        numOfArgs = (env.find(x[0])[x[0]]).get('args')
+        if not numOfArgs:
+            numOfArgs = 'inf'
+
+        streamType = (env.find(x[0])[x[0]]).get('class')
         
         if streamType == None:
             # catch default
@@ -501,7 +521,7 @@ def eval(x, env=global_env, depth = 0):
         else:
             args = [eval(exp, env, depth+1) for exp in x[1:]] # here should be the check
 
-        calledStream = str( streamType(proc, args) ) 
+        calledStream = str( streamType(proc, args, numOfArgs, env ,depth + 1) ) 
 
         string = '\n'+('  '*depth) + calledStream
         
@@ -510,7 +530,7 @@ def eval(x, env=global_env, depth = 0):
 
 
 FileIO('test.lisp','output.ck')
-os.system("chuck --remove.all")
-os.system("chuck + output.ck") 
+#os.system("chuck --remove.all")
+#os.system("chuck + output.ck") 
 
 
