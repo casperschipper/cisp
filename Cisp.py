@@ -109,6 +109,7 @@ class Cisp(object):
                 return self.Symbol(token)
 
     def Symbol(self,token):
+
         return token
 
     def remove_comments(self,string):
@@ -201,28 +202,33 @@ def returnOldBus ( busName ):
     return "st.bus("+busName+")"
 
 class StreamCall(object):
+    " this tranlates a function call "
     def __init__(self,name,arguments,environment,depth):
         self.cispname = name
-        self.name = eval(name,environment,depth)
+        self.name = eval(name,environment,depth) # evaluate the name
+        # this is mainly needed to move from seq() to st.seq.
 
         self.arguments = arguments # including the keyed args
         self.env = environment # a bit nasty to do it like this but okay
-        self.depth = depth
+        self.depth = depth # depth is mainly used for pretty formatting
 
-        self.splitKeyed()
+        self.splitKeyed() # split : notation named arguments. For example (seq 10 20 holdMode:true)
+                          # will result in st.seq([10,20]).holdMode(true)
 
 
         self.checkArgs() # checks number and correctness of ars
-        self.evaluateArgs()
+        self.evaluateArgs() # evaluate arguments
 
     
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
+        # this is the central construction of the function call:
         return self.name + "(" + self.printArguments() + ")" + self.setters()
 
     def evaluateArgs(self):
+        # this avaluates the arguments
         self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
 
     def checkArgs(self):
@@ -273,6 +279,7 @@ class StreamCall(object):
         self.arguments = normalArgs       
 
     def printArguments(self):
+        # this joins the (evaluated) arguments, separated by a comma.
         return ",".join(self.arguments)
 
     def setters(self):
@@ -460,7 +467,7 @@ def standard_env():
         'sci' : { 'name' : 'sci', 'args' : [2,3],               'class':SuperChuckInst },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
-        'collect' : {'name' : 'cs.collect', 'args' : 2},
+        'collect' : {'name' : 'cs.collect', 'args' : 2,         'type':'floatArray' },
 
         'fill' : {'name':'cs.fill', 'args' : 3, 'type' : 'intArray' },
         'fillf' : {'name': 'cs.fillf', 'args' : 3, 'type':'floatArray' },
