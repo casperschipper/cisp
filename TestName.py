@@ -18,11 +18,3 @@ print (test.name('casp'))
 print (test.name('func'))
 print (test.name('casp'))
 
-class Foo(object):
-	i = {'koe':'boeh','varken':'knor'}
-
-	def Bar(self):
-		print(i.get('varken'))
-
-foo = Foo()
-foo.Bar()

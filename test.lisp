@@ -1,1 +1,1 @@
-(step-gen (rv -1 1) (st 100))
+(seq (rv -1 1 :collect 32))

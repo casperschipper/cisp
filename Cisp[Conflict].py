@@ -8,7 +8,7 @@ import random
 #
 # Could a user define ListStreamCalls (stream calls that use arrays of stream as argument ?)
 
-# streamcall needs to be aware of cs.fillf!
+
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
@@ -206,11 +206,10 @@ class StreamCall(object):
         self.name = eval(name,environment,depth)
 
         self.arguments = arguments # including the keyed args
-        self.env = environment # a bit nasty to do it like this but okay
-        self.depth = depth
-
         self.splitKeyed()
 
+        self.env = environment # a bit nasty to do it like this but okay
+        self.depth = depth
 
         self.checkArgs() # checks number and correctness of ars
         self.evaluateArgs()
@@ -269,14 +268,12 @@ class StreamCall(object):
                 #normal args
                 normalArgs.append(item)
                 item = snext(iterator)
-
         self.arguments = normalArgs       
 
     def printArguments(self):
         return ",".join(self.arguments)
 
     def setters(self):
-        # there must be some way of telling to the outside world that this should be treaded as list thing when embedded in an SEQ.
         return "".join(['.'+str(key)+'(' + str(value) + ')' for key,value in self.extra.items()])
 
 class ListStream(StreamCall):
@@ -285,7 +282,7 @@ class ListStream(StreamCall):
         return  '[' + mixedTypeListFix( args ) + ']'
 
 class ListStreamCall(StreamCall):
-    # this should be used for Seq, Series and Choice
+    # this should be used for Seq and Index
     def printArguments(self):
         # checks if true, adds that to the end of the arguments, after the list
         if self.arguments[-1] == 'true':
@@ -434,8 +431,6 @@ def standard_env():
         'line' : {'name': 'st.line','args':2},
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
         'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
-        'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
-
 
         'index' : { 'name' : 'st.index', 'args':2 },
         'walk' : { 'name' : 'st.walk','args':2 },
