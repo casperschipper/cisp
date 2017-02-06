@@ -1,1 +1,1 @@
-(seq (rv -1 1 :collect 32))
+(seq (fillf 32 -1 1))

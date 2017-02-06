@@ -6,9 +6,8 @@ import random
 
 # TODO
 #
-# Could a user define ListStreamCalls (stream calls that use arrays of stream as argument ?)
-
-# streamcall needs to be aware of cs.fillf!
+# Enviroment values should be returned as objects instead of strings ?
+# Would this enable better handling of seq([some array pointer]), or the listFixer ?
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
@@ -201,6 +200,14 @@ def returnOldBus ( busName ):
     " Return a new value "
     return "st.bus("+busName+")"
 
+def anyIn( seq1, seq2 ):
+    "return true of any item in seq is in seq2"
+    for item in seq1:
+        if item in seq2:
+            return True
+    return False
+
+
 class StreamCall(object):
     " this tranlates a function call "
     def __init__(self,name,arguments,environment,depth):
@@ -287,20 +294,32 @@ class StreamCall(object):
         return "".join(['.'+str(key)+'(' + str(value) + ')' for key,value in self.extra.items()])
 
 class ListStream(StreamCall):
+
     def printArguments(self):
         args = ','.join(self.arguments)
         return  '[' + mixedTypeListFix( args ) + ']'
 
 class ListStreamCall(StreamCall):
-    # this should be used for Seq, Series and Choice
+    "this should be used for Seq, Series and Choice"
     def printArguments(self):
-        # checks if true, adds that to the end of the arguments, after the list
+        "checks if holdmode true, adds that to the end of the arguments, after the list"
         if self.arguments[-1] == 'true':
             self.arguments = self.arguments[:-1]
             holdMode = ',true'
         else:
             holdMode = ''
         return '[' + ','.join(mixedTypeListFix(self.arguments)) + ']' + holdMode
+
+    def checkIfArgsIsArrayPointer(self):
+        if anyIn(['cs.fill','cs.fillf'],self.arguments):
+            return true
+        return false
+
+
+class ArrayGen(StreamCall):
+    def printArguments(self):
+        return ",".join(self.arguments)
+        
 
 class DirectSynth(StreamCall):
     "A function that calls a non-standard synth"
@@ -460,6 +479,10 @@ def standard_env():
         '-' : { 'name' : 'st.sub', 'args' : inf },
         '*' : { 'name' : 'st.mup', 'args' : inf },
         '/' : { 'name' : 'st.div', 'args' : inf },
+        '<<' : { 'name' : 'st.bitShiftL', 'args' : 2 },
+        '>>' : { 'name' : 'st.bitShiftR', 'args' : 2 },
+        '&&' : { 'name' : 'st.bitAnd', 'args' , 2 },
+        '||' : { 'name' : 'st.bitOr', 'args' , 2 },
         'step-gen' : { 'name' : 'step-gen', 'args' : 2,         'class':DirectSynth },
         'pulse-gen' : { 'name' : 'pulse-gen', 'args' : 2,       'class':DirectSynth },
         'line-gen' : { 'name' : 'line-gen', 'args' : 2,         'class':DirectSynth },
@@ -467,16 +490,17 @@ def standard_env():
         'sci' : { 'name' : 'sci', 'args' : [2,3],               'class':SuperChuckInst },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
-        'collect' : {'name' : 'cs.collect', 'args' : 2,         'type':'floatArray' },
+        'collect' : {'name' : 'st.collect', 'args' : 2,          },
 
-        'fill' : {'name':'cs.fill', 'args' : 3, 'type' : 'intArray' },
-        'fillf' : {'name': 'cs.fillf', 'args' : 3, 'type':'floatArray' },
+        'fill' : {'name':'cs.fill', 'args' : 3, 'type' : 'intArray', 'class':ArrayGen },
+        'fillf' : {'name': 'cs.fillf', 'args' : 3, 'type':'floatArray', 'class':ArrayGen },
+        'sine' : {'name' : 'cs.sine', 'args', : 2, 'type' : 'floatArray', 'class':ArrayGen },
         '#' : {'name' : 'makeTable', 'args' : 2 ,               'class':MakeTable },
-        'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable }
-
+        'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable },
+        'print' : {'name' : 'cs.printf', 'args':1 }
     })
     return env
-
+    
 global_env = standard_env()
 
 def is_number(s):

@@ -1,4 +1,4 @@
 
 st.seq([
-    st.rv(-1,1).collect(32)])
+    cs.fillf(32,-1,1)])
 day => now;
