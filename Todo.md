@@ -38,4 +38,20 @@ There are currently two possible options:
 :repeat 10)
 
 
+# How to deal with context sensitive syntax:
+
+## Statement of problem:
+
+Take this statement as example:
+
+(seq (fillf 32 -1 1))
+
+this will evaluate to:
+
+(seq (fillf 21 -1 1))
+
+st.seq(cs.fillf(32,-1,1))
+
+
+
 

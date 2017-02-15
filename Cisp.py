@@ -8,6 +8,11 @@ import random
 #
 # Enviroment values should be returned as objects instead of strings ?
 # Would this enable better handling of seq([some array pointer]), or the listFixer ?
+# 
+
+# chuck --chugin-dir:~/Library/Application\ Support/ChucK/ChuGins
+# chuck + /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck
+
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
@@ -194,11 +199,11 @@ class StreamFuncDef(object):
 
 def makeNewBus ( busName, body ):
     " Make a Chuck Stream Bus, a bus is a shared stream. When a caller gets a new value it updates the state inside"
-    return "st.bus("+body+",\""+busName+"\")"
+    return "\nst.bus("+body+",\""+busName+"\")"
 
 def returnOldBus ( busName ):
     " Return a new value "
-    return "st.bus("+busName+")"
+    return "\nst.bus("+busName+")"
 
 def anyIn( seq1, seq2 ):
     "return true of any item in seq is in seq2"
@@ -239,7 +244,7 @@ class StreamCall(object):
         self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
 
     def checkArgs(self):
-        # retrieve the number of args expected
+        "retrieve the number of args expected"
         numOfArgs = (self.env.find(self.cispname)[self.cispname]).get('args')
         if not numOfArgs:
             numOfArgs = 'inf'
@@ -248,7 +253,7 @@ class StreamCall(object):
             numOfArgs = [numOfArgs] 
             print('it is now this:'+ str(numOfArgs))
         if not  'inf' in numOfArgs and not len(self.arguments) in numOfArgs:
-            raise Exception('function:'+ self.name + ' has '+str(len(self.arguments)) + ' args, expects: '+str(numOfArgs))
+            raise Exception('function:'+ self.name + ' has '+str(len(self.arguments)) + ' args, expects: '+str(numOfArgs) + '\n' + 'argumnets were:' + str(self.arguments) +'\n')
 
     def splitKeyed(self):
         "Strip the keyed arguments (:key values)  from the arguments list"
@@ -294,8 +299,8 @@ class StreamCall(object):
         return "".join(['.'+str(key)+'(' + str(value) + ')' for key,value in self.extra.items()])
 
 class ListStream(StreamCall):
-
     def printArguments(self):
+        "Explicit list definition"
         args = ','.join(self.arguments)
         return  '[' + mixedTypeListFix( args ) + ']'
 
@@ -308,12 +313,15 @@ class ListStreamCall(StreamCall):
             holdMode = ',true'
         else:
             holdMode = ''
-        return '[' + ','.join(mixedTypeListFix(self.arguments)) + ']' + holdMode
+        if (self.checkIfArgsIsArrayPointer()):
+            return ','.join(mixedTypeListFix(self.arguments)) + holdMode
+        return '[' + ','.join(mixedTypeListFix(self.arguments)) + holdMode + ']'
 
     def checkIfArgsIsArrayPointer(self):
-        if anyIn(['cs.fill','cs.fillf'],self.arguments):
-            return true
-        return false
+        "check arguments, only True with single argument"
+        if len(self.arguments) == 1:
+            return True
+        return False
 
 
 class ArrayGen(StreamCall):
@@ -370,29 +378,32 @@ def streamArray( seq ):
     return string
 
 class SuperChuckInst(StreamCall):
+    def __repr__(self):
+        # this is the central construction of the function call:
+        return self.printArguments() 
+
     def evaluateArgs(self):
         x = self.arguments
-        self.arguments = [x[1]] + [eval(exp, self.env, self.depth+1) for exp in x[2:]] # evaluate everything but the name of the instrument
+        print self.arguments, 'self.arguments', 'before eval'
+        # something wrong with eval here TODO TODO
+        self.arguments =  [str(x[0])] + [eval(exp, self.env, self.depth+1) for exp in x[1:]] # evaluate everything but the name of the instrument
+
+    def printArguments(self):
+        print self.arguments, 'self.arguments'
+        return SuperChuckInstStr(*self.arguments)
+
+class MidiNoteStream(StreamCall):
+    def __repr__(self):
+        # this is the central construction of the function call:
+        return self.printArguments() 
+
+    def evaluateArgs(self):
+        x = self.arguments
+        self.arguments = [eval(exp, self.env, self.depth+1) for exp in x] # evaluate everything but the name of the instrument
 
     def printArguments(self):
         self.arguments = ','.join(self.arguments)
-        return SuperChuckInstStr(*self.arguments)
-
-    def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
-        "creates a little SuperChuck inst"
-        funcName = unique.name('superChuckFunc')
-        return """function void """+funcName+"""() { 
-        SuperChuck sc;
-        sc.instrument(\""""+instrumentName+"""\");
-        sc.timer("""+st_timer+""");
-        sc.freq("""+st_freq+""");
-        sc.duration("""+st_dur+""");
-        sc.amp("""+st_amp+""");
-        sc.start();
-        day => now;
-    }
-    spork ~ """+funcName+"""();
-    """
+        return MidiChuckInstrStr(*self.arguments)
 
 class MakeTable(StreamCall):
     def evaluateArgs(self):
@@ -422,9 +433,11 @@ def makeStream( arg ):
 
 
 
-def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
+def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
     funcName = unique.name('superChuckFunc')
-    return """funct void """+funcName+"""() { 
+    for item in [st_timer,st_freq,st_dur,st_amp]:
+        print type(item), item, 'this is item'
+    return """function void """+funcName+"""() { 
     SuperChuck sc;
     sc.instrument(\""""+instrumentName+"""\");
     sc.timer("""+st_timer+""");
@@ -433,6 +446,20 @@ def SuperChuckInst( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st
     sc.amp("""+st_amp+""");
     sc.start();
     day => now;
+}
+spork ~ """+funcName+"""();
+"""
+
+def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)' , st_velo='st.st(80)' ):
+    "creates a little Midi instrument inst"
+    funcName = unique.name('midi_instr')
+    return """function void """+funcName+"""() { 
+    MidiStream midi;
+    midi.timer("""+st_timer+""");
+    midi.pitch("""+st_pitch+""");
+    midi.gain("""+st_gain+""");
+    midi.dur("""+st_dur+""");
+    midi.start();
 }
 spork ~ """+funcName+"""();
 """
@@ -481,20 +508,21 @@ def standard_env():
         '/' : { 'name' : 'st.div', 'args' : inf },
         '<<' : { 'name' : 'st.bitShiftL', 'args' : 2 },
         '>>' : { 'name' : 'st.bitShiftR', 'args' : 2 },
-        '&&' : { 'name' : 'st.bitAnd', 'args' , 2 },
-        '||' : { 'name' : 'st.bitOr', 'args' , 2 },
+        '&&' : { 'name' : 'st.bitAnd', 'args' :2 },
+        '||' : { 'name' : 'st.bitOr', 'args' : 2 },
         'step-gen' : { 'name' : 'step-gen', 'args' : 2,         'class':DirectSynth },
         'pulse-gen' : { 'name' : 'pulse-gen', 'args' : 2,       'class':DirectSynth },
         'line-gen' : { 'name' : 'line-gen', 'args' : 2,         'class':DirectSynth },
 
-        'sci' : { 'name' : 'sci', 'args' : [2,3],               'class':SuperChuckInst },
+        'sci' : { 'name' : 'sci', 'args' : [2,3,4],               'class':SuperChuckInst },
+        'midi-note' : {'name' : 'sci', 'args' : [3,4] ,         'class': MidiNoteStream },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
         'collect' : {'name' : 'st.collect', 'args' : 2,          },
 
         'fill' : {'name':'cs.fill', 'args' : 3, 'type' : 'intArray', 'class':ArrayGen },
         'fillf' : {'name': 'cs.fillf', 'args' : 3, 'type':'floatArray', 'class':ArrayGen },
-        'sine' : {'name' : 'cs.sine', 'args', : 2, 'type' : 'floatArray', 'class':ArrayGen },
+        'sine' : {'name' : 'cs.sine', 'args' : 2, 'type' : 'floatArray', 'class':ArrayGen },
         '#' : {'name' : 'makeTable', 'args' : 2 ,               'class':MakeTable },
         'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable },
         'print' : {'name' : 'cs.printf', 'args':1 }
@@ -502,6 +530,8 @@ def standard_env():
     return env
     
 global_env = standard_env()
+
+# helper functions
 
 def is_number(s):
     try:
@@ -511,6 +541,11 @@ def is_number(s):
         return False
 
 
+def matchStrings(testValues,string):
+   result = False
+   for test in testValues:
+       result = result | (string.find(test) != -1)
+   return result
 
 # class Procedure(object):
 #     "A user-defined Scheme procedure."
@@ -528,7 +563,7 @@ def eval(x, env=global_env, depth = 0):
         symbol_object = env.find(x)[x] # return the name
         return symbol_object['name']
     elif isinstance(x, Number):
-        return str(x)
+        return str(x) #TODO add formatting of float
     elif not isinstance(x, List):  # constant literal
         return x                
     elif x[0] == '\'':          # (quote exp)
@@ -549,6 +584,7 @@ def eval(x, env=global_env, depth = 0):
         proc = x[0]    
         args = x[1:]
 
+        # find which class to use to parse this:
         streamType = (env.find(x[0])[x[0]]).get('class')
         
         if streamType == None:
@@ -565,7 +601,7 @@ def eval(x, env=global_env, depth = 0):
 
 
 FileIO('test.lisp','output.ck')
-#os.system("chuck --remove.all")
-#os.system("chuck + output.ck") 
+os.system("chuck --remove.all")
+os.system("chuck + output.ck") 
 
 

@@ -1,0 +1,3 @@
+Buffer b;
+
+hour => now;
