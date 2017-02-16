@@ -10,10 +10,6 @@ import random
 # Would this enable better handling of seq([some array pointer]), or the listFixer ?
 # 
 
-# chuck --chugin-dir:~/Library/Application\ Support/ChucK/ChuGins
-# chuck + /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck
-
-
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
 Number = (int, float) # A Scheme Number is implemented as a Python int or float
@@ -29,28 +25,67 @@ class FileIO(object):
     def writeLine(self,line):
         self.outFile.write(line)
 
-
     def processInfile(self):
         "Stack all the lines together, process each line"
         fullLine = '' 
-        for line in self.inFile:            
-            if line != '\n':
-                # if an expression is multiline, combine it
-                fullLine += line 
-            else:
-                # if empty line, start parsing what has been harvested
-                parser = Cisp(fullLine)
-                result = parser.result()
-                self.writeLine(result)
-                print( result ) # print the parsed result
-                fullLine = ''
-        if (fullLine != ''):
-            parser = Cisp(fullLine)
-            result = parser.result()
-            self.writeLine(result)
-            print( result ) # print the parsed result
+        nOpen, nClosed, thisLineCount = 0, 0, 0
+
+
+        for line in self.inFile:
+            nOpen += self.countOpen(line)
+            nClosed += self.countClosed(line)
+            thisLineCount = (nOpen - nClosed)
+            print 'values', nOpen, nClosed, thisLineCount
+            if nOpen > 0:
+                if thisLineCount != 0:
+                    fullLine += line.replace('\n','')
+                    print 'thislinecount', fullLine, thisLineCount
+                else:
+                    fullLine += line.replace('\n','')
+                    self.parseLine(fullLine)
+                    fullLine = ''
+                    nOpen, nClosed, thisLineCount = 0, 0, 0
+            
         self.outFile.write('\nday => now;') # this ends every file with time passing, just to avoid it closing.
         self.outFile.close()
+
+    def parseLine(self,string):
+        print  '... is parsing ... '
+        parser = Cisp(string)
+        result = parser.result()
+        self.writeLine(result)
+        print( 'parsedline:', result ) # print the parsed result
+
+    def countOpen(self,string):
+        count = 0
+        for x in string:
+            if x == '(':
+                count += 1
+        return count
+
+    def countClosed(self,string):
+        count = 0
+        for x in string:
+            if x == ')':
+                count += 1
+        return count
+
+    def isComplete(self,string):
+        "returns true if the line is balanced"
+        level = 0
+        flag = 0
+        for x in string: 
+            if x == '(':
+                flag = True # there is at least one parenthesis
+                level = level + 1
+            elif x == ')':
+                level = level - 1
+        return (level == 0) and flag 
+
+    def isIncomplete(self,string):
+        level = 0
+
+
 
 
 class UniqueName(object):
@@ -144,21 +179,15 @@ class Env(dict):
         except AttributeError:
             print('value:' + var + ' not found.')
 
-def makeFunction( functionName, arguments, body ):
-    "make a chuck Stream function, only stream arguments allowed"
-    if arguments == None:
-        arguments = [];
-    arguments = ",".join(["Stream "+x for x in arguments]) # add Stream type before all values. Join with ',' .
-    return "fun Stream "+ functionName + " ("+arguments+") {\n" + "return "+body+";\n}\n"
-
 class StreamFuncDef(object):
     "A definition of a stream function, this will combine input streams into some output stream"
     def __init__(self,lexedCispDefinitionList,environment,depth):
         self.defList = lexedCispDefinitionList;
         self.env = environment
         self.depth = depth
-
-        self.result = self.makeFunction(self.parse())
+        parsed = self.parse()
+        
+        self.result = parsed
 
     def __repr__(self):
         return self.result
@@ -166,7 +195,7 @@ class StreamFuncDef(object):
     def __str__(self):
         return self.__repr__()
 
-    def makeFunction( functionName, arguments, body ):
+    def makeFunction( self, functionName, arguments, body ):
         "make a chuck Stream function, only stream arguments allowed"
         if arguments == None:
             arguments = [];
@@ -175,10 +204,11 @@ class StreamFuncDef(object):
 
     def parse(self):
         x = self.defList
+        env = self.env
         if len(x) > 3:
             (_, var, arg, body) = x # _ = 'fun'
         
-            functionDiscr = { var : {'name':var , 'args':len(arg) }}
+            functionDiscr = { var : {'name':var + '()' , 'args':len(arg) }}
 
             env.update(thisFunction)
 
@@ -189,13 +219,13 @@ class StreamFuncDef(object):
 
             env[var]['args'] = len(arg) # store the number of args in env
             body = eval(body,localEnv)
-        else: # no arguments, body is obligatory
+        else: # no arguments, only name and body
             (_, var, body) = x
-            functionDiscr = { var : {'name':var , 'args' : 0}}
-            env.update(functionDicr)
+            functionDiscr = { var : {'name':var + '()', 'args' : 0}}
+            env.update(functionDiscr)
             arg = None
             body = eval(body,env)
-        return makeFunction(var,arg,body)
+        return self.makeFunction(var,arg,body)
 
 def makeNewBus ( busName, body ):
     " Make a Chuck Stream Bus, a bus is a shared stream. When a caller gets a new value it updates the state inside"
@@ -221,6 +251,7 @@ class StreamCall(object):
         # this is mainly needed to move from seq() to st.seq.
 
         self.arguments = arguments # including the keyed args
+
         self.env = environment # a bit nasty to do it like this but okay
         self.depth = depth # depth is mainly used for pretty formatting
 
@@ -274,7 +305,8 @@ class StreamCall(object):
         iterator = iter(self.arguments)
         item = snext(iterator)
         isKeyedArg = False
-        while(item):
+
+        while(item is not False): 
             key = isKey(item)
             if key:
                 # move to next arg
@@ -384,12 +416,9 @@ class SuperChuckInst(StreamCall):
 
     def evaluateArgs(self):
         x = self.arguments
-        print self.arguments, 'self.arguments', 'before eval'
-        # something wrong with eval here TODO TODO
         self.arguments =  [str(x[0])] + [eval(exp, self.env, self.depth+1) for exp in x[1:]] # evaluate everything but the name of the instrument
 
     def printArguments(self):
-        print self.arguments, 'self.arguments'
         return SuperChuckInstStr(*self.arguments)
 
 class MidiNoteStream(StreamCall):
@@ -402,7 +431,6 @@ class MidiNoteStream(StreamCall):
         self.arguments = [eval(exp, self.env, self.depth+1) for exp in x] # evaluate everything but the name of the instrument
 
     def printArguments(self):
-        self.arguments = ','.join(self.arguments)
         return MidiChuckInstrStr(*self.arguments)
 
 class MakeTable(StreamCall):
@@ -457,9 +485,10 @@ def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st
     MidiStream midi;
     midi.timer("""+st_timer+""");
     midi.pitch("""+st_pitch+""");
-    midi.gain("""+st_gain+""");
-    midi.dur("""+st_dur+""");
+    midi.velo("""+st_velo+""");
+    midi.dura("""+st_dur+""");
     midi.start();
+    day => now;
 }
 spork ~ """+funcName+"""();
 """
@@ -488,6 +517,7 @@ def standard_env():
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
         'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
+        'floor' : { 'name' : 'st.floor' , 'args':1   },
 
 
         'index' : { 'name' : 'st.index', 'args':2 },
@@ -514,7 +544,7 @@ def standard_env():
         'pulse-gen' : { 'name' : 'pulse-gen', 'args' : 2,       'class':DirectSynth },
         'line-gen' : { 'name' : 'line-gen', 'args' : 2,         'class':DirectSynth },
 
-        'sci' : { 'name' : 'sci', 'args' : [2,3,4],               'class':SuperChuckInst },
+        'sci' : { 'name' : 'sci', 'args' : [2,3,4,5],               'class':SuperChuckInst },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,         'class': MidiNoteStream },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
@@ -556,7 +586,7 @@ def matchStrings(testValues,string):
 
 
 def eval(x, env=global_env, depth = 0):
-    print("this is x" + str(x))
+    print("this is x : " + str(x))
     #env = global_env
     "Evaluate an expression in an environment."
     if isinstance(x, Symbol):      # variable reference, not a function call
@@ -601,7 +631,7 @@ def eval(x, env=global_env, depth = 0):
 
 
 FileIO('test.lisp','output.ck')
-os.system("chuck --remove.all")
-os.system("chuck + output.ck") 
+#os.system("chuck --remove.all")
+#os.system("chuck + output.ck") 
 
 
