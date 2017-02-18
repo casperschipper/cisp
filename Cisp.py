@@ -35,11 +35,9 @@ class FileIO(object):
             nOpen += self.countOpen(line)
             nClosed += self.countClosed(line)
             thisLineCount = (nOpen - nClosed)
-            print 'values', nOpen, nClosed, thisLineCount
             if nOpen > 0:
                 if thisLineCount != 0:
                     fullLine += line.replace('\n','')
-                    print 'thislinecount', fullLine, thisLineCount
                 else:
                     fullLine += line.replace('\n','')
                     self.parseLine(fullLine)
@@ -50,11 +48,11 @@ class FileIO(object):
         self.outFile.close()
 
     def parseLine(self,string):
-        print  '... is parsing ... '
         parser = Cisp(string)
         result = parser.result()
+        print 'result:'
+        print (result)
         self.writeLine(result)
-        print( 'parsedline:', result ) # print the parsed result
 
     def countOpen(self,string):
         count = 0
@@ -450,8 +448,11 @@ class MakeTable(StreamCall):
 def mixedTypeListFix(seq):
     " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
     mask = [is_number(x) for x in seq]
-    if True in mask and False in mask:
+    if True in mask and False in mask: # some streams, make all the values streams
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
+    elif False in mask and not True in mask: # there are only non float objects (probably streams...)
+        print 'x0 + x1:', seq[0] , seq[1:],'len(x)', len(seq)
+        return [castStream(seq[0])] + seq[1:]
     return seq
 
 
@@ -459,12 +460,11 @@ def makeStream( arg ):
     "make a static value stream"
     return 'st.st('+arg+')'
 
+def castStream( arg ):
+    return arg+' $ Stream'
 
-
-def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)' ):
+def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)', st_pan='st.st(0.0)' ):
     funcName = unique.name('superChuckFunc')
-    for item in [st_timer,st_freq,st_dur,st_amp]:
-        print type(item), item, 'this is item'
     return """function void """+funcName+"""() { 
     SuperChuck sc;
     sc.instrument(\""""+instrumentName+"""\");
@@ -472,6 +472,7 @@ def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq=
     sc.freq("""+st_freq+""");
     sc.duration("""+st_dur+""");
     sc.amp("""+st_amp+""");
+    sc.pan("""+st_pan+""");
     sc.start();
     day => now;
 }
@@ -517,8 +518,9 @@ def standard_env():
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
         'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
-        'floor' : { 'name' : 'st.floor' , 'args':1   },
-
+        'floor' : { 'name' : 'st.floor' , 'args' : 1   },
+        'test' : { 'name' : 'st.test' , 'args' : 1},
+        'mtof' : { 'name' : 'st.mtof' , 'args' : 1 },
 
         'index' : { 'name' : 'st.index', 'args':2 },
         'walk' : { 'name' : 'st.walk','args':2 },
@@ -528,6 +530,7 @@ def standard_env():
         'bouncyWalk' : { 'name' : 'st.bouncyWalk', 'args':3 },
         'boundedListWalk' : { 'name' : 'st.boundedListWalk', 'args': 3 },
         'boundedMupWalk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
+        'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
         'list' : { 'name' : 'list', 'args': inf },
@@ -544,7 +547,7 @@ def standard_env():
         'pulse-gen' : { 'name' : 'pulse-gen', 'args' : 2,       'class':DirectSynth },
         'line-gen' : { 'name' : 'line-gen', 'args' : 2,         'class':DirectSynth },
 
-        'sci' : { 'name' : 'sci', 'args' : [2,3,4,5],               'class':SuperChuckInst },
+        'sci' : { 'name' : 'sci', 'args' : [2,3,4,5,6],               'class':SuperChuckInst },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,         'class': MidiNoteStream },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
@@ -586,7 +589,7 @@ def matchStrings(testValues,string):
 
 
 def eval(x, env=global_env, depth = 0):
-    print("this is x : " + str(x))
+    print("eval : " + str(x))
     #env = global_env
     "Evaluate an expression in an environment."
     if isinstance(x, Symbol):      # variable reference, not a function call
@@ -631,7 +634,7 @@ def eval(x, env=global_env, depth = 0):
 
 
 FileIO('test.lisp','output.ck')
-#os.system("chuck --remove.all")
-#os.system("chuck + output.ck") 
+os.system("chuck --remove.all")
+os.system("chuck + output.ck") 
 
 
