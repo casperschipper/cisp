@@ -8,7 +8,10 @@ import random
 #
 # Enviroment values should be returned as objects instead of strings ?
 # Would this enable better handling of seq([some array pointer]), or the listFixer ?
-# 
+
+# Finish CheckIfAllNumbers
+
+# eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
@@ -30,7 +33,7 @@ class FileIO(object):
         fullLine = '' 
         nOpen, nClosed, thisLineCount = 0, 0, 0
 
-
+        # making sure we parse a full S-expression
         for line in self.inFile:
             nOpen += self.countOpen(line)
             nClosed += self.countClosed(line)
@@ -101,6 +104,8 @@ class UniqueName(object):
             return prefix+"_1"
 
 unique = UniqueName()
+
+
 
 class Cisp(object):
     def __init__(self,text):
@@ -231,7 +236,7 @@ def makeNewBus ( busName, body ):
 
 def returnOldBus ( busName ):
     " Return a new value "
-    return "\nst.bus("+busName+")"
+    return "\nst.bus(\""+busName+"\")"
 
 def anyIn( seq1, seq2 ):
     "return true of any item in seq is in seq2"
@@ -328,6 +333,12 @@ class StreamCall(object):
         # there must be some way of telling to the outside world that this should be treaded as list thing when embedded in an SEQ.
         return "".join(['.'+str(key)+'(' + str(value) + ')' for key,value in self.extra.items()])
 
+class SingleStatement(StreamCall):
+    def __repr__(self):
+        return self.name + "(" + self.printArguments() + ")" + self.setters() + ';'
+
+
+# NOT USED 
 class ListStream(StreamCall):
     def printArguments(self):
         "Explicit list definition"
@@ -345,13 +356,26 @@ class ListStreamCall(StreamCall):
             holdMode = ''
         if (self.checkIfArgsIsArrayPointer()):
             return ','.join(mixedTypeListFix(self.arguments)) + holdMode
-        return '[' + ','.join(mixedTypeListFix(self.arguments)) + holdMode + ']'
+        return '[' + ','.join(mixedTypeListFix(self.arguments)) + ']' + holdMode
 
     def checkIfArgsIsArrayPointer(self):
         "check arguments, only True with single argument"
         if len(self.arguments) == 1:
             return True
         return False
+
+class ListListStreamCall(StreamCall):
+    "this is used for weights"
+    def evaluateArgs(self):
+        print ("self.arguments",self.arguments)
+        x = self.arguments
+        result = []
+        if (type(x[0]) == list):
+            for element in x:
+                result.append(eval(element,self.env,self.depth,True)) # call as listlist
+        print(result,'result')
+        self.arguments = result
+
 
 
 class ArrayGen(StreamCall):
@@ -363,9 +387,9 @@ class DirectSynth(StreamCall):
     "A function that calls a non-standard synth"
     # translator of names: 
     synthDict = {
-        'step-gen' : 'StepSynth',
-        'pulse-gen' : 'PulseSynth',
-        'line-gen' : 'LineSynth',
+        'step-gen' : 'StepSynth', # sah sythesis
+        'pulse-gen' : 'PulseSynth', # pulse synthesis, zero in between values
+        'line-gen' : 'LineSynth', # interpolates linearily between steps
     }
 
     def __repr__(self):
@@ -398,14 +422,19 @@ spork ~ """+sparkName+"""();
             return False
         return True
 
-def streamArray( seq ):
-    # is used ?
-    seq = [str(x) for x in seq]
+def streamArray( seq ): 
+    "streamArray "
+    seq = [eval(x) for x in seq]
     seq = mixedTypeListFix(seq)
     seq = ",".join(seq)
     string = '['+seq+']'
     string = string.replace('\n','')
     return string
+
+def checkNumbersR(l):
+    if isinstance(l,List):
+        return all(checkNumbersR(i) for i in l)
+    return is_number(l)
 
 class SuperChuckInst(StreamCall):
     def __repr__(self):
@@ -451,7 +480,7 @@ def mixedTypeListFix(seq):
     if True in mask and False in mask: # some streams, make all the values streams
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
     elif False in mask and not True in mask: # there are only non float objects (probably streams...)
-        print 'x0 + x1:', seq[0] , seq[1:],'len(x)', len(seq)
+
         return [castStream(seq[0])] + seq[1:]
     return seq
 
@@ -516,11 +545,13 @@ def standard_env():
         'rv' : {'name': 'st.rv',    'args': 2 },
         'line' : {'name': 'st.line','args':2},
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
+        'weights' : { 'name' : 'st.weights', 'args': inf, 'class':ListListStreamCall },
         'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'floor' : { 'name' : 'st.floor' , 'args' : 1   },
         'test' : { 'name' : 'st.test' , 'args' : 1},
         'mtof' : { 'name' : 'st.mtof' , 'args' : 1 },
+        'sync' : { 'name' : 'cs.sync' , 'args' : 1 , 'class':SingleStatement }, 
 
         'index' : { 'name' : 'st.index', 'args':2 },
         'walk' : { 'name' : 'st.walk','args':2 },
@@ -572,6 +603,8 @@ def is_number(s):
         return True
     except ValueError:
         return False
+    except TypeError:
+        return False
 
 
 def matchStrings(testValues,string):
@@ -588,7 +621,7 @@ def matchStrings(testValues,string):
 #         return eval(self.body, Env(self.parms, args, self.env))
 
 
-def eval(x, env=global_env, depth = 0):
+def eval(x, env=global_env, depth = 0,listlist = False):
     print("eval : " + str(x))
     #env = global_env
     "Evaluate an expression in an environment."
@@ -612,7 +645,7 @@ def eval(x, env=global_env, depth = 0):
             return makeNewBus(x[1],eval(x[2])) + ';'
         else:
             len(x[1:]) == 1
-            return returnOldBus(x[1]) + ';'
+            return returnOldBus(x[1])
     else:
         proc = x[0]    
         args = x[1:]
@@ -631,10 +664,13 @@ def eval(x, env=global_env, depth = 0):
         
         return string
 
+print( checkNumbersR([[1,100],[2,100],[3,100]] ))
+print( checkNumbersR([[1,100],['what',100],['blah',100]] ))
+print( checkNumbersR([[1,100],['what',100],['blah',100]] ))
 
 
-FileIO('test.lisp','output.ck')
-os.system("chuck --remove.all")
-os.system("chuck + output.ck") 
+# FileIO('test.lisp','output.ck')
+# os.system("chuck --remove.all")
+# os.system("chuck + output.ck") 
 
 
