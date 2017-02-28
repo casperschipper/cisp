@@ -3,6 +3,7 @@ import operator as op
 import re
 import os
 import random
+import functools
 
 # TODO
 #
@@ -364,19 +365,13 @@ class ListStreamCall(StreamCall):
             return True
         return False
 
+
 class ListListStreamCall(StreamCall):
     "this is used for weights"
     def evaluateArgs(self):
-        print ("self.arguments",self.arguments)
-        x = self.arguments
-        result = []
-        if (type(x[0]) == list):
-            for element in x:
-                result.append(eval(element,self.env,self.depth,True)) # call as listlist
-        print(result,'result')
-        self.arguments = result
-
-
+        self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
+        if matchStrings(self.arguments,'st'):
+            self.name = eval('stream-weights')
 
 class ArrayGen(StreamCall):
     def printArguments(self):
@@ -422,18 +417,24 @@ spork ~ """+sparkName+"""();
             return False
         return True
 
-def streamArray( seq ): 
-    "streamArray "
-    seq = [eval(x) for x in seq]
-    seq = mixedTypeListFix(seq)
+def streamArray( seq, env, depth ): 
+    "streamArray"
+    allNumbersFlag = isAllNumbersR(seq)
+    seq = [eval(x,env,depth) for x in seq]
+    
+    # only fix if it is not all numbers !
+    if not allNumbersFlag:
+        seq = mixedTypeListFix(seq)
+
     seq = ",".join(seq)
     string = '['+seq+']'
     string = string.replace('\n','')
     return string
 
-def checkNumbersR(l):
+def isAllNumbersR(l):
+    "verifies if all items in l are numbers (if nested lists, tries recursevely"
     if isinstance(l,List):
-        return all(checkNumbersR(i) for i in l)
+        return all(isAllNumbersR(i) for i in l)
     return is_number(l)
 
 class SuperChuckInst(StreamCall):
@@ -479,8 +480,7 @@ def mixedTypeListFix(seq):
     mask = [is_number(x) for x in seq]
     if True in mask and False in mask: # some streams, make all the values streams
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
-    elif False in mask and not True in mask: # there are only non float objects (probably streams...)
-
+    elif False in mask and not True in mask: # TODO explicit test there are only non float objects (probably streams...)
         return [castStream(seq[0])] + seq[1:]
     return seq
 
@@ -490,6 +490,8 @@ def makeStream( arg ):
     return 'st.st('+arg+')'
 
 def castStream( arg ):
+    if '[' in arg:
+        return arg
     return arg+' $ Stream'
 
 def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)', st_pan='st.st(0.0)' ):
@@ -546,6 +548,7 @@ def standard_env():
         'line' : {'name': 'st.line','args':2},
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
         'weights' : { 'name' : 'st.weights', 'args': inf, 'class':ListListStreamCall },
+        'stream-weights' : { 'name' : 'st.weightStream', 'args' : inf },
         'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'floor' : { 'name' : 'st.floor' , 'args' : 1   },
@@ -578,7 +581,7 @@ def standard_env():
         'pulse-gen' : { 'name' : 'pulse-gen', 'args' : 2,       'class':DirectSynth },
         'line-gen' : { 'name' : 'line-gen', 'args' : 2,         'class':DirectSynth },
 
-        'sci' : { 'name' : 'sci', 'args' : [2,3,4,5,6],               'class':SuperChuckInst },
+        'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,         'class': MidiNoteStream },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
@@ -595,7 +598,7 @@ def standard_env():
     
 global_env = standard_env()
 
-# helper functions
+# *** helper functions
 
 def is_number(s):
     try:
@@ -607,11 +610,36 @@ def is_number(s):
         return False
 
 
-def matchStrings(testValues,string):
-   result = False
-   for test in testValues:
-       result = result | (string.find(test) != -1)
-   return result
+def matchStrings(haystack,needle):
+    "tries to find a needle in a haystack, recusevely"
+    def testFunc(string):
+        try:
+            string.index(needle)
+            return True
+        except ValueError:
+            return False
+        return testFunc
+    return recursiveTestAny(haystack,testFunc)
+
+def recursiveTestAll(item,test):
+    "recursevely traverse a tree, only if all tests are true, return True"
+    if isinstance(item,List):
+        return all( [recursiveTestAll(x,test) for x in item ] )
+    return test(item)
+
+def recursiveTestAny(item,test):
+    "same as recursive test all, but returns true if any test returns true"
+    print 'this is tested', item
+    if isinstance(item,List):
+        return any( [recursiveTestAny(x,test) for x in item ] )
+    return test(item)
+
+def makeStringFinder(arg):
+    def g(string):
+        return string.find(arg) != -1
+    return g
+
+
 
 # class Procedure(object):
 #     "A user-defined Scheme procedure."
@@ -636,8 +664,11 @@ def eval(x, env=global_env, depth = 0,listlist = False):
         (_, exp) = x
         return exp
     elif is_number(x[0]) or isinstance(x[0],List): # if list with numbers or streams
-        string = streamArray(x)
+        string = streamArray(x,env,depth)
         return string
+    elif x[0] == 'list':
+        # this is an emergency solution !
+        return streamArray(x[1:],env,depth)
     elif x[0] == 'fun': # this should be moved into its own class.
         return str(StreamFuncDef(x,env,depth))
     elif x[0] in ['bus','~']: # this should be moved into its own class
@@ -664,13 +695,13 @@ def eval(x, env=global_env, depth = 0,listlist = False):
         
         return string
 
-print( checkNumbersR([[1,100],[2,100],[3,100]] ))
-print( checkNumbersR([[1,100],['what',100],['blah',100]] ))
-print( checkNumbersR([[1,100],['what',100],['blah',100]] ))
+def mainApp():
+    FileIO('test.lisp','output.ck')
+    os.system("chuck --remove.all")
+    os.system("chuck + output.ck") 
+
+mainApp()
 
 
-# FileIO('test.lisp','output.ck')
-# os.system("chuck --remove.all")
-# os.system("chuck + output.ck") 
 
 
