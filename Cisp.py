@@ -109,6 +109,7 @@ unique = UniqueName()
 
 
 class Cisp(object):
+    "This is the main class, it takes a text file input and translates it to ChucK+Tools.ck"
     def __init__(self,text):
         cleanedText = self.remove_comments(text)
         # lex the text, convert S-expressions to python lists
@@ -152,7 +153,7 @@ class Cisp(object):
                 return self.Symbol(token)
 
     def Symbol(self,token):
-
+        "does something with a token"
         return token
 
     def remove_comments(self,string):
@@ -252,7 +253,7 @@ class StreamCall(object):
     def __init__(self,name,arguments,environment,depth):
         self.cispname = name
         self.name = eval(name,environment,depth) # evaluate the name
-        # this is mainly needed to move from seq() to st.seq.
+        # this is needed to move from seq() to st.seq.
 
         self.arguments = arguments # including the keyed args
 
@@ -271,11 +272,11 @@ class StreamCall(object):
         return self.__repr__()
 
     def __repr__(self):
-        # this is the central construction of the function call:
+        "this is the central construction of the function call"
         return self.name + "(" + self.printArguments() + ")" + self.setters()
 
     def evaluateArgs(self):
-        # this avaluates the arguments
+        "this avaluates the arguments"
         self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
 
     def checkArgs(self):
@@ -438,6 +439,7 @@ def isAllNumbersR(l):
     return is_number(l)
 
 class SuperChuckInst(StreamCall):
+    "This is  used to create SuperCollider OSC messages, using a synth and than some parameters"
     def __repr__(self):
         # this is the central construction of the function call:
         return self.printArguments() 
@@ -450,6 +452,7 @@ class SuperChuckInst(StreamCall):
         return SuperChuckInstStr(*self.arguments)
 
 class MidiNoteStream(StreamCall):
+    "This is a bridge to create a stream of midi notes: timer, pitch, velocity, duration"
     def __repr__(self):
         # this is the central construction of the function call:
         return self.printArguments() 
@@ -461,7 +464,13 @@ class MidiNoteStream(StreamCall):
     def printArguments(self):
         return MidiChuckInstrStr(*self.arguments)
 
+class MidiControlStream(MidiNoteStream):
+    "This is a bridge to create a stream of midi controller changes"
+    def printArguments(self):
+        return MidiCtrlStr(*self.arguments)
+
 class MakeTable(StreamCall):
+    "This is generating values from a stream and storing them in a named float array, to be used later in other streams that use arrays"
     def evaluateArgs(self):
         # do not evaluate the name
         x = self.arguments
@@ -524,6 +533,19 @@ def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st
 }
 spork ~ """+funcName+"""();
 """
+def MidiCtrlStr(st_channel = '1', st_controller = 'st.st(1)', st_value='st.st(0)'):
+    funcName = unique.name('midi_instr')
+    return """function void """+funcName+"""() { 
+    MidiCtrlStream midi;
+    midi.channel("""+st_channel+""");
+    midi.timer("""+st_timer+""");
+    midi.value("""+st_value+""");
+    midi.start();
+    day => now;
+}
+spork ~ """+funcName+"""();
+"""
+
 
 class Literal(object):
     # very simple object
@@ -537,7 +559,7 @@ class Literal(object):
         return self.__repr__()
 
 def standard_env():
-    "Here are most of the standard functions"
+    "Here are most of the standard functions in Cisp"
     env = Env()
     inf = 'inf'
 
@@ -548,7 +570,7 @@ def standard_env():
         'line' : {'name': 'st.line','args':2},
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
         'weights' : { 'name' : 'st.weights', 'args': inf, 'class':ListListStreamCall },
-        'stream-weights' : { 'name' : 'st.weightStream', 'args' : inf },
+        'stream-weights' : { 'name' : 'st.weightStream', 'args' : 2 },
         'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'floor' : { 'name' : 'st.floor' , 'args' : 1   },
@@ -560,10 +582,11 @@ def standard_env():
         'walk' : { 'name' : 'st.walk','args':2 },
         'hold' : {'name' : 'st.hold', 'args':2},
         'line' : {'name' : 'st.line', 'args':2},
-        'boundedWalk' : { 'name' : 'st.boundedWalk','args':3 },
-        'bouncyWalk' : { 'name' : 'st.bouncyWalk', 'args':3 },
-        'boundedListWalk' : { 'name' : 'st.boundedListWalk', 'args': 3 },
-        'boundedMupWalk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
+        'mup-walk' : {'name' : 'st.mupWalk', 'args':2},
+        'bounded-walk' : { 'name' : 'st.boundedWalk','args':3 },
+        'bouncy-walk' : { 'name' : 'st.bouncyWalk', 'args':3 },
+        'bounded-list-walk' : { 'name' : 'st.boundedListWalk', 'args': 3 },
+        'bounded-mup-walk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
         'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
@@ -583,6 +606,7 @@ def standard_env():
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,         'class': MidiNoteStream },
+        'midi-ctrl' : {'name' : 'MidiControlStream', 'args': 3, 'class' : MidiControlStream },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
         'collect' : {'name' : 'st.collect', 'args' : 2,          },
@@ -601,6 +625,7 @@ global_env = standard_env()
 # *** helper functions
 
 def is_number(s):
+    "returns true if integer or float (from string!)"
     try:
         float(s)
         return True
@@ -611,7 +636,7 @@ def is_number(s):
 
 
 def matchStrings(haystack,needle):
-    "tries to find a needle in a haystack, recusevely"
+    "tries to find a needle in a haystack, recursevely"
     def testFunc(string):
         try:
             string.index(needle)
@@ -635,6 +660,7 @@ def recursiveTestAny(item,test):
     return test(item)
 
 def makeStringFinder(arg):
+    "a higher level function, not used for now"
     def g(string):
         return string.find(arg) != -1
     return g
@@ -667,7 +693,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
         string = streamArray(x,env,depth)
         return string
     elif x[0] == 'list':
-        # this is an emergency solution !
+        # this is an emergency solution ! Ignores the 'list' word, treats as stream array.
         return streamArray(x[1:],env,depth)
     elif x[0] == 'fun': # this should be moved into its own class.
         return str(StreamFuncDef(x,env,depth))
