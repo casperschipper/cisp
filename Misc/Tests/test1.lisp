@@ -39,6 +39,6 @@
 	(loop 
 		(* (index ((rv 1 3) 2 3 4 foo 6 (ch 1 4) 8 4 10) (rv bnd bnd)) octaver)
 		repeats (ch 1 2 4 8 16 32 128)
-		) ) 1)
+		) ) 3)
 
 

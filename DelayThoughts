@@ -1,0 +1,69 @@
+[------W------------R---------------]
+	   ^ write      ^ read
+	   <----delay-->
+
+Tab delay
+
+* a tab delay is one writehead, many reader buffer, the readers' position is based on that of the writehead. 
+* writehead cannot be controlled, simply goes round the buffer.
+* often the tabread can be modified freely.
+
+- One way of implementing is by using a shared table outputting the phase at the TabWr,
+- TabRead takes the phase as an input.
+
+Normal delay
+
+* one writehead, one readhead
+* the delaytime may be variable.
+
+Shared buffer, delay implied
+
+Write and readheads simply share the same space write and read wherever they like.
+
+(seq table)
+
+(tabwrite x table
+
+(rw_combi tableName (write value index) (reader index)) returns output from the reader !
+
+Executable audio:
+
+If, instead of floating point values, one could imagine a table consisting only of symbols:
+- jump forward
+- move right/left/up/down
+- move right, but change value
+- 50% chance of doing something
+- STREAMS as cell !
+- repeat last move
+- repeat last moves
+- do opposite of last move
+- loop last few moves
+- record next 10 moves, repeat them
+- copy current cell to many other cells
+- take value from neighbor, interpret as value and move so many.
+- Read until you find x 
+
+two things are needed:
+- a table of values 64 x 64
+- tables are named by x, y
+- some random changes in the pattern
+- it needs to keep track of the last 10 values (bucket brigade)
+- both writing and reading
+- easy access to neighbors
+
+- moving up = + 64
+- moving down = - 64
+- moving right = + 1
+- moving left = - 1
+
+Some thoughts:
+- Should try to avoid ending up in same place
+- Should try to avoid extreme noisyness
+- Should read whole line
+
+First stage could be to only ready the next few cells
+
+Grow a second layer, of cellular automata.
+
+
+

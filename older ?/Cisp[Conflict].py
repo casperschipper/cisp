@@ -1,18 +1,14 @@
-#!/usr/bin/python
-
 import math
 import operator as op
 import re
 import os
 import random
 import functools
-import sys,getopt
 
 # TODO
 # How to do panning ?
 # how to add multiple pars to sc
 # how to do more feedback delays
-# how to time execution of functions ?
 
 # eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
 
@@ -531,7 +527,7 @@ class MakeTable(StreamCall):
 
 def mixedTypeListFix(seq):
     " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
-    if len(seq) == 1: # do not try to cast a list/array
+    if len(seq) == 1:
         return seq
     mask = [is_number(x) for x in seq]
 
@@ -552,34 +548,7 @@ def castStream( arg ):
         return arg
     return arg+' $ Stream'
 
-class SuperChuckInstStrClass(object):
-    # not sure how this is useful yet !
-    def __init__(self,instName = 'saw',timer = 'st.st(1.0)',freq = 'st.st(440)',duration = 'st.st(1.0)',amp = 'st.st(1.0)',pan = 'st.st(0.0)',entryDelay = 0.0):
-        self.instrumentName = instName
-        self.freq = freq
-        self.timer = timer
-        self.duration = duration
-        self.amp = amp
-        self.pan = pan
-        self.entryDelay = 0.0
-
-    def __repr__(self):
-        funcName = unique.name('superChuckFunc')
-        return """function void """+funcName+"""() { 
-        SuperChuck sc;
-        sc.instrument(\""""+self.instrumentName+"""\");
-        sc.timer("""+self.timer+""");
-        sc.freq("""+self.freq+""");
-        sc.duration("""+self.dur+""");
-        sc.amp("""+self.amp+""");
-        sc.pan("""+self.pan+");" + str(self.entryDelay) + """ * second => now;
-        sc.start();
-        day => now;
-    }
-    spork ~ """+funcName+"""();
-    """
-
-def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)', st_pan='st.st(0.0)', entryDelay = 0.0 ):
+def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)', st_pan='st.st(0.0)' ):
     funcName = unique.name('superChuckFunc')
     return """function void """+funcName+"""() { 
     SuperChuck sc;
@@ -588,7 +557,7 @@ def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq=
     sc.freq("""+st_freq+""");
     sc.duration("""+st_dur+""");
     sc.amp("""+st_amp+""");
-    sc.pan("""+st_pan+");" + str(entryDelay) + """ * second => now;
+    sc.pan("""+st_pan+""");
     sc.start();
     day => now;
 }
@@ -807,30 +776,12 @@ def eval(x, env=global_env, depth = 0,listlist = False):
         
         return string
 
-def main(argv):
-   inputfile = ''
-   outputfile = ''
-   try:
-      opts, args = getopt.getopt(argv,"hi:o:",["ifile=","ofile="])
-   except getopt.GetoptError:
-      print 'cisp.py -i <inputfile> -o <outputfile>'
-      sys.exit(2)
-   for opt, arg in opts:
-      if opt == '-h':
-         print 'cisp.py -i <inputfile> -o <outputfile>'
-         sys.exit()
-      elif opt in ("-i", "--ifile"):
-         inputfile = arg
-      elif opt in ("-o", "--ofile"):
-         outputfile = arg
-   print 'Input file is "', inputfile
-   print 'Output file is "', outputfile
-   FileIO('test.lisp','output.ck')
-   os.system("chuck --remove.all")
-   os.system("chuck + output.ck") 
+def mainApp():
+    FileIO('test.lisp','output.ck')
+    os.system("chuck --remove.all")
+    os.system("chuck + output.ck") 
 
-if __name__ == "__main__":
-   main(sys.argv[1:])
+mainApp()
 
 
 

@@ -1,64 +1,50 @@
-fun Stream casper () {
+fun Stream bnd () {
 return 
-st.sum(64,
-    st.seq([
-        st.seq([0,-2,-7,-12,-24]),
-        st.index([0,12,24,-12,7],
-            st.boundedWalk(0,4,
-                st.hold(
-                    st.ch([-1,1]),
-                    st.rv(7,13)))),
-        st.seq([7,-7,12,0,36,-7,-12]),st.st(12)]));
+st.t(
+    st.rv(1,10),
+    st.ch([0.1,0.2,0.8,1.6,5]));
 }
-fun Stream velo () {
+fun Stream foo () {
 return 
-st.line(
-    st.seq([30,100]),
-    st.ch([7,11]));
+st.index([    st.seq(        cs.sine(16,[1.0])),    st.ch([1,10]),    st.rv(1,200),    st.ch([100,1]),st.st(3),st.st(4),bnd(),st.st(1),bnd(),st.st(1),bnd(),st.st(2),st.st(1)],
+    st.rv(bnd(),bnd()));
+}
+fun Stream repeats () {
+return 
+st.index([st.st(1),st.st(1),st.st(1),st.st(1),st.st(1),st.st(1),st.st(1),st.st(1),st.st(1),st.st(1),    st.ch([1,2,4,8,16,32])],
+    st.rv(0,11));
+}
+fun Stream octaver () {
+return 
+st.t(
+    st.ch([0.5,0.25,0.125,0.06125,2]),
+    st.fractRandTimer(0.0001));
 }
 
-function void midi_instr_1() { 
-    MidiStream midi;
-    midi.timer(0.1);
-    midi.pitch(
-    st.loop(casper(),
-        st.seq([3,2,5,3]),
-        st.seq([3,1,3])));
-    midi.velo(velo());
-    midi.dura(0.1);
-    midi.start();
-    day => now;
-}
-spork ~ midi_instr_1();
 
-function void midi_instr_2() { 
-    MidiStream midi;
-    midi.timer(0.1);
-    midi.pitch(
-    st.loop(casper(),
-        st.seq([3,2,5,3]),
-        st.seq([
-            st.rv(2,3),st.st(1),st.st(3)])));
-    midi.velo(velo());
-    midi.dura(0.1);
-    midi.start();
-    day => now;
-}
-spork ~ midi_instr_2();
+    
+fun void shred_1() {
+StepSynth s => Safe safe => dac;
 
-function void midi_instr_3() { 
-    MidiStream midi;
-    midi.timer(0.1);
-    midi.pitch(
-    st.loop(casper(),
-        st.seq([3,2,5,3]),
-        st.seq([
-            st.rv(2,3),st.st(1),st.st(3)])));
-    midi.velo(velo());
-    midi.dura(0.1);
-    midi.start();
-    day => now;
+s.init(
+        st.seq(
+            st.collect(
+                st.index([                    st.walk(0,                        st.ch([-0.1,0.1])),                    st.hold(                        st.ch([-1,1]),                        st.rv(1,10)),                    st.seq(                        cs.sine(128,[1.0,-1.0,2.0,1.0,0.5,1.0]))],
+                    st.hold(
+                        st.rv(0,3),
+                        st.ch([16,8,2,32]))),128))
+,
+        st.loop(
+            st.mup(
+                st.index([                    st.rv(1,3),st.st(2),st.st(3),st.st(4),foo(),st.st(6),                    st.ch([1,4]),st.st(8),st.st(4),st.st(10)],
+                    st.rv(bnd(),bnd())),octaver()),repeats(),
+            st.ch([1,2,4,8,16,32,128]))
+
+);
+
+day => now;
 }
-spork ~ midi_instr_3();
+spork ~ shred_1();
+;
 
 day => now;
