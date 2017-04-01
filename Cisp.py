@@ -823,11 +823,19 @@ def main(argv):
          inputfile = arg
       elif opt in ("-o", "--ofile"):
          outputfile = arg
+
+   if outputfile is '':
+      print "outputfile not given, using default"
+      outputfile = 'output.ck'
+   if inputfile is '':
+      print "missing inputfile, using the default"
+      inputfile = 'test.lisp'
+
    print 'Input file is "', inputfile
-   print 'Output file is "', outputfile
-   FileIO('test.lisp','output.ck')
+   print 'Output file is "', outputfile 
+   FileIO(inputfile,'output.ck')
    os.system("chuck --remove.all")
-   os.system("chuck + output.ck") 
+   os.system("chuck + " + outputfile) 
 
 if __name__ == "__main__":
    main(sys.argv[1:])
