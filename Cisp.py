@@ -9,7 +9,8 @@ import functools
 import sys,getopt
 
 # TODO
-# How to do panning ?
+
+# how to make sample accurate pannign ?
 # how to add multiple pars to sc
 # how to do more feedback delays
 # how to time execution of functions ?
@@ -445,11 +446,19 @@ class DirectSynth(StreamCall):
 
         amp, timer = self.arguments
 
+        if "pan" in self.extra.keys():     
+            panUnit = "Pan2 p =>"
+            pancontrol = "p.pan(cs.rvf());"
+        else:
+            panUnit = pancontrol = ""
+
         chuckCode = """
 fun void """+sparkName+"""() {
-"""+self.generatorName+""" s => Safe safe => dac;
+"""+self.generatorName+""" s => Safe safe =>"""+ panUnit +""" dac;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
+
+"""+pancontrol+"""
 
 day => now;
 }
@@ -700,7 +709,8 @@ def standard_env():
         'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable },
         'print' : {'name' : 'cs.printf', 'args':1 },
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
-        'fractRandTimer' : {'name' : 'st.fractRandTimer', 'args': 1}
+        'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': 1},
+        'grow' : {'name':'cs.grow' , 'args' : 3 }
     })
     return env
     
@@ -833,9 +843,10 @@ def main(argv):
 
    print 'Input file is "', inputfile
    print 'Output file is "', outputfile 
-   FileIO(inputfile,'output.ck')
-   os.system("chuck --remove.all")
-   os.system("chuck + " + outputfile) 
+   FileIO(inputfile,outputfile)
+   print "hey casper !!!"
+   os.system("/usr/local/bin/chuck --remove.all") # need to be explicit, because of build system :-( 
+   os.system("/usr/local/bin/chuck + " + outputfile) 
 
 if __name__ == "__main__":
    main(sys.argv[1:])

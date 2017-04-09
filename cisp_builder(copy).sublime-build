@@ -1,0 +1,6 @@
+{
+    "shell" : true,
+    "cmd": ["./Cisp.py" ,"-i", "$file"],
+    "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
+    "selector": "source.lisp"
+}
