@@ -572,6 +572,9 @@ class SuperChuckInstStrClass(object):
         self.pan = pan
         self.entryDelay = 0.0
 
+    def extraParsFormatted(self):
+        return "".join( [ "sc.addPar(\" " + key + "\","+ value + ");\n" for key,value in enumerate(self.extra) ] )
+
     def __repr__(self):
         funcName = unique.name('superChuckFunc')
         return """function void """+funcName+"""() { 
@@ -581,7 +584,8 @@ class SuperChuckInstStrClass(object):
         sc.freq("""+self.freq+""");
         sc.duration("""+self.dur+""");
         sc.amp("""+self.amp+""");
-        sc.pan("""+self.pan+");" + str(self.entryDelay) + """ * second => now;
+        sc.pan("""+self.pan+");" + str(self.entryDelay) + """ * second => now;"""+
+        self.extraParsFormatted() + """
         sc.start();
         day => now;
     }
