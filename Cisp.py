@@ -383,6 +383,11 @@ class ListStream(StreamCall):
 
 class ListStreamCall(StreamCall):
     "this should be used for Seq, Series and Choice"
+    def evaluateArgs(self):
+        "this avaluates the arguments"
+        self.depth = 0;
+        self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
+
     def printArguments(self):
         "checks if holdmode true, adds that to the end of the arguments, after the list"
         if self.arguments[-1] == 'true':
@@ -404,6 +409,7 @@ class ListStreamCall(StreamCall):
 class ListListStreamCall(StreamCall):
     "this is used for weights"
     def evaluateArgs(self):
+        self.depth = 0;
         self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
         if matchStrings(self.arguments,'st'):
             self.name = eval('stream-weights')
@@ -584,8 +590,7 @@ class SuperChuckInstStrClass(object):
         sc.freq("""+self.freq+""");
         sc.duration("""+self.dur+""");
         sc.amp("""+self.amp+""");
-        sc.pan("""+self.pan+");" + str(self.entryDelay) + """ * second => now;"""+
-        self.extraParsFormatted() + """
+        sc.pan("""+self.pan+");" + str(self.entryDelay) + """ * second => now;""" + self.extraParsFormatted() + """
         sc.start();
         day => now;
     }
@@ -682,6 +687,8 @@ def standard_env():
         'bouncy-walk' : { 'name' : 'st.bouncyWalk', 'args':3 },
         'bounded-list-walk' : { 'name' : 'st.boundedListWalk', 'args': [1,2,3,4] },
         'bounded-mup-walk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
+        'list-walk' : {'name' : 'st.walkList', 'args':2},
+        'write' : { 'write' : 'st.write', 'args' : [3,4] },
         'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
@@ -714,7 +721,11 @@ def standard_env():
         'print' : {'name' : 'cs.printf', 'args':1 },
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
         'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': 1},
-        'grow' : {'name':'cs.grow' , 'args' : 3 }
+        'grow' : {'name':'cs.grow' , 'args' : 3 },
+        'rvi' : {'name':'cs.rv', 'args' : 2 },
+        'rvfi' : {'name' : 'cs.rvf', 'args' : 2},
+        'replacef' : {'name' : 'cs.replacef', 'args':2},
+        'replace' : { 'name' : 'cs.replace' , 'args':2}
     })
     return env
     
@@ -788,13 +799,13 @@ def eval(x, env=global_env, depth = 0,listlist = False):
         (_, exp) = x
         return exp
     elif is_number(x[0]) or isinstance(x[0],List): # if list with numbers or streams
-        string = streamArray(x,env,depth)
+        string = streamArray(x,env,0)
         return string
     elif x[0] == 'list':
         # this is an emergency solution ! Ignores the 'list' word, treats as stream array.
         return streamArray(x[1:],env,depth)
     elif x[0] == 'fun': # this should be moved into its own class.
-        return str(StreamFuncDef(x,env,depth))
+        return str(StreamFuncDef(x,env,0))
     elif x[0] in ['bus','~']: # this should be moved into its own class
         if len(x[1:]) > 1:
             # if there is a second argument, this is a new bus def
@@ -817,7 +828,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
 
         calledStream = str( streamType(proc, args, env ,depth + 1) ) 
 
-        string = '\n'+('  '*depth) + calledStream
+        string = '\n'+('    '*depth) + calledStream
         
         return string
 
