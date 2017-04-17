@@ -544,9 +544,28 @@ class MakeTable(StreamCall):
         self.generator = eval(x[1], self.env, self.depth+1)
 
     def __repr__(self):
+        if self.tableName in self.env.keys():
+            return self.generator + ' @=> ' + self.tableName + ';'
+        
         self.env[self.tableName] = {}
         self.env[self.tableName]['name'] = self.tableName
         return  self.generator + ' @=> ' + 'float ' + self.tableName + '[];'
+
+class MakeProcedure(StreamCall):
+    "This creates a single-use class. It creates a Stream object as a funktor without input or output, it is only used for its side effects. For example the procedure can create tables or reset a certain bus."
+    def evaluateArgs(self):
+        x = self.arguments
+        self.procedureName = x[0]
+        self.procedureBody = eval(x[1], self.env,self.depth+1)
+
+    def printArguments(self):
+        className = unique.name('Procedure_')
+        """
+        class Procedure_"""+procedureName+"""extends Stream {"""
+        self.procedureBody+';'+
+        """
+        }
+        """+className+' '+self.procedureName+';'
 
 def mixedTypeListFix(seq):
     " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
@@ -722,6 +741,8 @@ def standard_env():
         'sine' : {'name' : 'cs.sine', 'args' : 2, 'type' : 'floatArray', 'class':ArrayGen },
         '#' : {'name' : 'makeTable', 'args' : 2 ,               'class':MakeTable },
         'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable },
+        'procedure' : {'name' : 'Procedure', 'args' : 2, 'class' : MakeProcedure },
+        'schedule' : { 'name' : 'Schedule' , 'args' : 2}
         'print' : {'name' : 'cs.printf', 'args':1 },
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
         'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': 1},
