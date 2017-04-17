@@ -1,10 +1,10 @@
 (fun mupper (t (rv 1 40) (ch 0.1 0.2 0.4 0.8 1.6 3.2 6.4)))
 
-(fun silent (t (seq (line (seq 0 1) (st 100)) 0.1 0.2) (ch 1 2 4)))
+(fun silent (t (seq (t (seq 0 1) (st 0.1)) 0.1 0.2) (ch 1 2 4)))
 
-(fun ampy (t (seq silent 1) (ch 0.01 0.010001)))
+(fun ampy (t (seq silent 1) (ch 0.06 0.06001)))
 
-(fun detuned (line (seq 100 (rv 0 200)) (rv 30 90)))
+(fun detuned (line (seq 100 (rv 0 100)) (rv 30 90)))
 
 (clone
 (step-gen

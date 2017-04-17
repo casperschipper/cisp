@@ -13,6 +13,11 @@ import sys,getopt
 # how to make sample accurate pannign ?
 # how to add multiple pars to sc
 # how to do more feedback delays
+
+# Allow for redefinition of tables 
+# if there already is a table, it should be redefined (miss the *float* foo [])
+# A procedure is a stream, 
+
 # how to time execution of functions ?
 
 # eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
@@ -542,7 +547,6 @@ class MakeTable(StreamCall):
         self.env[self.tableName] = {}
         self.env[self.tableName]['name'] = self.tableName
         return  self.generator + ' @=> ' + 'float ' + self.tableName + '[];'
-
 
 def mixedTypeListFix(seq):
     " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "

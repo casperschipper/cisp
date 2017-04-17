@@ -1,37 +1,313 @@
-fun Stream verySlowOctaver () {
+fun Stream mupper () {
 return 
 st.t(
-    st.ch([0.125,0.25,0.5,1.0]),
-    st.ch([16,32,64]));
+        st.rv(1,40),
+        st.ch([0.1,0.2,0.4,0.8,1.6,3.2,6.4]));
 }
-fun Stream alpha () {
+fun Stream silent () {
 return 
 st.t(
-    st.seq([1,8]),
-    st.mup(
-        st.ch(
-            cs.grow(0.0001,2,8)),verySlowOctaver()));
+        st.seq([
+    st.t(
+            st.seq([0,1]),
+            st.st(0.1)),st.st(0.1),st.st(0.2)]),
+        st.ch([1,2,4]));
 }
-fun Stream slowFielder () {
+fun Stream ampy () {
 return 
 st.t(
-    st.rv(1,128),
-    st.rv(1,40));
+        st.seq([silent(),st.st(1)]),
+        st.ch([0.06,0.06001]));
+}
+fun Stream detuned () {
+return 
+st.line(
+        st.seq([st.st(100),
+    st.rv(0,100)]),
+        st.rv(30,90));
 }
 
 
-    
+        
 fun void shred_1() {
 StepSynth s => Safe safe =>Pan2 p => dac;
 
 s.init(
-        st.seq(
-            cs.fillf(128,-1,1)).max(slowFielder())
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
 ,
-        st.index([st.rv(1,                cs.rv(1,10)),            st.st(                cs.rv(5,10)),            st.t(                st.seq([1,10]),alpha()),            st.st(                cs.rv(10,30)),st.st(10),            st.ch([10,20])],
-            st.line(
-                st.seq([alpha() $ Stream,alpha()]),
-                st.fractRandTimer(0.0001)))
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
+
+);
+
+p.pan(cs.rvf());
+
+day => now;
+}
+spork ~ shred_1();
+;
+
+        
+fun void shred_1() {
+StepSynth s => Safe safe =>Pan2 p => dac;
+
+s.init(
+                st.seq([
+    st.mup(ampy(),0.5) $ Stream,
+    st.mup(ampy(),-0.5)])
+,
+                st.div(44100,
+                        st.t(
+                                st.index([st.mup(detuned(),2) $ Stream,st.mup(detuned(),1),st.mup(detuned(),3),st.mup(detuned(),4),st.mup(detuned(),5),st.mup(detuned(),6),st.mup(detuned(),7),st.mup(detuned(),8),st.mup(detuned(),9)],
+                                        st.loop(
+                                                st.rv(0,10),
+                                                st.seq([st.st(2),
+    st.ch([2,3,4])]),
+                                                st.ch([2,3,6]))),
+                                st.mup(
+                                        st.seq([0.1,0.2]),mupper())))
 
 );
 
