@@ -10,7 +10,10 @@ import sys,getopt
 
 # TODO
 
-# how to make sample accurate pannign ?
+# Feedback instrument should be defined
+# simple convolution thing.
+# way of stopping all current shreds (STOP ?)
+
 # how to add multiple pars to sc
 # how to do more feedback delays
 
@@ -178,7 +181,7 @@ class Cisp(object):
                 return match.group(1) # captured quoted-string
         return regex.sub(_replacer, string)
 
-Env = dict          # An environment is a mapping of {variable: value}
+#Env = dict          # An environment is a mapping of {variable: value}
 
 class Env(dict):
     "An environment: a dict of {'var':val} pairs, with an outer Env."
@@ -221,20 +224,20 @@ class StreamFuncDef(object):
         if len(x) > 3:
             (_, var, arg, body) = x # _ = 'fun'
         
-            functionDiscr = { var : {'name':var + '()' , 'args':len(arg) }}
+            functionDiscr = { var : {'name':var , 'args':len(arg) }}
 
-            env.update(thisFunction)
+            env.update(functionDiscr)
 
-            localEnv = Env( None , None , env )
+            localEnv = Env( () , () , env )
 
             for item in arg:
-                localEnv.update({ item : { 'name' : name }}) # parameter stored in a local env, to not polute global env
+                localEnv.update({ item : { 'name' : item }}) # parameter stored in a local env, to not polute global env
 
             env[var]['args'] = len(arg) # store the number of args in env
             body = eval(body,localEnv)
         else: # no arguments, only name and body
             (_, var, body) = x
-            functionDiscr = { var : {'name':var + '()', 'args' : 0}}
+            functionDiscr = { var : {'name':var, 'args' : 0, 'isFunction': True }}
             env.update(functionDiscr)
             arg = None
             body = eval(body,env)
@@ -324,7 +327,7 @@ class StreamCall(object):
             if key:
                 # move to next arg
                 item = snext(iterator)
-                # add the arg to the key
+                # add the arg to the key, evaluate the value of the key.
                 self.extra[key] = eval(item,self.env,self.depth)
                 # move forward and loop on
                 item = snext(iterator)
@@ -436,36 +439,44 @@ class ArrayGen(StreamCall):
     def printArguments(self):
         return ",".join(self.arguments)
         
+class PanSynth(StreamCall):
+    def __repr__(self):
+        sparkName = unique.name('shred')
+
+        amp, timer, panner = self.arguments
+
+    
+        chuckCode = """
+fun void """+sparkName+"""() {
+"""+self.name+""" s;
+
+s.init("""+amp+'\n,'+timer+'\n,'+panner+"""\n);
+
+day => now;
+}
+spork ~ """+sparkName+"""();
+""" # creates a function sparkname and immediately execute 
+        return chuckCode
 
 class DirectSynth(StreamCall):
     "A function that calls a non-standard synth"
     # translator of names: 
-    synthDict = {
-        'step-gen' : 'StepSynth', # sah sythesis
-        'pulse-gen' : 'PulseSynth', # pulse synthesis, zero in between values
-        'line-gen' : 'LineSynth', # interpolates linearily between steps
-    }
 
     def __repr__(self):
         # generate a name, lookup synth name, construct a Synth shred, spork it.
         sparkName = unique.name('shred')
 
-        self.generatorName = DirectSynth.synthDict.get(self.name)
-
-        if self.generatorName == None:
-            raise(Exception("unkown generatorName" + self.generatorName))
-
         amp, timer = self.arguments
 
-        if "pan" in self.extra.keys():     
+        if "pan" in self.extra.keys():  #   
             panUnit = "Pan2 p =>"
-            pancontrol = "p.pan(cs.rvf());"
+            pancontrol = "p.pan("+self.extra["pan"]+");"
         else:
             panUnit = pancontrol = ""
 
         chuckCode = """
 fun void """+sparkName+"""() {
-"""+self.generatorName+""" s => Safe safe =>"""+ panUnit +""" dac;
+"""+self.name+""" s => Safe safe =>"""+ panUnit +""" dac;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
 
@@ -474,7 +485,7 @@ s.init("""+amp+'\n,'+timer+"""\n\n);
 day => now;
 }
 spork ~ """+sparkName+"""();
-""" # creates a function sparkname and immediately executse 
+""" # creates a function sparkname and immediately execute 
         return chuckCode
         
 
@@ -545,7 +556,7 @@ class MakeTable(StreamCall):
 
     def __repr__(self):
         if self.tableName in self.env.keys():
-            return self.generator + ' @=> ' + self.tableName + ';'
+            return "cs.replacef("+self.generator+","+self.tableName+');'
         
         self.env[self.tableName] = {}
         self.env[self.tableName]['name'] = self.tableName
@@ -558,12 +569,24 @@ class MakeProcedure(StreamCall):
         self.procedureName = x[0]
         self.procedureBody = eval(x[1], self.env,self.depth+1)
 
-    def printArguments(self):
-        className = unique.name('Procedure_')
-        """
-        class Procedure_"""+procedureName+"""extends Stream {"""
-        self.procedureBody+';'+
-        """
+        # to safely use stream namespace, replace all 'st' with 'ST'
+        self.procedureBody = self.procedureBody.replace('st.','ST.')
+
+        print "self.procedureBody", self.procedureBody
+        self.env[self.procedureName] = {}
+        self.env[self.procedureName]['name'] = self.procedureName
+        #SOMETHING WITH PROCEDURES NEED TO BE STORED IN ENVIROMENT
+
+
+    def __repr__(self):
+        className = unique.name('Procedure')
+        return """
+        class """+className+""" extends Stream {
+        st ST; // this is for namespace reasons, st is already used within Stream class.
+
+        \t fun float next() {
+        \t"""+self.procedureBody+"""
+        \t}
         }
         """+className+' '+self.procedureName+';'
 
@@ -725,9 +748,12 @@ def standard_env():
         '>>' : { 'name' : 'st.bitShiftR', 'args' : 2 },
         '&&' : { 'name' : 'st.bitAnd', 'args' :2 },
         '||' : { 'name' : 'st.bitOr', 'args' : 2 },
-        'step-gen' : { 'name' : 'step-gen', 'args' : 2,         'class':DirectSynth },
-        'pulse-gen' : { 'name' : 'pulse-gen', 'args' : 2,       'class':DirectSynth },
-        'line-gen' : { 'name' : 'line-gen', 'args' : 2,         'class':DirectSynth },
+        'step-gen' : { 'name' : 'StepSynth', 'args' : 2,         'class':DirectSynth },
+        'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,       'class':DirectSynth },
+        'line-gen' : { 'name' : 'LineSynth', 'args' : 2,         'class':DirectSynth },
+        'step-pan-gen' : { 'name' : 'StepPanSynth', 'args' : 3,         'class':PanSynth },
+        'pulse-pan-gen' : { 'name' : 'PulsePanSynth', 'args' : 3,       'class':PanSynth },
+        'line-pan-gen' : { 'name' : 'LinePanSynth', 'args' : 3,         'class':PanSynth },
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,         'class': MidiNoteStream },
@@ -742,13 +768,15 @@ def standard_env():
         '#' : {'name' : 'makeTable', 'args' : 2 ,               'class':MakeTable },
         'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable },
         'procedure' : {'name' : 'Procedure', 'args' : 2, 'class' : MakeProcedure },
-        'schedule' : { 'name' : 'Schedule' , 'args' : 2}
+        'schedule' : { 'name' : 'st.schedule' , 'args' : 2, 'class' : SingleStatement },
         'print' : {'name' : 'cs.printf', 'args':1 },
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
         'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': 1},
         'grow' : {'name':'cs.grow' , 'args' : 3 },
         'rvi' : {'name':'cs.rv', 'args' : 2 },
         'rvfi' : {'name' : 'cs.rvf', 'args' : 2},
+        'chi' : {'name' : 'cs.choose' , 'args' : inf },
+        'chfi' : {'name' : 'cs.choosef' , 'args' : inf },
         'replacef' : {'name' : 'cs.replacef', 'args':2},
         'replace' : { 'name' : 'cs.replace' , 'args':2}
     })
@@ -815,7 +843,11 @@ def eval(x, env=global_env, depth = 0,listlist = False):
     "Evaluate an expression in an environment."
     if isinstance(x, Symbol):      # variable reference, not a function call
         symbol_object = env.find(x)[x] # return the name
-        return symbol_object['name']
+        if ('isFunction' in symbol_object.keys()):
+            call = '()' 
+        else:
+            call = ''
+        return symbol_object['name'] + call # call functions immediately, saving some parenthesis.
     elif isinstance(x, Number):
         return str(x) #TODO add formatting of float
     elif not isinstance(x, List):  # constant literal
@@ -853,7 +885,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
 
         calledStream = str( streamType(proc, args, env ,depth + 1) ) 
 
-        string = '\n'+('    '*depth) + calledStream
+        string = '\n'+('\t'*depth) + calledStream
         
         return string
 

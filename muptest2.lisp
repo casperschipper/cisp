@@ -2,7 +2,7 @@
 	(line (ch 0.01 0.125 0.25 0.5 1.0) (ch 16 32 64)))
 
 (fun alpha 
-	(line (seq 1 80) (* (fractRandTimer 0.0001) verySlowOctaver )))
+(line (seq 1 80) (* (fractRandTimer 0.0001) verySlowOctaver )))
 
 (fun slowFielder
 	(line (rv 1 128)
