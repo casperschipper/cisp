@@ -5,7 +5,7 @@ StepSynth s => Safe safe => dac;
 <<<"casper">>>;
 
 s.init(
-		st.seq([-1,1])
+		st.seq(OSC.table1)
 ,
 		st.st(10)
 

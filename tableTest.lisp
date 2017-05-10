@@ -1,3 +1,3 @@
 (step-gen
-	(seq -1 1)
+	(seq OSC.table1)
 	(st 10))

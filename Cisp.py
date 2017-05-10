@@ -7,6 +7,7 @@ import os
 import random
 import functools
 import sys,getopt
+from time import sleep
 
 # TODO
 
@@ -938,10 +939,13 @@ def main(argv):
    print 'Input file is "', inputfile
    print 'Output file is "', outputfile 
    FileIO(inputfile,outputfile)
-   os.system("/usr/local/bin/chuck --kill")
-   os.system("/usr/local/bin/chuck --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop")  
-   os.system("/usr/local/bin/chuck + /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck")
-   os.system("/usr/local/bin/chuck + " + outputfile) 
+   os.system("killall chuck") # want to be sure
+
+   os.system("/usr/local/bin/chuck --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")  
+   os.system("echo go to sleep")
+   sleep(1.0)
+   os.system("echo I am awake")
+   os.system("/usr/local/bin/chuck + " + outputfile + "&") 
 
 if __name__ == "__main__":
    main(sys.argv[1:])
