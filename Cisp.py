@@ -10,12 +10,18 @@ import sys,getopt
 
 # TODO
 
+# ant algorithm for walk (previous walks have preference, but with some mutation. food = succes)
+
+# what is a DUSG slope generator.
+# context sensitive
+# sport modulator.
+
+# bug: latch cannot do zero times an element ?
 # Feedback instrument should be defined
 # simple convolution thing.
-# way of stopping all current shreds (STOP ?)
+# way of stopping all current shreds (global value that checks STOP ?)
 
-# how to add multiple pars to sc
-# how to do more feedback delays
+# how to add multiple pars to sc, :pan (st 1) :casper (rv -1 1) :duration (rv 10 100)
 
 # Allow for redefinition of tables 
 # if there already is a table, it should be redefined (miss the *float* foo [])
@@ -120,7 +126,7 @@ unique = UniqueName()
 
 
 class Cisp(object):
-    "This is the main class, it takes a text file input and translates it to ChucK+Tools.ck"
+    "This is the main class, it takes a text file input and translates it to ChucK+Tools.ck family of objects"
     def __init__(self,text):
         cleanedText = self.remove_comments(text)
         # lex the text, convert S-expressions to python lists
@@ -477,6 +483,7 @@ class DirectSynth(StreamCall):
         chuckCode = """
 fun void """+sparkName+"""() {
 """+self.name+""" s => Safe safe =>"""+ panUnit +""" dac;
+<<<"casper">>>;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
 
@@ -613,16 +620,17 @@ def castStream( arg ):
         return arg
     return arg+' $ Stream'
 
-class SuperChuckInstStrClass(object):
+class SuperChuckInstStrClass(StreamCall):
     # not sure how this is useful yet !
-    def __init__(self,instName = 'saw',timer = 'st.st(1.0)',freq = 'st.st(440)',duration = 'st.st(1.0)',amp = 'st.st(1.0)',pan = 'st.st(0.0)',entryDelay = 0.0):
+    def __init__(self,instName = 'saw',timer = 'st.st(1.0)',freq = 'st.st(440)',duration = 'st.st(1.0)',amp = 'st.st(1.0)',pan = 'st.st(0.0)',entryDelay = 0.0,extraArg = {}):
         self.instrumentName = instName
         self.freq = freq
         self.timer = timer
-        self.duration = duration
+        self.dur = duration
         self.amp = amp
         self.pan = pan
         self.entryDelay = 0.0
+        self.extra = extraArg
 
     def extraParsFormatted(self):
         return "".join( [ "sc.addPar(\" " + key + "\","+ value + ");\n" for key,value in enumerate(self.extra) ] )
@@ -723,8 +731,9 @@ def standard_env():
 
         'index' : { 'name' : 'st.index', 'args':2 },
         'walk' : { 'name' : 'st.walk','args':2 },
-        'hold' : {'name' : 'st.hold', 'args':2},
-        'latch' : {'name' : 'st.latch', 'args':2},
+        'reset' : {'name' : 'st.reset', 'args' : 3 },
+        'hold' : {'name' : 'st.hold', 'args':2 },
+        'latch' : {'name' : 'st.latch', 'args':2 },
         'tlatch' : {'name' : 'st.tLatch', 'args':2},
         'tLatch' : {'name' : 'st.tLatch', 'args':2},
         'line' : {'name' : 'st.line', 'args':2},
@@ -738,6 +747,7 @@ def standard_env():
         'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
+        'count2' : { 'name' : 'st.count2','args': [1,2] },
         'list' : { 'name' : 'list', 'args': inf },
         'st' : { 'name' : 'st.st' , 'args' : 1 },
         '+' : { 'name' : 'st.sum', 'args' : inf },
@@ -751,6 +761,7 @@ def standard_env():
         'step-gen' : { 'name' : 'StepSynth', 'args' : 2,         'class':DirectSynth },
         'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,       'class':DirectSynth },
         'line-gen' : { 'name' : 'LineSynth', 'args' : 2,         'class':DirectSynth },
+        'pulse-fb-gen' : { 'name' : 'PulseFeedbackSynth' , 'args' : 2 , 'class' : DirectSynth },
         'step-pan-gen' : { 'name' : 'StepPanSynth', 'args' : 3,         'class':PanSynth },
         'pulse-pan-gen' : { 'name' : 'PulsePanSynth', 'args' : 3,       'class':PanSynth },
         'line-pan-gen' : { 'name' : 'LinePanSynth', 'args' : 3,         'class':PanSynth },
@@ -769,7 +780,7 @@ def standard_env():
         'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable },
         'procedure' : {'name' : 'Procedure', 'args' : 2, 'class' : MakeProcedure },
         'schedule' : { 'name' : 'st.schedule' , 'args' : 2, 'class' : SingleStatement },
-        'print' : {'name' : 'cs.printf', 'args':1 },
+        'print' : {'name' : 'cs.printf', 'args':1, 'class' : SingleStatement },
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
         'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': 1},
         'grow' : {'name':'cs.grow' , 'args' : 3 },
@@ -778,7 +789,18 @@ def standard_env():
         'chi' : {'name' : 'cs.choose' , 'args' : inf },
         'chfi' : {'name' : 'cs.choosef' , 'args' : inf },
         'replacef' : {'name' : 'cs.replacef', 'args':2},
-        'replace' : { 'name' : 'cs.replace' , 'args':2}
+        'replace' : { 'name' : 'cs.replace' , 'args':2},
+        'take' : {'name': 'st.take', 'args' : 1 },
+        'diff' : {'name' : 'st.diff' , 'args' : 1 },
+        'OSC.table1' : { 'name' : 'OSC.table1' , 'args' : 0, 'class' : Literal },
+        'OSC.table2' : { 'name' : 'OSC.table2' , 'args' : 0, 'class' : Literal },
+        'OSC.table3' : { 'name' : 'OSC.table3' , 'args' : 0, 'class' : Literal },
+        'OSC.table4' : {  'name' : 'OSC.table4' , 'args' : 0, 'class' : Literal },
+        'OSC.table5' : { 'name' : 'OSC.table5' , 'args' : 0, 'class' : Literal },
+        'OSC.table6' : { 'name' : 'OSC.table6' , 'args' : 0, 'class' : Literal },
+        'OSC.table7' : {  'name' : 'OSC.table7' , 'args' : 0, 'class' : Literal },
+        'OSC.table8' : { 'name' : 'OSC.table8' , 'args' : 0, 'class' : Literal },
+        'OSC.table9' : { 'name' : 'OSC.table9' , 'args' : 0, 'class' : Literal }
     })
     return env
     
@@ -916,8 +938,9 @@ def main(argv):
    print 'Input file is "', inputfile
    print 'Output file is "', outputfile 
    FileIO(inputfile,outputfile)
-   print "hey casper !!!"
-   os.system("/usr/local/bin/chuck --remove.all") # need to be explicit, because of build system :-( 
+   os.system("/usr/local/bin/chuck --kill")
+   os.system("/usr/local/bin/chuck --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop")  
+   os.system("/usr/local/bin/chuck + /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck")
    os.system("/usr/local/bin/chuck + " + outputfile) 
 
 if __name__ == "__main__":
