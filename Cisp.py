@@ -13,22 +13,14 @@ from time import sleep
 
 # ant algorithm for walk (previous walks have preference, but with some mutation. food = succes)
 
-# what is a DUSG slope generator.
 # context sensitive
-# sport modulator.
+# embedable functions, like a walk and then specifiying the operator applied to previous and the step.
+# the functions should be embeddable in other streams of things ?
 
 # bug: latch cannot do zero times an element ?
 # Feedback instrument should be defined
 # simple convolution thing.
 # way of stopping all current shreds (global value that checks STOP ?)
-
-# how to add multiple pars to sc, :pan (st 1) :casper (rv -1 1) :duration (rv 10 100)
-
-# Allow for redefinition of tables 
-# if there already is a table, it should be redefined (miss the *float* foo [])
-# A procedure is a stream, 
-
-# how to time execution of functions ?
 
 # eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
 
@@ -465,6 +457,27 @@ spork ~ """+sparkName+"""();
 """ # creates a function sparkname and immediately execute 
         return chuckCode
 
+class WriteSchedule(StreamCall):
+    "A function that calls a non-standard synth"
+    def __repr__(self):
+        print "self.name WRITESCHEDULE = ",self.name
+        # generate a name, construct a  shred, spork it.
+        sparkName = unique.name('shred')
+
+        amp, timer = self.arguments
+
+        chuckCode = """
+fun void """+sparkName+"""() {
+"""+self.name+""" s;
+// shred to write value to table (st.write), amp is ignored
+s.init("""+amp+'\n,'+timer+"""\n\n);
+
+day => now;
+}
+spork ~ """+sparkName+"""();
+""" # immediately execute 
+        return chuckCode
+
 class DirectSynth(StreamCall):
     "A function that calls a non-standard synth"
     # translator of names: 
@@ -476,7 +489,7 @@ class DirectSynth(StreamCall):
         amp, timer = self.arguments
 
         if "pan" in self.extra.keys():  #   
-            panUnit = "Pan2 p =>"
+            panUnit = "Pan4 p =>"
             pancontrol = "p.pan("+self.extra["pan"]+");"
         else:
             panUnit = pancontrol = ""
@@ -484,7 +497,6 @@ class DirectSynth(StreamCall):
         chuckCode = """
 fun void """+sparkName+"""() {
 """+self.name+""" s => Safe safe =>"""+ panUnit +""" dac;
-<<<"casper">>>;
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
 
@@ -495,6 +507,7 @@ day => now;
 spork ~ """+sparkName+"""();
 """ # creates a function sparkname and immediately execute 
         return chuckCode
+
         
 
     def checkArgs(self):
@@ -603,10 +616,10 @@ def mixedTypeListFix(seq):
     if len(seq) == 1: # do not try to cast a list/array
         return seq
     mask = [is_number(x) for x in seq]
-
+    print "okay at least we are here", seq,mask
     if True in mask and False in mask: # some streams, make all the values streams
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
-    elif False in mask and not True in mask: # TODO explicit test there are only non float objects (probably streams...)
+    elif not all(mask): # if all are non-floats: thus they are all streams.
         return [castStream(seq[0])] + seq[1:]
     return seq
 
@@ -615,42 +628,49 @@ def makeStream( arg ):
     "make a static value stream"
     return 'st.st('+arg+')'
 
+def firstCharIsBracket( arg ):
+    "remove noncharacters and check if the first thing is a bracket (could be weights)"
+    return (arg.replace(' ','').replace('\n',''))[0] == '['
+
 def castStream( arg ):
     "used in mixed type arrays, to force streams. In ChucK, the first element decides the array type."
-    if '[' in arg:
+    if firstCharIsBracket(arg):
         return arg
     return arg+' $ Stream'
 
 class SuperChuckInstStrClass(StreamCall):
-    # not sure how this is useful yet !
-    def __init__(self,instName = 'saw',timer = 'st.st(1.0)',freq = 'st.st(440)',duration = 'st.st(1.0)',amp = 'st.st(1.0)',pan = 'st.st(0.0)',entryDelay = 0.0,extraArg = {}):
-        self.instrumentName = instName
-        self.freq = freq
-        self.timer = timer
-        self.dur = duration
-        self.amp = amp
-        self.pan = pan
-        self.entryDelay = 0.0
-        self.extra = extraArg
+    # this is a new class to be used in situations were the parameters do not follow standard.
+    def evaluateArgs(self):
+        "this avaluates the arguments"
+        instrumentName = self.arguments.pop(0) # do not eval instrumentName
+        self.arguments = [instrumentName] + [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
 
     def extraParsFormatted(self):
-        return "".join( [ "sc.addPar(\" " + key + "\","+ value + ");\n" for key,value in enumerate(self.extra) ] )
+        "this formats the extra parameters"
+        print "self.extra dict",self.extra
+        return "".join( [ "sc.addPar(\"" + key + "\","+ value + ");\n" for key,value in self.extra.items() ] )
 
     def __repr__(self):
         funcName = unique.name('superChuckFunc')
-        return """function void """+funcName+"""() { 
+        # the arguments are collected in a dict, use expansion on the list !!!!
+        instrumentName = self.arguments[0]
+        timer = self.arguments[1]
+
+        extraParsString = self.extraParsFormatted()
+        # here is the final string
+        print "extraParsString",extraParsString
+
+        constructedString = """function void """+ funcName +"""() { 
         SuperChuck sc;
-        sc.instrument(\""""+self.instrumentName+"""\");
-        sc.timer("""+self.timer+""");
-        sc.freq("""+self.freq+""");
-        sc.duration("""+self.dur+""");
-        sc.amp("""+self.amp+""");
-        sc.pan("""+self.pan+");" + str(self.entryDelay) + """ * second => now;""" + self.extraParsFormatted() + """
-        sc.start();
+        sc.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"""
+        sc.timer("""+timer+""");
+        sc.play();
         day => now;
-    }
-    spork ~ """+funcName+"""();
-    """
+        } spork ~ """
+
+        print constructedString
+
+        return constructedString+funcName+"();\n"
 
 def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)' , st_amp='st.st(0.1)', st_pan='st.st(0.0)', entryDelay = 0.0 ):
     funcName = unique.name('superChuckFunc')
@@ -731,6 +751,7 @@ def standard_env():
         'clip' : { 'name' : 'st.clip' , 'args' : 3, },
 
         'index' : { 'name' : 'st.index', 'args':2 },
+        'index-lin' : { 'name' : 'st.indexLin', 'args':2 },
         'walk' : { 'name' : 'st.walk','args':2 },
         'reset' : {'name' : 'st.reset', 'args' : 3 },
         'hold' : {'name' : 'st.hold', 'args':2 },
@@ -743,8 +764,9 @@ def standard_env():
         'bouncy-walk' : { 'name' : 'st.bouncyWalk', 'args':3 },
         'bounded-list-walk' : { 'name' : 'st.boundedListWalk', 'args': [1,2,3,4] },
         'bounded-mup-walk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
-        'list-walk' : {'name' : 'st.walkList', 'args':2},
-        'write' : { 'write' : 'st.write', 'args' : [3,4] },
+        'bouncy-list-walk' : { 'name' : 'st.bouncyListWalk', 'args' : 2},
+        'list-walk' : {'name' : 'st.walkList', 'args':[1,2]},
+        'write' : { 'name' : 'st.write', 'args' : [3,4] },
         'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
@@ -759,29 +781,33 @@ def standard_env():
         '>>' : { 'name' : 'st.bitShiftR', 'args' : 2 },
         '&&' : { 'name' : 'st.bitAnd', 'args' :2 },
         '||' : { 'name' : 'st.bitOr', 'args' : 2 },
-        'step-gen' : { 'name' : 'StepSynth', 'args' : 2,         'class':DirectSynth },
-        'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,       'class':DirectSynth },
-        'line-gen' : { 'name' : 'LineSynth', 'args' : 2,         'class':DirectSynth },
-        'pulse-fb-gen' : { 'name' : 'PulseFeedbackSynth' , 'args' : 2 , 'class' : DirectSynth },
+        '^' : { 'name' : 'st.pow' , 'args' : 2 },
+        'pow' : { 'name' : 'st.pow' , 'args' : 2 },
+        'step-gen' : { 'name' : 'StepSynth', 'args' : 2,                'class':DirectSynth },
+        'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,              'class':DirectSynth },
+        'line-gen' : { 'name' : 'LineSynth', 'args' : 2,                'class':DirectSynth },
+        'pulse-fb-gen' : { 'name' : 'PulseFeedbackSynth' , 'args' : 2 , 'class':DirectSynth },
         'step-pan-gen' : { 'name' : 'StepPanSynth', 'args' : 3,         'class':PanSynth },
         'pulse-pan-gen' : { 'name' : 'PulsePanSynth', 'args' : 3,       'class':PanSynth },
         'line-pan-gen' : { 'name' : 'LinePanSynth', 'args' : 3,         'class':PanSynth },
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
-        'midi-note' : {'name' : 'sci', 'args' : [3,4] ,         'class': MidiNoteStream },
-        'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4], 'class' : MidiControlStream },
+        'sci2' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],              'class':SuperChuckInstStrClass },
+        'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
+        'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
         'collect' : {'name' : 'st.collect', 'args' : 2,          },
 
-        'fill' : {'name':'cs.fill', 'args' : 3, 'type' : 'intArray', 'class':ArrayGen },
+        'fill' : {'name':'cs.fill', 'args' : 3, 'type' : 'intArray',    'class':ArrayGen },
         'fillf' : {'name': 'cs.fillf', 'args' : 3, 'type':'floatArray', 'class':ArrayGen },
         'sine' : {'name' : 'cs.sine', 'args' : 2, 'type' : 'floatArray', 'class':ArrayGen },
-        '#' : {'name' : 'makeTable', 'args' : 2 ,               'class':MakeTable },
-        'makeTable' : {'name' : 'makeTable', 'args' : 2,        'class':MakeTable },
-        'procedure' : {'name' : 'Procedure', 'args' : 2, 'class' : MakeProcedure },
-        'schedule' : { 'name' : 'st.schedule' , 'args' : 2, 'class' : SingleStatement },
-        'print' : {'name' : 'cs.printf', 'args':1, 'class' : SingleStatement },
+        'phasor' : {'name' : 'st.phasor', 'args' : 1 },
+        '#' : {'name' : 'makeTable', 'args' : 2 ,                       'class':MakeTable },
+        'makeTable' : {'name' : 'makeTable', 'args' : 2,                'class':MakeTable },
+        'procedure' : {'name' : 'Procedure', 'args' : 2,                'class' : MakeProcedure },
+        'schedule' : { 'name' : 'st.schedule' , 'args' : 2,             'class' : SingleStatement },
+        'print' : {'name' : 'cs.printf', 'args':1,                      'class' : SingleStatement },
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
         'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': 1},
         'grow' : {'name':'cs.grow' , 'args' : 3 },
@@ -801,7 +827,16 @@ def standard_env():
         'OSC.table6' : { 'name' : 'OSC.table6' , 'args' : 0, 'class' : Literal },
         'OSC.table7' : {  'name' : 'OSC.table7' , 'args' : 0, 'class' : Literal },
         'OSC.table8' : { 'name' : 'OSC.table8' , 'args' : 0, 'class' : Literal },
-        'OSC.table9' : { 'name' : 'OSC.table9' , 'args' : 0, 'class' : Literal }
+        'OSC.table9' : { 'name' : 'OSC.table9' , 'args' : 0, 'class' : Literal },
+        'read-write' : { 'name' : 'st.readWrite' , 'args': [3,4,5] },
+        'write-schedule' : { 'name' : 'WriteSchedule' , 'args' : 2, 'class' : WriteSchedule },
+        'onepole' : { 'name' : 'st.onepole', 'args': 2 },
+        'waveoscl' : { 'name' : 'st.waveOscL','args':2 },
+        'waveOscL' : { 'name' : 'st.waveOscL', 'args' : 2 },
+        'waveosc' : { 'name' : 'st.waveOsc' , 'args' : 2 },
+        'table-cap' : { 'name' : 'st.tableCap' , 'args' : 1 },
+        'hzPhasor' : { 'name' : 'st.hzPhasor', 'args' : 1},
+        'sineseg' : { 'name' : 'st.sineseg' , 'args' : 1}
     })
     return env
     
@@ -889,11 +924,11 @@ def eval(x, env=global_env, depth = 0,listlist = False):
     elif x[0] in ['bus','~']: # this should be moved into its own class
         if len(x[1:]) > 1:
             # if there is a second argument, this is a new bus def
-            return makeNewBus(x[1],eval(x[2])) + ';'
+            return ('  '*depth)+makeNewBus(x[1],eval(x[2])) + ';'
         else:
             # return the old bus
             len(x[1:]) == 1
-            return returnOldBus(x[1])
+            return ('  '*depth)+returnOldBus(x[1])
     else:
         proc = x[0]    
         args = x[1:]
@@ -908,7 +943,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
 
         calledStream = str( streamType(proc, args, env ,depth + 1) ) 
 
-        string = '\n'+('\t'*depth) + calledStream
+        string = '\n'+('  '*depth) + calledStream
         
         return string
 
@@ -941,10 +976,8 @@ def main(argv):
    FileIO(inputfile,outputfile)
    os.system("killall chuck") # want to be sure
 
-   os.system("/usr/local/bin/chuck --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")  
-   os.system("echo go to sleep")
-   sleep(1.0)
-   os.system("echo I am awake")
+   os.system("/usr/local/bin/chuck --out:2 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")  
+   sleep(0.5)
    os.system("/usr/local/bin/chuck + " + outputfile + "&") 
 
 if __name__ == "__main__":

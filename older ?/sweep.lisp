@@ -1,0 +1,12 @@
+(sci2 sweep (line (seq 0.01 (rv 0.001 0.5)) (ch 0.01 0.02 0.3 1.0 4.0))
+	:gain (st 0.5) 
+	:startFreq (mtof (line (seq 60 40) (ch 0.1 0.01 0.2 0.3 1.7)))
+	:endFreq (mtof (line (seq 40 80) (ch 2.3 0.23 0.023)))
+	:duration (t (ch 0.1) (st 1.0))
+	:pan (line (rv -1 1) (ch .1 .2 .4 .8))
+	:pitchCurve (t (ch -1 -3) (rv 0 4))
+	:ampCurve (t (ch -1 -2 -10 -100) (rv 0 4))
+	:index (line (seq 1 10) (st 10))
+	:ratio (line (seq 1 10) (st 10))
+)
+

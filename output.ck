@@ -1,20 +1,20 @@
-
-
-fun void shred_1() {
-StepSynth s => Safe safe => dac;
-<<<"casper">>>;
-
-s.init(
-		st.seq(OSC.table1)
-,
-		st.st(10)
-
-);
-
-
-
-day => now;
+fun Stream pitch () {
+return 
+st.hold(
+    st.seq([440,110,220,330,550,1100,222]),
+    st.ch([1,2]));
 }
-spork ~ shred_1();
+
+function void superChuckFunc_1() { 
+        SuperChuck sc;
+        sc.instrument("saw");
+sc.addPar("freq",
+  st.seq([pitch() $ Stream,pitch()]));
+
+        sc.timer(
+    st.st(0.1));
+        sc.play();
+        day => now;
+        } spork ~ superChuckFunc_1();
 
 day => now;
