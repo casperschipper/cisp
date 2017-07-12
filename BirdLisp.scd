@@ -30,14 +30,17 @@ SynthDef(\saw,
 {   |
 	gain = 1.0,
 	freq = 220,
-	duration = 1.0
+	duration = 1.0,
+    pos = 0.0
 	|
-	var ampEnv = EnvGen.ar( Env.perc(0.0001,duration) , doneAction:2);
-	var filterFreq = EnvGen.ar( Env.perc(0.001,duration)).linlin(0,1,200,2000);
+	var ampEnv = EnvGen.ar( Env.perc(0.0001,duration,curve:-2) , doneAction:2);
+		var filterFreq = EnvGen.ar( Env.perc(0.001,duration*0.9)).linlin(0,1,freq*3,(freq * 8).clip(20,20000));
 	var tooth = Saw.ar( freq:freq, mul:gain );
-	var filter = BLowPass4.ar( tooth, filterFreq, 1);
-	Out.ar( 0 , (filter * ampEnv) ! 2 )
+	var filter = BLowPass4.ar( tooth, filterFreq,rq:1.2);
+	Out.ar( 0 , Pan2.ar((filter * ampEnv),pos:pos)  );
 }).send;
 )
+
+s.options.dump;
 
 z = Synth(\saw);

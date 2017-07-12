@@ -8,6 +8,7 @@ import random
 import functools
 import sys,getopt
 from time import sleep
+import uuid
 
 # TODO
 
@@ -34,7 +35,41 @@ class FileIO(object):
     def __init__(self,fileInName,fileOutName):
         self.inFile = open(fileInName,'r')
         self.outFile = open(fileOutName,'w')
+        
+        unique_filename = str(uuid.uuid4())
+
+        self.cleanFile(unique_filename)
         self.processInfile()
+
+        #os.remove(unique_filename)
+
+
+    def cleanFile(self,unique_filename):
+        print("\n mellonfarmer \n")
+        self.cleanFile = open(unique_filename,'w')
+        data = ""
+        for line in self.inFile:
+            data += line
+
+        self.cleanFile.write(self.remove_comments(data))
+        self.cleanFile.close()        
+
+        self.inFile = open(unique_filename,'r')
+       
+
+    def remove_comments(self,string):
+        pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
+        # first group captures quoted strings (double or single)
+        # second group captures comments (//single-line or /* multi-line */)
+        regex = re.compile(pattern, re.MULTILINE|re.DOTALL)
+        def _replacer(match):
+            # if the 2nd group (capturing comments) is not None,
+            # it means we have captured a non-quoted (real) comment string.
+            if match.group(2) is not None:
+                return "" # so we will return empty to remove the comment
+            else: # otherwise, we will return the 1st group
+                return match.group(1) # captured quoted-string
+        return regex.sub(_replacer, string)
 
     def writeLine(self,line):
         self.outFile.write(line)
@@ -121,9 +156,9 @@ unique = UniqueName()
 class Cisp(object):
     "This is the main class, it takes a text file input and translates it to ChucK+Tools.ck family of objects"
     def __init__(self,text):
-        cleanedText = self.remove_comments(text)
+        #TODO REMOVE
         # lex the text, convert S-expressions to python lists
-        self.parsedText = self.parse(cleanedText)
+        self.parsedText = self.parse(text)
         # evaluate the python lists to chuck code
         self.evaluatedText = eval(self.parsedText)
 
@@ -165,20 +200,6 @@ class Cisp(object):
     def Symbol(self,token):
         "does something with a token"
         return token
-
-    def remove_comments(self,string):
-        pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
-        # first group captures quoted strings (double or single)
-        # second group captures comments (//single-line or /* multi-line */)
-        regex = re.compile(pattern, re.MULTILINE|re.DOTALL)
-        def _replacer(match):
-            # if the 2nd group (capturing comments) is not None,
-            # it means we have captured a non-quoted (real) comment string.
-            if match.group(2) is not None:
-                return "" # so we will return empty to remove the comment
-            else: # otherwise, we will return the 1st group
-                return match.group(1) # captured quoted-string
-        return regex.sub(_replacer, string)
 
 #Env = dict          # An environment is a mapping of {variable: value}
 
@@ -616,7 +637,6 @@ def mixedTypeListFix(seq):
     if len(seq) == 1: # do not try to cast a list/array
         return seq
     mask = [is_number(x) for x in seq]
-    print "okay at least we are here", seq,mask
     if True in mask and False in mask: # some streams, make all the values streams
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
     elif not all(mask): # if all are non-floats: thus they are all streams.
