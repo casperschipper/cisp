@@ -3,9 +3,19 @@
 
 // timer
 
+(fun fif
+	(hold 
+		(seq 54 56 57 58 64) 
+		(seq 2 3 4)))
+
+(fun seven
+	(hold 
+		(seq 73 75 74 77 80)
+		(seq 3 7 11)))
+
 (midi-note
-(st 0.11)
-(index (list (seq 64 60 71) 67 (hold (seq 72 70 74 77) (ch 3 2 3 5))) (hold (count 3) (seq 1 1 1 2)))
-(st 0.11)
+(st 0.13666667)
+(seq fif 61 66 seven)
+(st 0.10)
 (seq 40 80 100)
 )

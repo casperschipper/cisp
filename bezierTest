@@ -1,0 +1,5 @@
+(step-gen
+	(index-lin (list -1 1) 
+	(line (seq 0 1) (0.01)))
+	(st 1)
+)

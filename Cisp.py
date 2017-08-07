@@ -12,15 +12,10 @@ import uuid
 
 # TODO
 
-# ant algorithm for walk (previous walks have preference, but with some mutation. food = succes)
-
-# context sensitive
 # embedable functions, like a walk and then specifiying the operator applied to previous and the step.
 # the functions should be embeddable in other streams of things ?
 
 # bug: latch cannot do zero times an element ?
-# Feedback instrument should be defined
-# simple convolution thing.
 # way of stopping all current shreds (global value that checks STOP ?)
 
 # eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
@@ -41,11 +36,10 @@ class FileIO(object):
         self.cleanFile(unique_filename)
         self.processInfile()
 
-        #os.remove(unique_filename)
+        os.remove(unique_filename)
 
 
     def cleanFile(self,unique_filename):
-        print("\n mellonfarmer \n")
         self.cleanFile = open(unique_filename,'w')
         data = ""
         for line in self.inFile:
@@ -58,6 +52,7 @@ class FileIO(object):
        
 
     def remove_comments(self,string):
+        "remove comments & multi-line comments"
         pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
         # first group captures quoted strings (double or single)
         # second group captures comments (//single-line or /* multi-line */)
@@ -136,7 +131,7 @@ class FileIO(object):
 
 
 class UniqueName(object):
-    "creates unique names with a prefix"
+    "creates unique names with a prefix, used for on the temp functions"
     def __init__(self):
         self.prefixDict = {}
 
@@ -242,7 +237,7 @@ class StreamFuncDef(object):
         x = self.defList
         env = self.env
         if len(x) > 3:
-            (_, var, arg, body) = x # _ = 'fun'
+            (_, var, arg, body) = x # _ = 'fun' 
         
             functionDiscr = { var : {'name':var , 'args':len(arg) }}
 
@@ -658,12 +653,73 @@ def castStream( arg ):
         return arg
     return arg+' $ Stream'
 
-class SuperChuckInstStrClass(StreamCall):
+class EventGenerator(StreamCall):
+    def splitKeyed(self):
+        "Specially adjusted for once per event stream. Strip the keyed arguments (:key values)  from the arguments list"
+        def snext(iterator):
+            # safe next, returns false instead of raising error
+            return next(iterator,False)
+
+        def isKey(string):
+            # returns key if starts with ':'
+            if isinstance(string,str):
+                if string[0] == ':':
+                    return string[1:]
+            return False
+
+        def isDefer(string):
+            # returns key if defer ;
+            if (isinstance(string,str)):
+                if string[0] == ';':
+                    return string[1:]
+            return False
+
+        self.extra = {}
+        self.defered = {} # this contains all the defered streams, evaluated once per event
+
+        normalArgs = []
+        
+        iterator = iter(self.arguments)
+        item = snext(iterator)
+        isKeyedArg = False
+
+        while(item is not False): 
+            key = isKey(item)
+            defer = isDefer(item)
+            
+            if key:
+                # move to next arg
+                item = snext(iterator)
+                # add the arg to the key, evaluate the value of the key.
+                self.extra[key] = eval(item,self.env,self.depth)
+                # move forward and loop on
+                item = snext(iterator)
+            elif defer:
+                # move to next arg
+                item = snext(iterator)
+                # add the arg to the key, evaluate the value of the key.
+                self.defered[defer] = eval(item,self.env,self.depth)
+                # move forward and loop on
+                item = snext(iterator)
+            else:
+                #normal args
+                normalArgs.append(item)
+                item = snext(iterator)
+
+        self.arguments = normalArgs 
+
+class SuperChuckInstStrClass(EventGenerator):
     # this is a new class to be used in situations were the parameters do not follow standard.
+
     def evaluateArgs(self):
         "this avaluates the arguments"
         instrumentName = self.arguments.pop(0) # do not eval instrumentName
         self.arguments = [instrumentName] + [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
+
+    def deferedParsFormatted(self):
+        print ("self.defered dict",self.defered)
+        return "".join(["sc.addDefered(\"" + key + "\","+ value + ");\n" for key,value in self.defered.items() ] )
+
 
     def extraParsFormatted(self):
         "this formats the extra parameters"
@@ -676,13 +732,17 @@ class SuperChuckInstStrClass(StreamCall):
         instrumentName = self.arguments[0]
         timer = self.arguments[1]
 
+
         extraParsString = self.extraParsFormatted()
         # here is the final string
         print "extraParsString",extraParsString
+        deferedParsString = self.deferedParsFormatted()
+        print ("these are the defered streams: ",deferedParsString)
 
         constructedString = """function void """+ funcName +"""() { 
         SuperChuck sc;
-        sc.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"""
+        """+deferedParsString+"""
+        sc.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
         sc.timer("""+timer+""");
         sc.play();
         day => now;
@@ -757,6 +817,7 @@ def standard_env():
         'true' : {'name':'true',    'args':0,           'class':Literal}, #this is a literal
         'seq': {'name':'st.seq',    'args':inf,         'class':ListStreamCall},
         'rv' : {'name': 'st.rv',    'args': 2 },
+        'rf' : {'name' : 'st.rf' , 'args': 2},
         'exprv' : {'name' : 'st.exprv', 'args' : 3},
         'line' : {'name': 'st.line','args':2},
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
@@ -786,6 +847,7 @@ def standard_env():
         'bounded-mup-walk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
         'bouncy-list-walk' : { 'name' : 'st.bouncyListWalk', 'args' : 2},
         'list-walk' : {'name' : 'st.walkList', 'args':[1,2]},
+        'list-walk-lin' : {'name':'st.listWalkLin', 'args': 2 },
         'write' : { 'name' : 'st.write', 'args' : [3,4] },
         'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
@@ -812,7 +874,7 @@ def standard_env():
         'line-pan-gen' : { 'name' : 'LinePanSynth', 'args' : 3,         'class':PanSynth },
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
-        'sci2' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],              'class':SuperChuckInstStrClass },
+        'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
@@ -829,7 +891,7 @@ def standard_env():
         'schedule' : { 'name' : 'st.schedule' , 'args' : 2,             'class' : SingleStatement },
         'print' : {'name' : 'cs.printf', 'args':1,                      'class' : SingleStatement },
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
-        'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': 1},
+        'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': inf},
         'grow' : {'name':'cs.grow' , 'args' : 3 },
         'rvi' : {'name':'cs.rv', 'args' : 2 },
         'rvfi' : {'name' : 'cs.rvf', 'args' : 2},

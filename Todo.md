@@ -22,6 +22,8 @@ A keyword is notated with a :key value. From the [page](http://www.gigamonkeys.c
 * It would be useful to be able to repeat a synth definition, both the supercollider variety and the stepgen.
 There are currently two possible options:
 
+<!-- THIS IS WHAT I ENDED UP WITH -->
+
 1. Have it as a type of built-in function ie:
 	(repeat 
 		(sci ping 
@@ -29,6 +31,8 @@ There are currently two possible options:
 		:amp (seq 10 20 30) 
 		:dur (seq 1 2 3)))
 
+
+<!-- not so easy to implement, and also counter intuitive -->
 2. Have it as a keyword to such functions. This keyword would be limited to integer values only.
 
 (sci ping 
@@ -51,6 +55,52 @@ this will evaluate to:
 (seq (fillf 21 -1 1))
 
 st.seq(cs.fillf(32,-1,1))
+
+# How to deal with parameters that are evaluated once per instrument 
+
+a 'special' keyed parameter
+
+(sci2 
+synthdefName
+(st 0.1)
+:freq (st 440)
+:duration (st 1.0)
+;falp (seq 0 1 2))
+
+There needs to be a type of stream that updates only once per event.
+It's value need to be reusable (it can be called twice or more for different parameters, but still returns the same value. It only updates when the event is passed)
+
+How to create streams that have internal feedback.
+
+Imagine, that an SCI Synth always has a "hidden" stream inside that updates once on each event.
+The count has to be sent each count to the inner streams that are there (COST !).
+
+There has to be some way of fetching a global value from the environment.
+
+
+Another strategy is to combine two parameters in a single stream that generates both values (much less beautiful)
+
+(sci
+name
+(st 0.1)
+:freq (index table (~ mySpecialBus))
+:duration (index table (~ mySpecialBus)) )
+
+;mySpecialBus (seq 0 1 2 3 4 5 6)
+
+indexer needs to be updated once per event.
+
+Localbus is something that returns the same value, until it's explicity updated () with an update call.
+could that update call be an event loop ? Does that event know its context ??
+
+What if we just use normal (~ buses) for the reader. Now that works, the only thing is, that the input stream for the bus needs to be triggered by the external class.
+
+~localBus
+
+
+
+## controllers, elements that keep their state intact, between starting (this is very similar to BUS)
+
 
 
 

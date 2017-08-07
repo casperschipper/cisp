@@ -5,10 +5,11 @@
 
 // get name
 me.arg(0) => string filename;
-if( filename.length() == 0 ) "foo.wav" => filename;
+if( filename.length() == 0 ) "simple2-b.wav" => filename;
 
 // pull samples from the dac
-dac => Gain g => WvOut w => blackhole;
+dac.left => Gain g => WvOut w => blackhole;
+dac.right
 // this is the output file name
 filename => w.wavFilename;
 <<<"writing to file:", "'" + w.filename() + "'">>>;
