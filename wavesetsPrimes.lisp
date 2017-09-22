@@ -138,12 +138,6 @@ result.size.postln;
 
 )
 
-(~ indexy
-	(t 
-	(line (rv 0 200) (ch 0.1 1 2 .5))
-	(st 0.01))
-	)
-
 (~ width
 	(line
 		(seq 0 1)
@@ -151,24 +145,29 @@ result.size.postln;
 
 (~ heavy
 	(line
-		(seq 1 80)
+		(seq 1 30)
 		(seq 13 5)))
 
 (~ disturbance
 	(*
 		(rv 0 1)
 		(line
-			(seq 1 1000)
+			(seq 1 10)
 			(seq 13 7 11))))
 
 
 (sci2
 	waveSet
+	;indexy (line (rv 0 200) (ch 0.1 1 2 .5))
 	(/ 1.0 (+ 
-		(line (rv 1 2000) (seq 17 5))
+		(line (seq 1 2000) (seq 17 5))
 		0))
 	:startFrame (index startFrames (~ indexy))
 	:duration (* (index delta (~ indexy)) (~ heavy))
 	:pan (rv
 		(* -1 (~ width)) (~ width))
-	:rate (rv (line (seq 0.01 16.0) (seq 13 15)) (line (seq 0.01 8.0) (seq 7 3))))
+	:rate (line
+		(seq
+		 (line (seq 0.01 16.0) (seq 13 15)) 
+		 (line (seq 0.01 16.0) (seq 7 3)))
+		(t (ch 0.1 0.01 0.001 0.1 3 10 30) (ch 1 3 4 8 16))))

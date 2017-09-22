@@ -37,6 +37,7 @@ class FileIO(object):
         self.processInfile()
 
         os.remove(unique_filename)
+        print('the file',unique_filename,'was deleted.')
 
 
     def cleanFile(self,unique_filename):
@@ -131,7 +132,7 @@ class FileIO(object):
 
 
 class UniqueName(object):
-    "creates unique names with a prefix, used for on the temp functions"
+    "creates unique names with a prefix, used for temp functions"
     def __init__(self):
         self.prefixDict = {}
 
@@ -524,11 +525,42 @@ spork ~ """+sparkName+"""();
 """ # creates a function sparkname and immediately execute 
         return chuckCode
 
-        
-
     def checkArgs(self):
         if len(self.arguments) != 2:
             print("error, stepgen wrong number of args (should be 2): "+len(self.arguments))
+            return False
+        return True
+
+class FBSynth(DirectSynth):
+    "A function that calls a non-standard synth"
+    # translator of names: 
+
+    def __repr__(self):
+        # generate a name, lookup synth name, construct a Synth shred, spork it.
+        sparkName = unique.name('shred')
+
+        schedule = "";
+        if (len(self.arguments) == 5):
+            amp, timer, pan, freq, fb = self.arguments
+        else:
+            amp, timer, pan, freq, fb, schedule = self.arguments
+            schedule = ","+schedule
+
+        chuckCode = """
+fun void """+sparkName+"""() {
+"""+self.name+""" s => Safe safe => dac;
+
+s.init("""+amp+','+timer+','+pan+','+freq+','+fb+schedule+"""\n\n);
+
+day => now;
+}
+spork ~ """+sparkName+"""();
+""" # creates a function sparkname and immediately execute 
+        return chuckCode
+
+    def checkArgs(self):
+        if len(self.arguments) in [5,6]:
+            print("error, wrong number of args (should be 5 or 6, amp time pan freq fb): ",len(self.arguments))
             return False
         return True
 
@@ -864,14 +896,17 @@ def standard_env():
         '&&' : { 'name' : 'st.bitAnd', 'args' :2 },
         '||' : { 'name' : 'st.bitOr', 'args' : 2 },
         '^' : { 'name' : 'st.pow' , 'args' : 2 },
+        '>' : { 'name' : 'st.bigger','args' : 2},
+        '<' : { 'name' : 'st.bigger','args': 2},
         'pow' : { 'name' : 'st.pow' , 'args' : 2 },
         'step-gen' : { 'name' : 'StepSynth', 'args' : 2,                'class':DirectSynth },
         'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,              'class':DirectSynth },
         'line-gen' : { 'name' : 'LineSynth', 'args' : 2,                'class':DirectSynth },
-        'pulse-fb-gen' : { 'name' : 'PulseFeedbackSynth' , 'args' : 2 , 'class':DirectSynth },
+        'pulse-fb-gen' : { 'name' : 'PulseFBSynth' , 'args' : [5,6] , 'class':FBSynth },
         'step-pan-gen' : { 'name' : 'StepPanSynth', 'args' : 3,         'class':PanSynth },
         'pulse-pan-gen' : { 'name' : 'PulsePanSynth', 'args' : 3,       'class':PanSynth },
         'line-pan-gen' : { 'name' : 'LinePanSynth', 'args' : 3,         'class':PanSynth },
+        'pulse-fb-synth' : { 'name' : 'PulseFBSynth', 'args' : [5,6],       'class':FBSynth },
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
@@ -887,6 +922,7 @@ def standard_env():
         'phasor' : {'name' : 'st.phasor', 'args' : 1 },
         '#' : {'name' : 'makeTable', 'args' : 2 ,                       'class':MakeTable },
         'makeTable' : {'name' : 'makeTable', 'args' : 2,                'class':MakeTable },
+        'read' : { 'name' : 'cs.buffToArray' , 'args' : 1 },
         'procedure' : {'name' : 'Procedure', 'args' : 2,                'class' : MakeProcedure },
         'schedule' : { 'name' : 'st.schedule' , 'args' : 2,             'class' : SingleStatement },
         'print' : {'name' : 'cs.printf', 'args':1,                      'class' : SingleStatement },
@@ -901,6 +937,7 @@ def standard_env():
         'replace' : { 'name' : 'cs.replace' , 'args':2},
         'take' : {'name': 'st.take', 'args' : 1 },
         'diff' : {'name' : 'st.diff' , 'args' : 1 },
+        'normalize' : { 'normstream' : 'st.normStream' , 'args' : inf },
         'OSC.table1' : { 'name' : 'OSC.table1' , 'args' : 0, 'class' : Literal },
         'OSC.table2' : { 'name' : 'OSC.table2' , 'args' : 0, 'class' : Literal },
         'OSC.table3' : { 'name' : 'OSC.table3' , 'args' : 0, 'class' : Literal },
@@ -917,8 +954,10 @@ def standard_env():
         'waveOscL' : { 'name' : 'st.waveOscL', 'args' : 2 },
         'waveosc' : { 'name' : 'st.waveOsc' , 'args' : 2 },
         'table-cap' : { 'name' : 'st.tableCap' , 'args' : 1 },
+        'table-size' : { 'name' : 'st.tableCap' , 'args' : 1 },
         'hzPhasor' : { 'name' : 'st.hzPhasor', 'args' : 1},
-        'sineseg' : { 'name' : 'st.sineseg' , 'args' : 1}
+        'sineseg' : { 'name' : 'st.sineseg' , 'args' : 1},
+        'couple' : { 'name' : 'st.couple' , 'args' : 2 }
     })
     return env
     
@@ -989,7 +1028,9 @@ def eval(x, env=global_env, depth = 0,listlist = False):
             call = ''
         return symbol_object['name'] + call # call functions immediately, saving some parenthesis.
     elif isinstance(x, Number):
-        return str(x) #TODO add formatting of float
+        if x % 1.0 == 0:
+            return str(x)
+        return '{:.12f}'.format(x) # enforce non-scientific notation for floats (chuck does not understand 0.23e-4)
     elif not isinstance(x, List):  # constant literal
         return x                
     elif x[0] == '\'':          # (quote exp)

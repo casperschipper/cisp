@@ -5,7 +5,7 @@
 
 // get name
 me.arg(0) => string filename;
-if( filename.length() == 0 ) "bezier-2-stereo" => filename;
+if( filename.length() == 0 ) "newSquare2_lisp1" => filename;
 
 // pull samples from the dac
 dac.chan(0) => Gain g1 => WvOut c1 => blackhole;
