@@ -1,6 +1,5 @@
-(
-	#
-	casper
-	(read "/Users/casperschipper/Google\ Drive/GuineaPigs/BowieMono.wav"))
+(# casper (read "/Users/casperschipper/Google Drive/GuineaPigs/BowieMono.wav"))
 
-(print casper)
+(step-gen
+	(seq casper)
+	(st 1))

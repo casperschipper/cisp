@@ -1,0 +1,56 @@
+class StringParser:
+    def __init__(self,seq):
+        self.lst = seq
+
+    def nextToken(self):
+        if (self.lst):
+            return self.lst.pop(0)
+        return None
+
+    def parse(self):
+        result = [] 
+
+        #print " ok start", self.lst 
+        
+        item = self.nextToken()
+        while item: # first item passed
+            #print "item",item
+            if type(item) == type([]): # if it is a list, parse it first than add to list
+                #print "item is list", item
+                parser = StringParser(item)
+                result = result + [parser.parse()]
+                #print "result after item is list", result
+            elif type(item) == type(""): # if the item is a string
+                #print "item is string", item
+                if item[0] == '\"':
+                   # print "it is a path!"
+                    combined = item # start a combined 
+                    item = self.nextToken()
+                    #print "item after nexttoken"
+                    while item: # add next item
+                        #print "the next item is also a string!"
+                        if type(item) == type(""):
+                            combined = combined + ' ' + item
+                            if item[-1] == '\"': # we reached the end
+                                #print "the last one is seen"
+                                #print result, combined
+                                result = result + [combined] # store the combined result
+                                #print "BREAK", result, combined
+                                break
+                        else:
+                            print( "ERROR unexpected string break" )
+                        item = self.nextToken()
+                else:
+                    result = result + [item]
+            else:
+                #print "should make list again", [item]
+                result = result + [item]
+            #print "after Break", result
+            # go on to the next one
+            item = self.nextToken()
+        #print item, 'item'
+        return result
+
+#a = ['#', 'casper', ['read', '"/Users/casperschipper/Google', 'Drive/GuineaPigs/BowieMono.wav"']]
+#print StringParser(a).parse()
+

@@ -99,6 +99,8 @@ class FileIO(object):
         print (result)
         self.writeLine(result)
 
+
+
     def countOpen(self,string):
         count = 0
         for x in string:
@@ -155,6 +157,10 @@ class Cisp(object):
         #TODO REMOVE
         # lex the text, convert S-expressions to python lists
         self.parsedText = self.parse(text)
+        # clean all the string stuff, combine paths with space inside
+        self.parsedText = StringParser(self.parsedText).parse()
+        print "self.parsedText",self.parsedText
+        
         # evaluate the python lists to chuck code
         self.evaluatedText = eval(self.parsedText)
 
@@ -198,6 +204,45 @@ class Cisp(object):
         return token
 
 #Env = dict          # An environment is a mapping of {variable: value}
+
+class StringParser:
+    def __init__(self,seq):
+        self.lst = seq
+
+    def nextToken(self):
+        if (self.lst):
+            return self.lst.pop(0)
+        return None
+
+    def parse(self):
+        result = [] 
+        
+        item = self.nextToken()
+        while item: # first item passed
+            if type(item != None) == type([]): # if it is a list, parse it first than add to list
+                parser = StringParser(item)
+                result = result + [parser.parse()]
+            elif type(item != None) == type(""): # if the item is a string
+                if item[0] == '\"':
+                    combined = item # start a combined 
+                    item = self.nextToken() # move on to next
+                    while item: # if there is one
+                        if type(item) == type(""):
+                            combined = combined + ' ' + item
+                            if item[-1] == '\"': # we reached the end
+                                result = result + [combined] # store the combined result
+                                break
+                        else:
+                            print( "ERROR unexpected string break" )
+                        item = self.nextToken() # get next token
+                else: # it is just a string not a special one
+                    result = result + [item]
+            else: # it is not a string, but a number
+                result = result + [item]
+            item = self.nextToken() # get the next token 
+        return result
+
+
 
 class Env(dict):
     "An environment: a dict of {'var':val} pairs, with an outer Env."
@@ -495,25 +540,97 @@ spork ~ """+sparkName+"""();
 """ # immediately execute 
         return chuckCode
 
-class DirectSynth(StreamCall):
+class EventGenerator(StreamCall):
+    "An event generator"
+    def deferedParsFormatted(self):
+        print ("self.defered dict",self.defered)
+        return "".join(["s.addDefered(\"" + key + "\","+ value + ");\n" for key,value in self.defered.items() ] )
+
+
+    def extraParsFormatted(self):
+        "this formats the extra parameters"
+        print "self.extra dict",self.extra
+        return "".join( [ "s.addPar(\"" + key + "\","+ value + ");\n" for key,value in self.extra.items() ] )
+
+    def splitKeyed(self):
+        print "something is ok"
+        "Specially adjusted for once per event stream. Strip the keyed arguments (:key values)  from the arguments list"
+        def snext(iterator):
+            # safe next, returns false instead of raising error
+            return next(iterator,False)
+
+        def isKey(string):
+            # returns key if starts with ':'
+            if isinstance(string,str):
+                if string[0] == ':':
+                    return string[1:]
+            return False
+
+        def isDefer(string):
+            # returns key if defer ;
+            if (isinstance(string,str)):
+                if string[0] == ';':
+                    return string[1:]
+            return False
+
+        self.extra = {}
+        self.defered = {} # this contains all the defered streams, evaluated once per event
+
+        normalArgs = []
+        
+        iterator = iter(self.arguments)
+        item = snext(iterator)
+        isKeyedArg = False
+
+        while(item is not False): 
+            key = isKey(item)
+            defer = isDefer(item)
+            
+            if key:
+                # move to next arg
+                item = snext(iterator)
+                # add the arg to the key, evaluate the value of the key.
+                self.extra[key] = eval(item,self.env,self.depth)
+                # move forward and loop on
+                item = snext(iterator)
+            elif defer:
+                # move to next arg
+                item = snext(iterator)
+                # add the arg to the key, evaluate the value of the key.
+                self.defered[defer] = eval(item,self.env,self.depth)
+                # move forward and loop on
+                item = snext(iterator)
+            else:
+                #normal args
+                normalArgs.append(item)
+                item = snext(iterator)
+
+        self.arguments = normalArgs 
+
+class DirectSynth(EventGenerator):
     "A function that calls a non-standard synth"
     # translator of names: 
 
     def __repr__(self):
         # generate a name, lookup synth name, construct a Synth shred, spork it.
         sparkName = unique.name('shred')
-
+        print "self.arguments"
         amp, timer = self.arguments
 
+        panUnit = pancontrol = ""
+
         if "pan" in self.extra.keys():  #   
-            panUnit = "Pan4 p =>"
+            panUnit = "Pan4 p => dac;"
             pancontrol = "p.pan("+self.extra["pan"]+");"
+        elif "chan" in self.extra.keys():
+            panUnit = "dac.chan("+self.extra["chan"]+" $ int);\n"
         else:
-            panUnit = pancontrol = ""
+            panUnit = panUnit + "dac;\n"
+
 
         chuckCode = """
 fun void """+sparkName+"""() {
-"""+self.name+""" s => Safe safe =>"""+ panUnit +""" dac;
+"""+self.name+""" s => Safe safe =>"""+ panUnit +self.deferedParsFormatted()+"""\n
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
 
@@ -685,61 +802,6 @@ def castStream( arg ):
         return arg
     return arg+' $ Stream'
 
-class EventGenerator(StreamCall):
-    def splitKeyed(self):
-        "Specially adjusted for once per event stream. Strip the keyed arguments (:key values)  from the arguments list"
-        def snext(iterator):
-            # safe next, returns false instead of raising error
-            return next(iterator,False)
-
-        def isKey(string):
-            # returns key if starts with ':'
-            if isinstance(string,str):
-                if string[0] == ':':
-                    return string[1:]
-            return False
-
-        def isDefer(string):
-            # returns key if defer ;
-            if (isinstance(string,str)):
-                if string[0] == ';':
-                    return string[1:]
-            return False
-
-        self.extra = {}
-        self.defered = {} # this contains all the defered streams, evaluated once per event
-
-        normalArgs = []
-        
-        iterator = iter(self.arguments)
-        item = snext(iterator)
-        isKeyedArg = False
-
-        while(item is not False): 
-            key = isKey(item)
-            defer = isDefer(item)
-            
-            if key:
-                # move to next arg
-                item = snext(iterator)
-                # add the arg to the key, evaluate the value of the key.
-                self.extra[key] = eval(item,self.env,self.depth)
-                # move forward and loop on
-                item = snext(iterator)
-            elif defer:
-                # move to next arg
-                item = snext(iterator)
-                # add the arg to the key, evaluate the value of the key.
-                self.defered[defer] = eval(item,self.env,self.depth)
-                # move forward and loop on
-                item = snext(iterator)
-            else:
-                #normal args
-                normalArgs.append(item)
-                item = snext(iterator)
-
-        self.arguments = normalArgs 
-
 class SuperChuckInstStrClass(EventGenerator):
     # this is a new class to be used in situations were the parameters do not follow standard.
 
@@ -747,16 +809,6 @@ class SuperChuckInstStrClass(EventGenerator):
         "this avaluates the arguments"
         instrumentName = self.arguments.pop(0) # do not eval instrumentName
         self.arguments = [instrumentName] + [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
-
-    def deferedParsFormatted(self):
-        print ("self.defered dict",self.defered)
-        return "".join(["sc.addDefered(\"" + key + "\","+ value + ");\n" for key,value in self.defered.items() ] )
-
-
-    def extraParsFormatted(self):
-        "this formats the extra parameters"
-        print "self.extra dict",self.extra
-        return "".join( [ "sc.addPar(\"" + key + "\","+ value + ");\n" for key,value in self.extra.items() ] )
 
     def __repr__(self):
         funcName = unique.name('superChuckFunc')
@@ -772,14 +824,13 @@ class SuperChuckInstStrClass(EventGenerator):
         print ("these are the defered streams: ",deferedParsString)
 
         constructedString = """function void """+ funcName +"""() { 
-        SuperChuck sc;
+        SuperChuck s;
         """+deferedParsString+"""
-        sc.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
-        sc.timer("""+timer+""");
-        sc.play();
+        s.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
+        s.timer("""+timer+""");
+        s.play();
         day => now;
         } spork ~ """
-
         print constructedString
 
         return constructedString+funcName+"();\n"
@@ -903,10 +954,12 @@ def standard_env():
         'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,              'class':DirectSynth },
         'line-gen' : { 'name' : 'LineSynth', 'args' : 2,                'class':DirectSynth },
         'pulse-fb-gen' : { 'name' : 'PulseFBSynth' , 'args' : [5,6] , 'class':FBSynth },
+        'pulse-fb-gen2' : {'name' : 'PulseFBSynth2' , 'args' : [5,6], 'class' : FBSynth },
         'step-pan-gen' : { 'name' : 'StepPanSynth', 'args' : 3,         'class':PanSynth },
         'pulse-pan-gen' : { 'name' : 'PulsePanSynth', 'args' : 3,       'class':PanSynth },
         'line-pan-gen' : { 'name' : 'LinePanSynth', 'args' : 3,         'class':PanSynth },
         'pulse-fb-synth' : { 'name' : 'PulseFBSynth', 'args' : [5,6],       'class':FBSynth },
+        'pulse-fb-synth2' : { 'name' : 'PulseFBSynth2', 'args' : [5,6],   'class':FBSynth },
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
@@ -929,6 +982,9 @@ def standard_env():
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
         'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': inf},
         'grow' : {'name':'cs.grow' , 'args' : 3 },
+        'num' : {'name' : 'cs.number' , 'args' : 1 },
+        'number' : {'name' : 'cs.number', 'args' : 1},
+        'flt' : { 'name' : 'cs.float' , 'args' : 1},
         'rvi' : {'name':'cs.rv', 'args' : 2 },
         'rvfi' : {'name' : 'cs.rvf', 'args' : 2},
         'chi' : {'name' : 'cs.choose' , 'args' : inf },
@@ -1017,17 +1073,18 @@ def makeStringFinder(arg):
 
 
 def eval(x, env=global_env, depth = 0,listlist = False):
-    print("eval : " + str(x))
     #env = global_env
     "Evaluate an expression in an environment."
     if isinstance(x, Symbol):      # variable reference, not a function call
+        if x[0] == '\"' and x[-1] == '\"': # it may be a path
+            return x # return the path, don't try to eval
         symbol_object = env.find(x)[x] # return the name
         if ('isFunction' in symbol_object.keys()):
             call = '()' 
         else:
             call = ''
         return symbol_object['name'] + call # call functions immediately, saving some parenthesis.
-    elif isinstance(x, Number):
+    elif isinstance(x, Number): # if first is number, the list is probably a list of things.
         if x % 1.0 == 0:
             return str(x)
         return '{:.12f}'.format(x) # enforce non-scientific notation for floats (chuck does not understand 0.23e-4)
@@ -1040,7 +1097,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
         string = streamArray(x,env,0)
         return string
     elif x[0] == 'list':
-        # this is an emergency solution ! Ignores the 'list' word, treats as stream array.
+        # this is an emergency solution, Ignores the 'list' word, treats as stream array.
         return streamArray(x[1:],env,depth)
     elif x[0] == 'fun': # this should be moved into its own class.
         return str(StreamFuncDef(x,env,0))
@@ -1053,6 +1110,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
             len(x[1:]) == 1
             return ('  '*depth)+returnOldBus(x[1])
     else:
+        print "streamcall detected:",x
         proc = x[0]    
         args = x[1:]
 
@@ -1099,7 +1157,7 @@ def main(argv):
    FileIO(inputfile,outputfile)
    os.system("killall chuck") # want to be sure
 
-   os.system("/usr/local/bin/chuck --out:2 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")  
+   os.system("/usr/local/bin/chuck --srate:96000 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")  
    sleep(0.5)
    os.system("/usr/local/bin/chuck + " + outputfile + "&") 
 

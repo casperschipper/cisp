@@ -1,0 +1,15 @@
+(# timers (1 2 3 4 5 6 7 8 9 10))
+
+(fun a 
+	(line 
+		(seq 0 (table-cap timers))
+		(ch 1 2 4 8)))
+
+(fun pitch
+	(index 
+		(rv a a)))
+
+(step-gen 
+(seq -1 1)
+pitch
+)
