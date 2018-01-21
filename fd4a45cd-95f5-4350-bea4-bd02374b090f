@@ -24,13 +24,6 @@ import uuid
 
 # eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
 
-# a new st.write variant could be st.append: it adds a single value to a table. past values can simply be reached through the normal streams 
-# with the table as parameter.
-# (~ append tab1 (rv 0 100)) would add a random value between 0 100 to a table
-
-# higher abstractions could be imagined, a 'smart' array that updates itself every now and then, has its own inner logic.
-# a changing, evolving state. 
-
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
 Number = (int, float) # A Scheme Number is implemented as a Python int or float
@@ -67,7 +60,7 @@ class FileIO(object):
         "remove comments & multi-line comments"
         pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
         # first group captures quoted strings (double or single)
-        # second group captures comments (//single-line or /* multi-line */)
+        # second group captures comments (
         regex = re.compile(pattern, re.MULTILINE|re.DOTALL)
         def _replacer(match):
             # if the 2nd group (capturing comments) is not None,
@@ -420,7 +413,7 @@ class StreamCall(object):
 
 class SingleStatement(StreamCall):
     def __repr__(self):
-        return self.name + "(" + self.printArguments() + ")" + self.setters() + ';\n\n'
+        return self.name + "(" + self.printArguments() + ")" + self.setters() + ';'
 
 
 class Cloner(StreamCall):
@@ -753,11 +746,11 @@ class MakeTable(StreamCall):
 
     def __repr__(self):
         if self.tableName in self.env.keys():
-            return "cs.replacef("+self.generator+","+self.tableName+');\n\n'
+            return "cs.replacef("+self.generator+","+self.tableName+');'
         
         self.env[self.tableName] = {}
         self.env[self.tableName]['name'] = self.tableName
-        return  self.generator + ' @=> ' + 'float ' + self.tableName + '[];\n\n'
+        return  self.generator + ' @=> ' + 'float ' + self.tableName + '[];'
 
 class MakeProcedure(StreamCall):
     "This creates a single-use class. It creates a Stream object as a funktor without input or output, it is only used for its side effects. For example the procedure can create tables or reset a certain bus."
@@ -781,11 +774,11 @@ class MakeProcedure(StreamCall):
         class """+className+""" extends Stream {
         st ST; // this is for namespace reasons, st is already used within Stream class.
 
-        fun float next() {
-        \t\t"""+self.procedureBody+""";
+        \t fun float next() {
+        \t"""+self.procedureBody+"""
         \t}
-        }\n\n
-        """+className+' '+self.procedureName+';\n\n'
+        }
+        """+className+' '+self.procedureName+';'
 
 def mixedTypeListFix(seq):
     " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
@@ -922,7 +915,6 @@ def standard_env():
         'floor' : { 'name' : 'st.floor' , 'args' : 1   },
         'test' : { 'name' : 'st.test' , 'args' : 1, 'class':SingleStatement },
         'mtof' : { 'name' : 'st.mtof' , 'args' : 1 },
-        'ftom' : { 'name' : 'st.ftom' , 'args' : 1 },
         'sync' : { 'name' : 'cs.sync' , 'args' : 1 , 'class':SingleStatement }, 
         'clip' : { 'name' : 'st.clip' , 'args' : 3, },
 
@@ -1119,7 +1111,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
     elif x[0] in ['bus','~']: # this should be moved into its own class
         if len(x[1:]) > 1:
             # if there is a second argument, this is a new bus def
-            return ('  '*depth)+makeNewBus(x[1],eval(x[2])) + ';\n\n'
+            return ('  '*depth)+makeNewBus(x[1],eval(x[2])) + ';'
         else:
             # return the old bus
             len(x[1:]) == 1

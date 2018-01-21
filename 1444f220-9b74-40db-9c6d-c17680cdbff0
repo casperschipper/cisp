@@ -1,0 +1,8 @@
+
+
+(midi-note
+	(scalef (sin 0.1) (st 1) (st 0.01))
+ 	(st 64)
+ 	(st 0.1)
+	(st 90)
+	)

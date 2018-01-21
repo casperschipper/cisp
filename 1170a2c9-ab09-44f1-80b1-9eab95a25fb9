@@ -1,0 +1,20 @@
+(# OSC.table1 
+	(100. 200 300 400 500))
+
+(sci2 
+	saw
+	(st 0.14)
+	:freq (ch OSC.table1)
+	:duration (st 0.1))
+
+(procedure replaceOne
+	(write tab1 
+		(rv 0 1000)
+		(rv 0 5)))
+
+(schedule
+	replaceOne
+	(st 1.0))
+
+
+

@@ -1,0 +1,13 @@
+(# tab1
+	(1 2 3 4 5 6 7 11 12 100 99 200))
+
+(fun a
+	(line 
+		(seq 0 (table-cap tab1))
+		(ch 1 3 5 11)))
+
+(step-gen
+	(seq -1 1)
+	(index
+		tab1
+		(rv a b)))

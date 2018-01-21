@@ -1,0 +1,13 @@
+(# OSC.table1
+	(fillf 8 -1 1))
+
+(procedure writeOne
+	(write OSC.table1 (rv -1 1) (rv 0 9)))
+
+(schedule
+	writeOne 
+	(st .1))
+
+(step-gen
+	(seq tab1)
+	(st 1))

@@ -1,0 +1,6 @@
+(midi-note
+(st 0.1)
+(ftom (bounded-mup-walk 200 10000 (ch 0.5 2.0 0.75 1.5)))
+(st 1.0)
+(st 64)
+)

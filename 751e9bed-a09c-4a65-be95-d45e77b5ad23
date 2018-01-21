@@ -1,0 +1,10 @@
+
+(midi-note
+(/ 1.0 (mtof 
+	(line 
+		(ch 0 100)
+		(ch 1 3 5 7 11))))
+(ftom (boundcy-mup-walk 200 10000 (ch 0.5 2.0 0.75 1.5 0.97)))
+(st 0.1)
+(st 64)
+)

@@ -1,0 +1,40 @@
+
+
+
+(# OSC.table1 
+	(50. 100. 200 300 400 500))
+
+(~ replaceOne
+	(write OSC.table1
+		(ch 
+			(* (ch OSC.table1) (ch 0.666667 1.5 1.0594630943593)) 
+			(ch 100 200 300 400 500))
+		(rv 0 5)))
+
+(schedule
+	(~ replaceOne)
+	(st 1.0))
+
+(procedure foo
+	(print OSC.table1))
+
+(schedule
+	(foo
+		(st 3.0)))
+
+(fun lengthController
+	(line
+		(ch 0.2 0.9 0.1) 
+		(ch (grow 0.1 2 8))))
+
+
+(clone
+	(sci2 
+		saw
+		(seq 0.14 0.13)
+		:freq (hold (seq OSC.table1) (ch 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 8))
+		:duration lengthController
+		:pan (st (rvfi -1 1))) 6)
+
+
+
