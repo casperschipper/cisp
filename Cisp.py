@@ -789,15 +789,20 @@ class MakeProcedure(StreamCall):
 
 def mixedTypeListFix(seq):
     " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
+    def makeFloatyString(seq):
+        # add a dot to the first float in seq, to force float array in ChucK !
+        if '.' in seq[0]:
+            return seq
+        return [seq[0] + '.'] + seq[1:] 
+
     if len(seq) == 1: # do not try to cast a list/array
         return seq
     mask = [is_number(x) for x in seq]
     if True in mask and False in mask: # some streams, make all the values streams
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
-    elif not all(mask): # if all are non-floats: thus they are all streams.
+    elif not all(mask): # if all are non-numbers: thus they are all streams.
         return [castStream(seq[0])] + seq[1:]
-    return seq
-
+    return makeFloatyString(seq) # the list is numbers, make sure the first one is a float
 
 def makeStream( arg ):
     "make a static value stream"
@@ -980,6 +985,7 @@ def standard_env():
         'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
+        'slider' : { 'name' : 'st.midiCtrl' , 'args': [1] },
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
         'collect' : {'name' : 'st.collect', 'args' : 2,          },
