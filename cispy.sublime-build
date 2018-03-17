@@ -2,6 +2,48 @@
     "cmd": ["python","./Cisp.py" ,"-i", "$file","-o","output.ck"],
     "file_regex": "^[ ]*File \"(...*?)\", line ([0-9]*)",
     "selector": "source.lisp",
-    "working_dir": "$file_path"
+    "working_dir": "$file_path",
+    "variants":
+ 	[
+ 	    {
+ 	    	"name" : "Start",
+ 	    	"cmd" : ["python","./Cisp.py" ,"-i", "$file","-o","output.ck"]
+ 	    },
+        {
+            "working_dir": "$file_path",
+             "name": "Stop",
+             "cmd": ["python", "stop.py"]
+        },
+        {
+            "working_dir": "$file_path",
+             "name" : "Add",
+             "cmd" : ["python","./Cisp.py","-i","$file","-o","output.ck","--command","+"]
+        },
+        {
+            "working_dir": "$file_path",
+            "name" : "Generate",
+            "cmd" : ["python","./Cisp.py","-i","$file","-o","output.ck","--command","gen"]
+        },
+        {
+            "working_dir": "$file_path",
+            "name" : "Replace",
+            "cmd" : ["python","./Cisp.py","-i","$file","-o","output.ck","--command","replace"]
+        },
+        {
+            "working_dir": "$file_path",
+            "name" : "Panic",
+            "cmd" : ["python","./Cisp.py","-i","$file","-o","output.ck","--command","panic"]
+        },
+        {
+            "working_dir": "$file_path",
+            "name" : "Stop",
+            "cmd" : ["python","./Cisp.py","-i","$file","-o","output.ck","--command","stop"]
+        },
+        {
+            "working_dir": "$file_path",
+            "name" : "All",
+            "cmd" : ["python","./Cisp.py","-i","$file","-o","output.ck","--command","all"]
+        }
+    ]
 }
 

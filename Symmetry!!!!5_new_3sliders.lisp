@@ -28,17 +28,18 @@ SynthDef(\ping,
 		(ch 7 12)))
 
 (sci2
-	ping
+	pulse
 	(seq 0.16 0.15)
 	:freq (mtof (+ 
 		(+ 
-		(seq 0 5 7) 
-		(hold (seq 0 5 7) (seq 3 5 4 3 5 2 2 3 4 5 3)))
+		(seq 0 (seq 5 5 a a 5 5 5) 7) 
+		(hold (seq 0 5 (seq b b b 2) 7) (seq 3 5 4 3 5 2 2 3 4 5 3)))
 		48))
 	:duration (* (weights ((1.0 100) (3.0 5))) (* (mtof (slider 1 :d 32)) 0.01))
 	:filter (seq
-		(line (mtof (slider 2 :d 80)) (st 0.05))
-		(line (mtof (slider 3 :d 80)) (st 0.05)))
+		(line (mtof (slider 2 :d 32)) (st 0.05))
+		(line (mtof (slider 3 :d 32)) (st 0.05))
+		(line (mtof (slider 4 :d 32)) (st 0.05)))
 	:filterEnvMup (seq
 		(line (seq 0.1 1.5) (ch 7 13 33))
 			(line (seq 0.1 1.5) (ch 7 13 33)))

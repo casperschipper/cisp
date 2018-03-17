@@ -12,14 +12,7 @@ import uuid
 
 # TODO
 
-# embedable functions, like a walk and then specifiying the operator applied to previous and the step.
-# one way of achieving this: an st.add without parameters is simply only the operator.
-# an st.add with one parameter is curried. 
-
-# the functions should be embeddable in other streams of things ?
-
 # bug: latch cannot do zero times an element ?
-# way of stopping all current shreds (global value that checks STOP ?)
 # adding streams to an already ongoing process.
 
 # eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
@@ -30,6 +23,9 @@ import uuid
 
 # higher abstractions could be imagined, a 'smart' array that updates itself every now and then, has its own inner logic.
 # a changing, evolving state. 
+
+#  /usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck  
+
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
 List   = list         # A Scheme List is implemented as a Python list
@@ -100,14 +96,15 @@ class FileIO(object):
                     fullLine = ''
                     nOpen, nClosed, thisLineCount = 0, 0, 0
             
-        self.outFile.write('\nday => now;') # this ends every file with time passing, just to avoid it closing.
+        self.outFile.write('\n<<<"shred id: ",me.id()>>>;');
+        self.outFile.write('\nEvent end;\n(new ShredEventStack).push(end);\nend => now;') # add an end event
         self.outFile.close()
 
     def parseLine(self,string):
         parser = Cisp(string)
         result = parser.result()
-        print 'result:'
-        print (result)
+        #print 'result:'
+        #print (result)
         self.writeLine(result)
 
     def countOpen(self,string):
@@ -140,6 +137,16 @@ class FileIO(object):
         level = 0
 
 
+# class EndEvent(object):
+#     "This is used at the end of a shred, to be able to stop it. not in use currently"
+#     def __init__(self,identifier):
+#         self.identifier = identifier
+
+#     def __repr__(self):
+#         # we return the name, so we can stop it later
+#         print "script is named: "+self.identifier;
+#         return "Event theEnd @=> st.events["+self.identifier+"];\ntheEnd => now;\n"
+
 
 
 class UniqueName(object):
@@ -168,7 +175,7 @@ class Cisp(object):
         self.parsedText = self.parse(text)
         # clean all the string stuff, combine paths with space inside
         self.parsedText = StringParser(self.parsedText).parse()
-        print "self.parsedText",self.parsedText
+        #print "self.parsedText",self.parsedText
         
         # evaluate the python lists to chuck code
         self.evaluatedText = eval(self.parsedText)
@@ -370,7 +377,7 @@ class StreamCall(object):
         
         if type(numOfArgs) == type(1):
             numOfArgs = [numOfArgs] 
-            print('it is now this:'+ str(numOfArgs))
+            #print('it is now this:'+ str(numOfArgs))
         if not  'inf' in numOfArgs and not len(self.arguments) in numOfArgs:
             raise Exception('function:'+ self.name + ' has '+str(len(self.arguments)) + ' args, expects: '+str(numOfArgs) + '\n' + 'argumnets were:' + str(self.arguments) +'\n')
 
@@ -554,17 +561,17 @@ spork ~ """+sparkName+"""();
 class EventGenerator(StreamCall):
     "An event generator"
     def deferedParsFormatted(self):
-        print ("self.defered dict",self.defered)
+        #print ("self.defered dict",self.defered)
         return "".join(["s.addDefered(\"" + key + "\","+ value + ");\n" for key,value in self.defered.items() ] )
 
 
     def extraParsFormatted(self):
         "this formats the extra parameters"
-        print "self.extra dict",self.extra
+        #print "self.extra dict",self.extra
         return "".join( [ "s.addPar(\"" + key + "\","+ value + ");\n" for key,value in self.extra.items() ] )
 
     def splitKeyed(self):
-        print "something is ok"
+        #print "something is ok"
         "Specially adjusted for once per event stream. Strip the keyed arguments (:key values)  from the arguments list"
         def snext(iterator):
             # safe next, returns false instead of raising error
@@ -769,7 +776,7 @@ class MakeProcedure(StreamCall):
         # to safely use stream namespace, replace all 'st' with 'ST'
         self.procedureBody = self.procedureBody.replace('st.','ST.')
 
-        print "self.procedureBody", self.procedureBody
+        #print "self.procedureBody", self.procedureBody
         self.env[self.procedureName] = {}
         self.env[self.procedureName]['name'] = self.procedureName
         #SOMETHING WITH PROCEDURES NEED TO BE STORED IN ENVIROMENT
@@ -801,7 +808,7 @@ def mixedTypeListFix(seq):
     if True in mask and False in mask: # some streams, make all the values streams
         return [makeStream(x) if mask[ind] else x for ind, x in enumerate(seq) ]
     elif not all(mask): # if all are non-numbers: thus they are all streams.
-        return [castStream(seq[0])] + seq[1:]
+        return [castClass(seq[0])] + seq[1:]
     return makeFloatyString(seq) # the list is numbers, make sure the first one is a float
 
 def makeStream( arg ):
@@ -812,8 +819,11 @@ def firstCharIsBracket( arg ):
     "remove noncharacters and check if the first thing is a bracket (could be weights)"
     return (arg.replace(' ','').replace('\n',''))[0] == '['
 
-def castStream( arg ):
-    "used in mixed type arrays, to force streams. In ChucK, the first element decides the array type."
+def castClass( arg ):
+    "used in mixed type arrays, to force uniformity. In ChucK, the first element decides the array type. There are "
+    if 'guard' or 'Guard' in arg:
+        print("there is a guard")
+        return arg + '$ Guard'
     if firstCharIsBracket(arg):
         return arg
     return arg+' $ Stream'
@@ -835,9 +845,9 @@ class SuperChuckInstStrClass(EventGenerator):
 
         extraParsString = self.extraParsFormatted()
         # here is the final string
-        print "extraParsString",extraParsString
+        #print "extraParsString",extraParsString
         deferedParsString = self.deferedParsFormatted()
-        print ("these are the defered streams: ",deferedParsString)
+        #print ("these are the defered streams: ",deferedParsString)
 
         constructedString = """function void """+ funcName +"""() { 
         SuperChuck s;
@@ -847,7 +857,7 @@ class SuperChuckInstStrClass(EventGenerator):
         s.play();
         day => now;
         } spork ~ """
-        print constructedString
+        #print constructedString
 
         return constructedString+funcName+"();\n"
 
@@ -866,6 +876,21 @@ def SuperChuckInstStr( instrumentName = 'saw', st_timer = 'st.st(1.0)', st_freq=
 }
 spork ~ """+funcName+"""();
 """
+
+class CustomOperator(StreamCall): 
+    "This creates a CustomOperator subclass, it requires a name and a string that is evaluating to
+    # def __str__(self):
+    #     return self.__repr__()
+
+    # def __repr__(self):
+    #     "this is the central construction of the function call"
+    #     return self.name + "(" + self.printArguments() + ")" + self.setters()
+
+    # def evaluateArgs(self):
+    #     "this avaluates the arguments"
+    #     self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments]  
+
+
 
 def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)' , st_velo='st.st(80)' ):
     "creates a little Midi instrument inst"
@@ -906,6 +931,17 @@ class Literal(object):
         
     def __str__(self):
         return self.__repr__()
+
+class SingleCall(object):
+    # very simple function call, one line
+    def __init__(self,string):
+        self.value = string 
+
+    def __repr__(self):
+        return self.value + '();\n\n'
+        
+    def __str__(self):
+        return self.__repr__() 
 
 def standard_env():
     "Here are most of the standard functions in Cisp"
@@ -964,11 +1000,13 @@ def standard_env():
         '&&' : { 'name' : 'st.bitAnd', 'args' :2 },
         '||' : { 'name' : 'st.bitOr', 'args' : 2 },
         '^' : { 'name' : 'st.pow' , 'args' : 2 },
-        '>' : { 'name' : 'st.bigger','args' : 2},
-        '<' : { 'name' : 'st.bigger','args': 2},
+        '>' : { 'name' : 'st.bigger','args' : [1,2]},
+        '<' : { 'name' : 'st.bigger','args': [1,2]},
+        'overwrite' : { 'name' : 'st.overwrite' ,'args' : 1},
         'pow' : { 'name' : 'st.pow' , 'args' : 2 },
         'sin' : { 'name' : 'st.sine' , 'args' : 1},
         'linlin' : { 'name' : 'st.linlin' , 'args' : 5 },
+        'map' : {'name' : 'st.map' , 'args' : 5 },
         'scaleAC' : { 'name' : 'st.scaleAC', 'args' : 3 },
         'step-gen' : { 'name' : 'StepSynth', 'args' : 2,                'class':DirectSynth },
         'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,              'class':DirectSynth },
@@ -1012,6 +1050,8 @@ def standard_env():
         'chfi' : {'name' : 'cs.choosef' , 'args' : inf },
         'replacef' : {'name' : 'cs.replacef', 'args':2},
         'replace' : { 'name' : 'cs.replace' , 'args':2},
+        'wr' : { 'name' : 'st.wr' , 'args' : 2 },
+        'rd' : { 'name' : 'st.rd' , 'args' : 1 },
         'take' : {'name': 'st.take', 'args' : 1 },
         'diff' : {'name' : 'st.diff' , 'args' : 1 },
         'normalize' : { 'normstream' : 'st.normStream' , 'args' : inf },
@@ -1035,6 +1075,11 @@ def standard_env():
         'hzPhasor' : { 'name' : 'st.hzPhasor', 'args' : 1},
         'sineseg' : { 'name' : 'st.sineseg' , 'args' : 1},
         'couple' : { 'name' : 'st.couple' , 'args' : 2 },
+        'solo' : {'name' : 'ShredEventStack.popAll', 'args' : 0, 'class' : SingleCall, 'isFunction' : True},
+        'guard' : { 'name' : 'st.guard', 'args' : 1 },
+        'guardTest' : { 'name' : 'st.guardTest' , 'args' : 2 },
+        'guardControl' : { 'name' : 'st.guardControl', 'args' : 2 },
+        'guardedWalk' : { 'name' : 'st.guardedWalk' , 'args' : 2 },
     })
     return env
     
@@ -1072,7 +1117,7 @@ def recursiveTestAll(item,test):
 
 def recursiveTestAny(item,test):
     "same as recursive test all, but returns true if any test returns true"
-    print 'this is tested', item
+    #print 'this is tested', item
     if isinstance(item,List):
         return any( [recursiveTestAny(x,test) for x in item ] )
     return test(item)
@@ -1131,7 +1176,14 @@ def eval(x, env=global_env, depth = 0,listlist = False):
             len(x[1:]) == 1
             return ('  '*depth)+returnOldBus(x[1])
     else:
-        print "streamcall detected:",x
+        if len(x) is 1:
+            # function without any args, get name
+            literalName = (env.find(x[0])[x[0]]).get('name')
+            # call it as a singleCall:
+            return str(SingleCall(literalName));
+
+
+        #print "streamcall detected:",x
         proc = x[0]    
         args = x[1:]
 
@@ -1157,26 +1209,56 @@ class RunShred:
 
     def run(self):
         os.system("killall chuck") # want to be sure
-        os.system("/usr/local/bin/chuck --srate:44100 --out:2 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")  
+        os.system("/usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")  
         sleep(0.5)
         os.system("/usr/local/bin/chuck + " + self.outputfile + "&") 
 
 class AddShred(RunShred):
     def run(self):
-        print "yo"
-        print "added the code as a script"
+        print "+"
         os.system("/usr/local/bin/chuck + " + self.outputfile + "&") 
 
 class GenerateCode(RunShred):
     "only generate the code"
     def run(self):
-        print "only the code was generated: " + self.outputfile
+        print "generated " + self.outputfile
 
 class ReplaceShred(RunShred):
     "replace the last shred"
     def run(self):
-        os.system("/usr/local/bin/chuck = " + self.outputfile + "&") 
-        print "code replace " + self.outputfile
+        os.system("/usr/local/bin/chuck + pop.ck")
+        os.system("/usr/local/bin/chuck + " + self.outputfile + "&") 
+        #print "code replace " + self.outputfile
+
+class Stop(RunShred):
+    "replace the last shred"
+    def run(self):
+        os.system("/usr/local/bin/chuck + removeAll.ck")
+        #print "code replace " + self.outputfile
+
+class Panic(RunShred):
+    "removall add new"
+    def run(self):
+        os.system("/usr/local/bin/chuck --kill");
+
+class All(RunShred):
+    def run(self):
+        os.system("/usr/local/bin/chuck + removeAll.ck")
+        os.system("/usr/local/bin/chuck + " + self.outputfile + "&") 
+
+
+# class ShredRegister(object):
+#     def __init__(self):
+#         # open the file without erasing
+#         self.file = open('ShredRegister.txt','a')
+
+#     def addShred(self,id):
+#         self.file.write(id + ' ')
+
+#     def wipe(self):
+#         self.file  = open('ShredRegister.txt','w')
+
+#     def removeShred(self,id)
 
 
 def main(argv):
@@ -1207,11 +1289,11 @@ def main(argv):
       print "missing inputfile, using the default"
       inputfile = 'test.lisp'
    if command is '':
-      print "no command, using run"
-      command = 'run'
+      print "no command, using overwrite"
+      command = 'replace'
 
-   print 'Input file is "', inputfile
-   print 'Output file is "', outputfile 
+   #print 'Input file is "', inputfile
+   #print 'Output file is "', outputfile 
    
    # this is the important call, that actually creates the chuck files
    FileIO(inputfile,outputfile)
@@ -1221,7 +1303,11 @@ def main(argv):
    runshreds = {
       "run" : RunShred,
       "+" : AddShred,
-      "gen" : GenerateCode
+      "gen" : GenerateCode,
+      "replace" : ReplaceShred,
+      "stop" : Stop,
+      "panic" : Panic,
+      "all" : All
    }
 
    command = runshreds[command]

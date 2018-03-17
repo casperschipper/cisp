@@ -1,0 +1,42 @@
+(sync 0.16)
+
+(fun filterf
+	(line
+		(seq 1000 10000)
+		(ch 1 3 5 7)))
+
+(fun five
+	(hold
+		(seq 9 12 7 5 5 5 2 0 5 7)
+		(ch 2 1 1 1 2 3)))
+
+(fun zero
+	(hold 
+		(seq 0 2 0 12 -7 -4 0 14)
+		(ch 2 2 1 3 4 2)))
+
+(~ basic
+	(mtof (+ 43.35
+		(+
+			(seq 0 five 7)
+			(hold 
+				(seq zero 5 7)
+				(ch 2 3 3 2 3))))))
+
+(~ additive
+	(reset
+		(walk 100 (ch 100 122 133 177 344)) (ch 50) (ch 2 3 4 1 2 3)))
+
+(sci2
+	pulse
+	(st 0.16)
+	:freq (index
+		(
+			(~ basic)
+			(~ additive)
+			) (hold (st 1) (ch 2 4 3 6)))
+	:duration (* (mtof (fader 1) 0.01))
+	:filter (seq filterf filterf filterf) 
+	:pan (hold (seq -1 0 1) (ch 1 1 1 2 1 3 4))
+	:attack (st 0.5)
+	)

@@ -1,0 +1,25 @@
+(sync 0.16)
+
+
+(fun five
+	(hold
+		(seq 5 5 5 3 9 12 14)
+		(ch 1 2 3 2 3 4)))
+
+(filterf
+	(line
+		(seq 100 10000)
+		(ch 1 3 5 7 11)))
+
+(sci2
+	pulse
+	(st 0.16)
+	:freq (mtof (+
+		48
+		(+ (seq 0 five 7)
+		(hold (seq 0 (seq 5 5 five five five) 7) (ch 2 3 4 3 5 2)))))
+	:duration (* (mtof (slider 1 :d 32)) 0.01)
+	:filter (seq filterf filterf filterf) 
+	:pan (hold (rv -1 1) (ch 1 1 1 2 1 3 4))
+	:attack (st 0.001)
+	)

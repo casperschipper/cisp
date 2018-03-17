@@ -17,6 +17,8 @@ SynthDef(\ping,
 
 (sync 0.31)
 
+(~ dur (seq 0.1 0.1))
+
 (fun a
 	(hold
 	(seq 9 12 19 14 16 24)
@@ -27,20 +29,31 @@ SynthDef(\ping,
 		(seq 0 2 -2)
 		(ch 7 12)))
 
+(# cassie (0. 7 14 21))
+
+(~ foo
+	(write cassie 
+		(index ( 
+			(+ (ch cassie) (* (* 0.1 (slider 9)) (ch -1 1)))
+			(rv 0 0))
+		(weights ((0 100) (1 1))))
+		(rv 0 4)) 
+
+)
+
+
+(schedule (~ foo) (st 0.01))
+
 (sci2
-	ping
-	(seq 0.16 0.15)
-	:freq (mtof (+ 
-		(+ 
-		(seq 0 5 7) 
-		(hold (seq 0 5 7) (seq 3 5 4 3 5 2 2 3 4 5 3)))
-		48))
-	:duration (* (weights ((1.0 100) (3.0 5))) (* (mtof (slider 1 :d 32)) 0.01))
+	pulse
+	(~ dur)
+	:freq (mtof (+ 50
+		(seq cassie)))
+	:duration (* (weights ((1.0 100) (3.0 5))) (* (mtof (slider 1 :d 64)) 0.01))
 	:filter (seq
-		(line (mtof (slider 2 :d 80)) (st 0.05))
-		(line (mtof (slider 3 :d 80)) (st 0.05)))
-	:filterEnvMup (seq
-		(line (seq 0.1 1.5) (ch 7 13 33))
-			(line (seq 0.1 1.5) (ch 7 13 33)))
+		(line (mtof (slider 2 :d 100)) (st 0.05))
+		(line (mtof (slider 3 :d 100)) (st 0.05))
+		(line (mtof (slider 4 :d 100)) (st 0.05)))
 	:amp (seq 0.1 0.1)
+	:attack (* (mtof (slider 8 :d 64)) 0.001))
 	:pan (line (seq -1 1) (hold (ch .14 0.28 0.56) (ch 5 10)) ))

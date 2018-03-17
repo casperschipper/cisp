@@ -1,31 +1,9 @@
 
-cs.sync(0.140000000000);
+st.test(
+    st.guardedWalk(100,[st.guardTest(    st.bigger(10),    st.sum(1))$ Guard,st.guardTest(    st.bigger(1000),    st.sub(2))]));
 
 
-st.bus(
-st.rv(0,
-    st.midiCtrl(2)),"stepsize");
-
-
-
-fun void shred_1() {
-StepSynth s => Safe safe =>dac;
-
-
-
-s.init(
-    st.indexLin(OSC.table1,
-        st.linlin(
-            st.midiCtrl(2),0,128,2,3))
-,
-    st.st(1)
-
-);
-
-
-
-day => now;
-}
-spork ~ shred_1();
-
-day => now;
+<<<"shred id: ",me.id()>>>;
+Event end;
+(new ShredEventStack).push(end);
+end => now;
