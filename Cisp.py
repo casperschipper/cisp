@@ -228,22 +228,22 @@ class StringParser:
     def nextToken(self):
         if (self.lst):
             return self.lst.pop(0)
-        return None
+        return False
 
     def parse(self):
         "This ugly beast takes care of file strings and comments"
         result = [] 
         
         item = self.nextToken()
-        while item: # first item passed
-            if type(item != None) == type([]): # if it is a list, parse it first than add to list
+        while (item is not False): # first item passed
+            if type(item) == type([]): # if it is a list, parse it first than add to list
                 parser = StringParser(item)
                 result = result + [parser.parse()]
-            elif type(item != None) == type(""): # if the item is a string
+            elif type(item) == type(""): # if the item is a string
                 if item[0] == '\"':
                     combined = item # start a combined 
                     item = self.nextToken() # move on to next
-                    while item: # if there is one
+                    while (item is not False): # if there is one
                         if type(item) == type(""):
                             combined = combined + ' ' + item
                             if item[-1] == '\"': # we reached the end
@@ -1033,7 +1033,7 @@ def standard_env():
         '||' : { 'name' : 'st.bitOr', 'args' : 2 },
         '^' : { 'name' : 'st.pow' , 'args' : 2 },
         '>' : { 'name' : 'st.bigger','args' : [1,2]},
-        '<' : { 'name' : 'st.bigger','args': [1,2]},
+        '<' : { 'name' : 'st.smaller','args': [1,2]},
         'overwrite' : { 'name' : 'st.overwrite' ,'args' : 1},
         '=' : { 'name' : 'st.overwrite' , 'args' : 1},
         'pow' : { 'name' : 'st.pow' , 'args' : 2 },
@@ -1112,6 +1112,7 @@ def standard_env():
         'guard' : { 'name' : 'st.guard', 'args' : 1 },
         'guardTest' : { 'name' : 'st.guardTest' , 'args' : 2 },
         '|' : { 'name' : 'st.guardTest', 'args' : 2 },
+        '|=' : { 'name' : 'st.guardTestValue', 'args' : 2 },
         'guardControl' : { 'name' : 'st.guardControl', 'args' : 2 },
         'guardedWalk' : { 'name' : 'st.guardedWalk' , 'args' : 2 },
         'apply' : { 'name': 'st.apply' , 'args' : 2 },

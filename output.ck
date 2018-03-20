@@ -1,5 +1,5 @@
 
- st.define("casper",10);
+ st.define("casper",0.100000000000);
 
  
 
@@ -11,7 +11,7 @@ StepSynth s => Safe safe =>dac;
 s.init(
      st.wr("casper",
         st.apply(
-            st.rd("casper") ,[st.guardTest(    st.bigger(10),    st.mup(2))$ Guard,st.guardTest(    st.bigger(1000),    st.st(200)),st.guard(    st.rv(-10,10))])) 
+            st.rd("casper") ,[st.guardTestValue(    st.smaller(-1),    st.st(0.100000000000))$ Guard,st.guardTestValue(    st.bigger(1),    st.st(0.100000000000)),st.guardTestValue(    st.smaller(0.000001000000),    st.st(0.100000000000)),st.guard(    st.mup(        st.t(            st.ch([0.500000000000,2.0,0.250000000000,0.666700000000,1.500000000000]),            st.ch([0.100000000000,0.050000000000]))))])) 
 ,
     st.st(1)
 
