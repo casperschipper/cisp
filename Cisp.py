@@ -38,7 +38,7 @@ class FileIO(object):
         self.inFile = open(fileInName,'r')
         self.outFile = open(fileOutName,'w')
         
-        unique_filename = str(uuid.uuid4())
+        unique_filename = 'tmp'
 
         self.cleanFile(unique_filename)
         self.processInfile()
@@ -766,6 +766,38 @@ class MakeTable(StreamCall):
         self.env[self.tableName]['name'] = self.tableName
         return  self.generator + ' @=> ' + 'float ' + self.tableName + '[];\n\n'
 
+class Wr(StreamCall):
+    "This is generating values from a stream and storing them in a named float array, to be used later in other streams that use arrays"
+    def evaluateArgs(self):
+        # do not evaluate the name
+        x = self.arguments
+        self.valueName = x[0]
+        self.value = eval(x[1], self.env, self.depth+1)
+
+    def __repr__(self):
+        return ' st.wr("'+self.valueName+'",'+self.value+') '
+
+class Rd(StreamCall):
+    "this reads values, therefore, does not try to evaluate name"
+    def evaluateArgs(self):
+        # do not evaluate the name
+        self.valueName = self.arguments[0]
+
+    def __repr__(self):
+        return 'st.rd("'+self.valueName+'") '
+
+class Define(StreamCall):
+    "This declares the name in ST_store array, and sets initial value"
+    def evaluateArgs(self):
+        # do not evaluate the name
+        x = self.arguments
+        self.valueName = x[0]
+        self.value = eval(x[1], self.env, self.depth+1)
+
+    def __repr__(self):
+        return ' st.define("'+self.valueName+'",'+self.value+');\n\n '
+
+
 class MakeProcedure(StreamCall):
     "This creates a single-use class. It creates a Stream object as a funktor without input or output, it is only used for its side effects. For example the procedure can create tables or reset a certain bus."
     def evaluateArgs(self):
@@ -878,9 +910,9 @@ spork ~ """+funcName+"""();
 """
 
 class CustomOperator(StreamCall): 
-    "This creates a CustomOperator subclass, it requires a name and a string that is evaluating to
-    # def __str__(self):
-    #     return self.__repr__()
+    "This creates a CustomOperator subclass, it requires a name and a string that is evaluating to"
+    def __str__(self):
+        return self.__repr__()
 
     # def __repr__(self):
     #     "this is the central construction of the function call"
@@ -1003,6 +1035,7 @@ def standard_env():
         '>' : { 'name' : 'st.bigger','args' : [1,2]},
         '<' : { 'name' : 'st.bigger','args': [1,2]},
         'overwrite' : { 'name' : 'st.overwrite' ,'args' : 1},
+        '=' : { 'name' : 'st.overwrite' , 'args' : 1},
         'pow' : { 'name' : 'st.pow' , 'args' : 2 },
         'sin' : { 'name' : 'st.sine' , 'args' : 1},
         'linlin' : { 'name' : 'st.linlin' , 'args' : 5 },
@@ -1050,8 +1083,8 @@ def standard_env():
         'chfi' : {'name' : 'cs.choosef' , 'args' : inf },
         'replacef' : {'name' : 'cs.replacef', 'args':2},
         'replace' : { 'name' : 'cs.replace' , 'args':2},
-        'wr' : { 'name' : 'st.wr' , 'args' : 2 },
-        'rd' : { 'name' : 'st.rd' , 'args' : 1 },
+        'wr' : { 'name' : 'st.wr' , 'args' : 2, 'class' : Wr },
+        'rd' : { 'name' : 'st.rd' , 'args' : 1, 'class' : Rd },
         'take' : {'name': 'st.take', 'args' : 1 },
         'diff' : {'name' : 'st.diff' , 'args' : 1 },
         'normalize' : { 'normstream' : 'st.normStream' , 'args' : inf },
@@ -1078,8 +1111,11 @@ def standard_env():
         'solo' : {'name' : 'ShredEventStack.popAll', 'args' : 0, 'class' : SingleCall, 'isFunction' : True},
         'guard' : { 'name' : 'st.guard', 'args' : 1 },
         'guardTest' : { 'name' : 'st.guardTest' , 'args' : 2 },
+        '|' : { 'name' : 'st.guardTest', 'args' : 2 },
         'guardControl' : { 'name' : 'st.guardControl', 'args' : 2 },
         'guardedWalk' : { 'name' : 'st.guardedWalk' , 'args' : 2 },
+        'apply' : { 'name': 'st.apply' , 'args' : 2 },
+        'define' : { 'name' : 'st.define', 'args' : 2, 'class' : Define }
     })
     return env
     

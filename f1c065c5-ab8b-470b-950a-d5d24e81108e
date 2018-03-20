@@ -1,7 +1,0 @@
-(step-gen
-	(seq -1 1)
-	(+ 
-	(rv 1 (line (seq 1 100) (ch 0.1 0.2 0.5 1.0))))
-	(t
-		(ch 1 100 1000)
-		(fractRandTimer (ch 0.001 0.01 0.2 2))))
