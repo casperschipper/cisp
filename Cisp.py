@@ -235,7 +235,7 @@ class StringParser:
         result = [] 
         
         item = self.nextToken()
-        while (item is not False): # first item passed
+        while (item is not False): # first item passed, is not because of 0 should be parsed
             if type(item) == type([]): # if it is a list, parse it first than add to list
                 parser = StringParser(item)
                 result = result + [parser.parse()]
@@ -853,7 +853,7 @@ def firstCharIsBracket( arg ):
 
 def castClass( arg ):
     "used in mixed type arrays, to force uniformity. In ChucK, the first element decides the array type. There are "
-    if 'guard' or 'Guard' in arg:
+    if 'guard' in arg or 'Guard' in arg:
         print("there is a guard")
         return arg + '$ Guard'
     if firstCharIsBracket(arg):
@@ -1111,6 +1111,7 @@ def standard_env():
         'solo' : {'name' : 'ShredEventStack.popAll', 'args' : 0, 'class' : SingleCall, 'isFunction' : True},
         'guard' : { 'name' : 'st.guard', 'args' : 1 },
         'guardTest' : { 'name' : 'st.guardTest' , 'args' : 2 },
+        'otherwise' : { 'name' : 'st.otherwise' , 'args' : 1 },
         '|' : { 'name' : 'st.guardTest', 'args' : 2 },
         '|=' : { 'name' : 'st.guardTestValue', 'args' : 2 },
         'guardControl' : { 'name' : 'st.guardControl', 'args' : 2 },
