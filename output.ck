@@ -12,23 +12,13 @@ st.line(
 }
 
 
-    cs.sine(16,[1.0]) @=> float tab1[];
+    cs.fillf(32,-1,1) @=> float tab1[];
 
 fun Stream a () {
 return 
 st.line(
-    st.seq([st.st(0),
-  st.tableCap(tab1)]),
-    st.ch([0.100000000000,3,5]));
-}
-
- st.define("casper",100);
-
- fun Stream latcher () {
-return 
-st.t(
-    st.ch([10.,20,100]),
-    st.ch([0.100000000000,0.500000000000,1,2]));
+    st.seq([0.,32]),
+    st.ch([3.,5]));
 }
 
 function void superChuckFunc_1() { 
@@ -38,12 +28,13 @@ function void superChuckFunc_1() {
 s.addPar("amp",
   st.st(0.100000000000));
 s.addPar("freq",
-   st.wr("casper",
-      st.apply(
-          st.rd("casper") ,[st.guardTest(    st.smaller(10),    st.sum(100))$ Guard,st.guardTestValue(    st.bigger(10000),    st.st(100)),st.otherwise(    st.seq([  st.latch(      st.sum(          st.rd("casper") ,          st.ch([100.,99,101])),latcher()) $ Stream,  st.latch(      st.mup(          st.rd("casper") ,          st.ch([2.0,0.500000000000])),latcher())]))])) );
+  st.reset(
+      st.walk(300,interval()),
+      st.sum(shifter(),shifter()),
+      st.weights([[1,20],[20,2],[7,1]])));
 s.addPar("number",
   st.line(
-      st.ch(1000),
+      st.ch([1400.,4,1500]),
       st.ch([1.,3,6])));
 s.addPar("pan",
   st.index(tab1,
@@ -52,8 +43,8 @@ s.addPar("pan",
 
         s.timer(
     st.line(
-        st.seq([0.010000000000,0.100000000000]),
-        st.ch([1.0,3.0,8.0])));
+        st.seq([0.001000000000,0.010000000000,0.050000000000,0.100000000000]),
+        st.rv(0.100000000000,0.400000000000)));
         s.play();
         day => now;
         } spork ~ superChuckFunc_1();
