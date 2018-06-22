@@ -6,8 +6,10 @@
 // get name
 <<<"hallo",dac.channels()>>>;
 
+
+
 me.arg(0) => string filename;
-if( filename.length() == 0 ) "Utrecht2-list" => filename;
+if( filename.length() == 0 ) "rec8" => filename;
 
 // pull samples from the dac
 dac.chan(0) => Gain g1 => WvOut c1 => blackhole;

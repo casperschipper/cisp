@@ -10,6 +10,16 @@ SynthDef(\casper,
 }).send(s);
 )
 
+Synth(\casper);
+
+s.sendMsg('s_new', 'casper', 1001,0,1,0,'duration',100);
+
+
+
+s.scope;
+
+
+
 (
 SynthDef(\sine,{
 	| duration = 0.1, freq = 220 |
@@ -35,18 +45,69 @@ SynthDef(\pulse,{
 
 a = (1..10).collect({|item| item + rrand(0.01,0.05)});
 
+pushmatrix
+scale(2);
+
+sendMsg
+
+s.bind(0.2,Synth(\casper));
+s.latency = 0.02;
+s.reboot;
+s.latency;
+
+Synth(\pulse);
+
+(
+Ndef(\casper,
+	{
+		var sound = Pulse.ar( (Saw.ar(3)>0).range(200,40) + (Saw.ar(3.7)>0).range(100,800));
+		sound = sound * Pulse.ar(SinOsc.ar(3,0,0.1,3)).range(0,1).pow(1)
+	}
+).play([0,1]);
+)
+
+
+
+TSeq
+
+x = Pshuf((1..10),inf).asStream;
+x.value;
+
+
+Ndef(\
+
+	s.sendMsg("/s_new","casper",1000,0,1,"freq",440,"amp",2.3044,2.340503452,23.492304123,249234,"blah",298379234.9352,"casper",829348234);
+
+(
+SynthDef(\ping,
+{   | freq = 220, duration = 1.0, amp = 0.1, filter = 1000, filterEnvMup = 1.0 , pan = 0.0|
+					var env = EnvGen.ar( Env.perc(0.001,duration), doneAction:2 );
+				var sig = SinOsc.ar(freq);
+					OffsetOut.ar( 0, Pan2.ar( sig, pan, env ) );
+}).send(s);
+)
+
 (
 SynthDef(\ping,
 {   | freq = 220, duration = 1.0, amp = 0.1, filter = 1000, filterEnvMup = 1.0 , pan = 0.0|
 	var s1, s2,env,filterEnv;
-		s1= SinOsc.ar(a*freq,1) / a.size;
+		s1= SinOsc.ar(freq,1);
 	env = EnvGen.ar( Env.perc(0.001,duration,curve:-2), doneAction:2);
-	filterEnv = Env.perc(0.001,duration,curve:-2).ar( doneAction:2);
+	filterEnv = EnvGen.ar( Env.perc(0.001,duration,curve:-2), doneAction:2);
 		s2 = BLowPass.ar(s1,freq:filter,rq:1) * env * amp ;
-		Out.ar(0,Pan2.ar(s2,pan));
+		OffsetOut.ar(0,Pan2.ar(s2,pan));
 }).send(s);
 )
+s.scope;
+s.options.blockSize = 64;
+	s.reboot;
 
+	s.options.blockSize;
+
+	s.options.dump;
+
+
+		Synth(\ping);
 
 (
 Synth(\casper);
@@ -64,6 +125,10 @@ filtered = LeakDC.ar( filtered );
 Out.ar(0, Pan2.ar(filtered,pos) * 0.1 );
 }).send;
 )
+
+		s.options.inDevice = "Built-in Microph";
+		s.reboot;
+
 
 s.scope;
 

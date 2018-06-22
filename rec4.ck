@@ -5,7 +5,7 @@
 
 // get name
 me.arg(0) => string filename;
-if( filename.length() == 0 ) "UtrechtMarsTreinRecord" => filename;
+if( filename.length() == 0 ) "AzimuthSSPRec" => filename;
 
 // pull samples from the dac
 dac.chan(0) => Gain g1 => WvOut c1 => blackhole;

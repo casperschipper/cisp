@@ -1,11 +1,4 @@
-(
-SynthDef(\saw, { | freq = 440, duration = 1.0, pan = 0.0 |
-	var freqs = freq * (0.99,0.991..1.01);
-	var env = EnvGen.ar( Env.perc(0.001,duration,curve:-4),doneAction:2);
-	var sig = Saw.ar( freqs,env ) * 0.2;
-	Out.ar( 0, Pan2.ar( sig.sum, pos:pan));
-}).send;
-)
+
 
 
 
@@ -29,13 +22,13 @@ SynthDef(\saw, { | freq = 440, duration = 1.0, pan = 0.0 |
 		(ch (grow 0.1 2 8))))
 
 
-(clone
 	(sci2 
 		saw
-		(seq 0.12 0.1 0.1 0.1)
+		(st 1.0)
+		:fuck (st 1.0)
 		:freq (hold (seq OSC.table1) (ch 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 2 8))
-		:duration lengthController
-		:pan (st (rvfi -1 1))) 3)
+		:duration (st 1.0)
+		)
 
 
 

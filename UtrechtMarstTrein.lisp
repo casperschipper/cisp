@@ -46,9 +46,9 @@
 	(index timers 
 		(line (seq aa aa) sr)))
 
-(pulse-pan-gen
+(step-pan-gen
 	(* (index-lin
-		(fillf 32 -1 1) (bounded-walk 0 32 (+ stepi noise))) 0.1)
+		(fillf 32 -1 1) (bounded-walk 0 32 (+ stepi noise))) 0.9)
 	(st 1)
 	(index-lin
 		panTable (bounded-walk 0 32 stepi)))

@@ -8,8 +8,8 @@ SynthDef(\sweepFM2,
 		var depth = modFreq * index;
 		var mod = SinOsc.ar(modFreq) * depth;
 		var sig	= SinOsc.ar( freq:freq + mod );
-		Out.ar(0, Pan2.ar( sig  , pan, 0.1) );
-}).add;
+		Out.ar(0, PanAz.ar(numChans:16, in:sig , pos:pan, level:0.01) );
+}).send;
 )
 */
 
@@ -36,15 +36,9 @@ SynthDef(\sweepFM2,
 
 (sci2
 	sweepFM2
-	(/ (st 1.0) (line (mtof (seq -50 80)) (fractRandTimer (0.001 0.1 1.0 2.0))))
-	:duration (/ (st 1.0) (line (rf -50 50) (fractRandTimer (0.001 0.1 1.0 2.0))))
-	:freq1 (loop (~ casper) (ch 4 10 20) (ch 3 10 8))
+	(/ (st 1.0) (line (mtof (seq 0 30)) (fractRandTimer (0.001 0.1 1.0 2.0))))
+	:duration (/ (st 1.0) (line (rf 60 80) (fractRandTimer (0.001 0.1 1.0 2.0))))
+	:freq1 (loop (~ casper) (ch 120) (ch 3 10 8))
 
-	:freq2 (loop (~ casper) (ch 4 10 20 80) (ch 3 10 80))
-	:ratio (t (ch 0.0 1.0 3.5 0.02) (ch 0.001 0.1 1 7 15))
-	:index (t (ch 0.0 0.0 1.0 1.5) (ch 0.001 0.1 1 7 15))
-	:pan (rv a b)
-	:numSamples (t (ch 100 200 300 (rv 1 300) 1000 20000) (fractRandTimer (0.001 0.2 0.3 1.0 0.01)))
-	:flip (seq -1 1)
-
+	:freq2 (loop (~ casper) (ch 20) (ch 3 10 80))
 	)

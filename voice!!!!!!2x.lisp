@@ -57,9 +57,9 @@ SynthDef(\voice, { | freq = 200, amp = 0.1, number = 3 |
 			(otherwise 
 				(seq
 					(latch (+ (rd casper) (ch 100 99 101)) latcher)
-					(latch (* (rd casper) (ch 2.0 0.5)) latcher)))
+					(latch (* (rd casper) (ch 2.0 2.5 1.5 0.75 0.5)) latcher)))
 			)))
-	:amp (st 0.1)
+	:amp (st 0.01)
 
 	:number (line (ch 1000) (ch 1 3 6))
 	:pan (index tab1 (rv a a))

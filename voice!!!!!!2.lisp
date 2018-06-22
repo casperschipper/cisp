@@ -25,7 +25,7 @@ SynthDef(\voice, { | freq = 200, amp = 0.1, number = 3 |
 
 (fun shifter
 	(line
-		(rv 300 700)
+		(rv 99 101)
 		(ch .1 0.01 4 7)))
 
 (# tab1
@@ -38,10 +38,10 @@ SynthDef(\voice, { | freq = 200, amp = 0.1, number = 3 |
 
 (sci2
 	voice
-	(line (seq 0.001 0.01 0.05 0.1) (rv 0.1 0.4))
-	:freq (reset (walk 300 interval) (+ shifter shifter) (weights ((1 20) (20 2) (7 1))))
-	:amp (st 0.1)
+	(line (st 0.1) (rv 0.1 0.4))
+	:freq (reset (walk 100 interval) (+ shifter shifter) (weights ((1 20) (20 2) (7 1))))
+	:amp (st 0.01)
 
-	:number (line (ch 1400 4 1500) (ch 1 3 6))
+	:number (line (ch 1000 1400) (ch 1 3 6))
 	:pan (index tab1 (rv a a))
 	)

@@ -8,7 +8,9 @@ import random
 import functools
 import sys,getopt
 from time import sleep
+from time import time
 import uuid
+from string import Template
 
 # TODO
 
@@ -20,9 +22,6 @@ import uuid
 # a new st.write variant could be st.append: it adds a single value to a table. past values can simply be reached through the normal streams 
 # with the table as parameter.
 # (~ append tab1 (rv 0 100)) would add a random value between 0 100 to a table
-
-# higher abstractions could be imagined, a 'smart' array that updates itself every now and then, has its own inner logic.
-# a changing, evolving state. 
 
 #  /usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck  
 
@@ -153,6 +152,10 @@ class UniqueName(object):
     "creates unique names with a prefix, used for temp functions"
     def __init__(self):
         self.prefixDict = {}
+        self.creation = str(int(time()))
+
+    def thisShred(self):
+        return 'shred-'+self.creation;
 
     def name(self,prefix):
         "returns a unique name based on a prefix, if used before adds _2 _3 etc.."
@@ -224,6 +227,7 @@ class Cisp(object):
 class StringParser:
     def __init__(self,seq):
         self.lst = seq
+
 
     def nextToken(self):
         if (self.lst):
@@ -438,7 +442,7 @@ class Cloner(StreamCall):
         # this is needed to move from seq() to st.seq.
 
         self.numberOfClones = arguments.pop() # pop the number of times from the arguments
-        print('self numberOfClones',self.numberOfClones,type(self.numberOfClones))
+
         self.arguments = arguments # including the keyed args
 
         self.env = environment # a bit nasty to do it like this but okay
@@ -666,8 +670,36 @@ spork ~ """+sparkName+"""();
             return False
         return True
 
-class FBSynth(DirectSynth):
+class ChannelSynth(EventGenerator):
     "A function that calls a non-standard synth"
+    # translator of names: 
+
+    def __repr__(self):
+        # generate a name, lookup synth name, construct a Synth shred, spork it.
+        sparkName = unique.name('shred')
+        print("self.arguments",self.arguments)
+        value, dura, amp, channel = self.arguments
+
+        chuckCode = """
+fun void """+sparkName+"""() {
+"""+self.name+""" s ;""" +self.deferedParsFormatted()+"""\n
+
+s.init("""+value+'\n,'+dura+'\n,'+amp+'\n,'+channel+"""\n\n);
+
+day => now;
+}
+spork ~ """+sparkName+"""();
+""" # creates a function sparkname and immediately execute 
+        return chuckCode
+
+    def checkArgs(self):
+        if len(self.arguments) != 4:
+            print("error, ChannelSynth wrong number of args (should be 4): "+str(len(self.arguments)))
+            return False
+        return True
+
+class FBSynth(DirectSynth):
+    "A function that calls a non-standard synth, with feedback loop"
     # translator of names: 
 
     def __repr__(self):
@@ -695,7 +727,7 @@ spork ~ """+sparkName+"""();
 
     def checkArgs(self):
         if len(self.arguments) in [5,6]:
-            print("error, wrong number of args (should be 5 or 6, amp time pan freq fb): ",len(self.arguments))
+            print("error, wrong number of args (should be 5 or 6, amp time pan freq fb): ",str(len(self.arguments)) )
             return False
         return True
 
@@ -771,7 +803,7 @@ class Wr(StreamCall):
     def evaluateArgs(self):
         # do not evaluate the name
         x = self.arguments
-        self.valueName = x[0]
+        self.valueName = x[0] + unique.thisShred()
         self.value = eval(x[1], self.env, self.depth+1)
 
     def __repr__(self):
@@ -781,7 +813,7 @@ class Rd(StreamCall):
     "this reads values, therefore, does not try to evaluate name"
     def evaluateArgs(self):
         # do not evaluate the name
-        self.valueName = self.arguments[0]
+        self.valueName = self.arguments[0] + unique.thisShred()
 
     def __repr__(self):
         return 'st.rd("'+self.valueName+'") '
@@ -910,19 +942,26 @@ spork ~ """+funcName+"""();
 """
 
 class CustomOperator(StreamCall): 
-    "This creates a CustomOperator subclass, it requires a name and a string that is evaluating to"
-    def __str__(self):
-        return self.__repr__()
+    "This creates a CustomOperator subclass, it requires a name and a string that is evaluating to" 
 
-    # def __repr__(self):
-    #     "this is the central construction of the function call"
-    #     return self.name + "(" + self.printArguments() + ")" + self.setters()
+    def evaluateArgs(self):
+        "this avaluates the arguments"
+        print("ARGUMENTS",self.arguments)
+        self.operatorName = self.arguments.pop(0) 
+        self.operatorName = unique.name(self.operatorName)
+        self.operatorCode = self.arguments.pop(0).replace("\"",'') 
+        print(self.operatorCode,"OPERATORCODE")
 
-    # def evaluateArgs(self):
-    #     "this avaluates the arguments"
-    #     self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments]  
-
-
+    def __repr__(self):
+        chuckCode = Template("""
+            class CustomOperator${name} extends ST_operator {
+                fun float operator(float a,float b) {
+                    return ( ${operation} ) $$ float;
+                }
+            }
+            CustomOperator${name} ${name};
+            """)
+        return chuckCode.substitute(name=self.operatorName,operation=self.operatorCode)
 
 def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)' , st_velo='st.st(80)' ):
     "creates a little Midi instrument inst"
@@ -1044,6 +1083,7 @@ def standard_env():
         'step-gen' : { 'name' : 'StepSynth', 'args' : 2,                'class':DirectSynth },
         'pulse-gen' : { 'name' : 'PulseSynth', 'args' : 2,              'class':DirectSynth },
         'line-gen' : { 'name' : 'LineSynth', 'args' : 2,                'class':DirectSynth },
+        'channel-synth' : { 'name' : 'ChannelSynth', 'args' : [3,4]       , 'class' : ChannelSynth },
         'pulse-fb-gen' : { 'name' : 'PulseFBSynth' , 'args' : [5,6] , 'class':FBSynth },
         'pulse-fb-gen2' : {'name' : 'PulseFBSynth2' , 'args' : [5,6], 'class' : FBSynth },
         'step-pan-gen' : { 'name' : 'StepPanSynth', 'args' : 3,         'class':PanSynth },
@@ -1117,7 +1157,10 @@ def standard_env():
         'guardControl' : { 'name' : 'st.guardControl', 'args' : 2 },
         'guardedWalk' : { 'name' : 'st.guardedWalk' , 'args' : 2 },
         'apply' : { 'name': 'st.apply' , 'args' : 2 },
-        'define' : { 'name' : 'st.define', 'args' : 2, 'class' : Define }
+        'define' : { 'name' : 'st.define', 'args' : 2, 'class' : Define },
+        'customOperator' : { 'name' : 'customOperator', 'args' : 2, 'class' : CustomOperator },
+        'delay' : { 'name' : 'st.delay' , 'args' : 3 },
+        'diff' : { 'name' : 'st.diff', 'args' : 1 }
     })
     return env
     
@@ -1178,7 +1221,8 @@ def makeStringFinder(arg):
 
 def eval(x, env=global_env, depth = 0,listlist = False):
     #env = global_env
-    "Evaluate an expression in an environment."
+    "Evaluate an expression in an environment. This is the actual parsing of tokens/symbols corresponding objects that generate chuck code"
+
     if isinstance(x, Symbol):      # variable reference, not a function call
         if x[0] == '\"' and x[-1] == '\"': # it may be a path
             return x # return the path, don't try to eval
@@ -1351,6 +1395,7 @@ def main(argv):
    command = runshreds[command]
 
    command(outputfile)
+
 
 if __name__ == "__main__":
    main(sys.argv[1:])
