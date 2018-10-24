@@ -87,14 +87,24 @@ SynthDef(\ping,
 }).send(s);
 )
 
+s.latency = 1.5;
+
+{
+	/* snare */
+		var env = EnvGen.ar( Env.perc(0.001,1)) ;
+		SinOsc.ar( 200, 0, 1);
+
+}
+
+
 (
 SynthDef(\ping,
 {   | freq = 220, duration = 1.0, amp = 0.1, filter = 1000, filterEnvMup = 1.0 , pan = 0.0|
 	var s1, s2,env,filterEnv;
-		s1= SinOsc.ar(freq,1);
+				s1= Saw.ar(freq:[freq*0.999,freq*1.001,freq*1.0],mul:1).sum;
 	env = EnvGen.ar( Env.perc(0.001,duration,curve:-2), doneAction:2);
-	filterEnv = EnvGen.ar( Env.perc(0.001,duration,curve:-2), doneAction:2);
-		s2 = BLowPass.ar(s1,freq:filter,rq:1) * env * amp ;
+	filterEnv = EnvGen.ar( Env.perc(0.1,duration,curve:-2), doneAction:2);
+		s2 = BLowPass.ar(s1,freq:filter,rq:0.1) * env * amp ;
 		OffsetOut.ar(0,Pan2.ar(s2,pan));
 }).send(s);
 )
