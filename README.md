@@ -1,17 +1,19 @@
-### This will be a library alowing you to use a Scheme like syntax to do non-standard synthesis.
+### Cisp is a simple (scheme inspired) interpreter that translates "Cisp" code into ChucK code.
 
 # requirements
 
-chuck command line
-my chugins (especially Linseg, DelayC)
-(optional) sublime text 2
+[ChucK Command Line](http://chuck.cs.princeton.edu/release/)
+[My chugins](https://github.com/casperschipper/chugins) (specifically: Linseg, DelayC)
+[My chuck Tools](https://github.com/casperschipper/ChucK-Tools)
 
-Cisp takes a scheme like input file (.lisp), and translates it to a chuck file (output.ck), which is added to the chuck virtual machine.
+I personally use it with sublime text and use a builder script to run Cisp input into Chuck.
 
-Cisp is using a lot of my Stream (ST_*) classes, which can be used to create supercollider events, or direct non standard synthesis.
+Cisp.py takes a scheme like input file (.lisp), and translates it to a chuck file (output.ck), which is added to the chuck virtual machine.
+
+Cisp is using my ChucK Stream (ST_*) classes, which can be used to create supercollider events, or direct non standard synthesis.
 
 Before using cisp, you have to start chuck in loop mode, for example like this:
-chuck --chugin-path:/Users/[yourusername]/Library/Application\ Support/ChucK/ChuGins /Users/[yourusername]/Google\ Drive/ChucK/tools/Tools.ck --loop
+` chuck --chugin-path:/Users/[yourusername]/Library/Application\ Support/ChucK/ChuGins /Users/[yourusername]/Google\ Drive/ChucK/tools/Tools.ck --loop`
 
 # Using sublime build script
 
@@ -60,5 +62,16 @@ and to automatically run cisp.py
 
 (~ casper) to read
 
+### define table
+
+(# casper (fillf 32 0 128))
+
+### write to table
+
+(procedure foo (write casper (count 128) (rv 1 128))
+
+which can be scheduled as
+
+(schedule foo (st 0.5)) // schedules every 0.5 seconds.
 
 
