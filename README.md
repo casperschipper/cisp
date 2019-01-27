@@ -1,14 +1,15 @@
 ### Cisp is a simple (scheme inspired) interpreter that translates "Cisp" code into ChucK code.
 
-# Requirements
-
 Cisp is my live coding tool that is specifically targeted at:
 1. Non-standard synthesis (the use of compositional techniques directly on generating waveforms).
 2. Algorithmic composition generating live Midi or OSC output.
 
+# Requirements
+
 [ChucK Command Line](http://chuck.cs.princeton.edu/release/)<br>
 [My chugins](https://github.com/casperschipper/chugins) (specifically: Linseg, DelayC)<br> 
 [My chuck Tools](https://github.com/casperschipper/ChucK-Tools)<br>
+Python
 
 My live coding sessions are set up like this:
 
