@@ -27,24 +27,26 @@ To make coding faster, I use a build scripts wich runs the .lisp file into cisp.
 
 ## non-standard synthesis
 
-(step-gen [amp] [number-of-samples])
+
+`(step-gen [amp] [number-of-samples])`
 
 
 * white noise
-
+<pre>
 	(step-gen 
-  		(rv -1 1) // random value
-  		(st 1)) // one sample constant value
+  		(rv -1 1) 
+  		(st 1))</pre>
 
 
 * very fast sequencer
-
+<pre>
 	(step-gen
   		(seq -1 1) // seq loops through a list ad infinitum -1 1 -1 1 -1 1 etc..
   		(seq 10 11 12 11 100 1100)) 
-
+</pre>
 * gendy like
 
+<pre>
 	(fun amp
 		(bounded-walk -1 1 (ch -0.01 0.01))) // bounded-walk min max step
 
@@ -54,30 +56,33 @@ To make coding faster, I use a build scripts wich runs the .lisp file into cisp.
 	(step-gen
 		(seq amp amp amp amp)
 		(seq tim tim tim tim)) 
+</pre>
 
-
-
+<pre>
 (t
 	(seq 10 20 30)
 	(ch 1 2 3 5))
+	
+	</pre>
 
 ### easy bus
 
-(~ casper (rv 1 100)) creates a bus
 
-(~ casper) to read back the bus somewhere else (note, these are completely global)
+`(~ casper (rv 1 100))` creates a bus
+
+`(~ casper)` to read back the bus somewhere else (note, these are completely global)
 
 ### define table
 
-(# casper (fillf 32 0 128))
+`(# casper (fillf 32 0 128))`
 
 ### write to table
 
-(~ foo (write casper (count 128) (rv 1 128))
+`(~ foo (write casper (count 128) (rv 1 128))`
 
 which can be scheduled as
 
-(schedule foo (st 0.5)) // which means that foo gets written every 0.5 seconds
+`(schedule foo (st 0.5))` // which means that foo gets written every 0.5 seconds
 
 video demo's will follow soon !
 
