@@ -1021,6 +1021,8 @@ def standard_env():
 
     env.update({
         'true' : {'name':'true',    'args':0,           'class':Literal}, #this is a literal
+        'pi' : { 'name' : '3.1415927535', 'args' : 0, 'class' : Literal },
+        'twopi' : { 'name' : '6.2831853072', 'args' : 0, 'class' : Literal },
         'seq': {'name':'st.seq',    'args':inf,         'class':ListStreamCall},
         'rv' : {'name': 'st.rv',    'args': 2 },
         'rf' : {'name' : 'st.rf' , 'args': 2},
@@ -1048,6 +1050,7 @@ def standard_env():
         'tlatch' : {'name' : 'st.tLatch', 'args':2},
         'tLatch' : {'name' : 'st.tLatch', 'args':2},
         'line' : {'name' : 'st.line', 'args':2},
+        'linseg' : {'name' : 'st.linseg', 'args' : [3,4] },
         'mup-walk' : {'name' : 'st.mupWalk', 'args':2},
         'bounded-walk' : { 'name' : 'st.boundedWalk','args':3 },
         'bouncy-walk' : { 'name' : 'st.bouncyWalk', 'args':3 },
@@ -1056,7 +1059,7 @@ def standard_env():
         'bouncy-list-walk' : { 'name' : 'st.bouncyListWalk', 'args' : 2},
         'list-walk' : {'name' : 'st.walkList', 'args':[1,2]},
         'list-walk-lin' : {'name':'st.listWalkLin', 'args': 2 },
-        'write' : { 'name' : 'st.write', 'args' : [3,4] },
+        'write' : { 'name' : 'st.write', 'args' : [3,4] }, # table, value, index
         'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
@@ -1078,7 +1081,9 @@ def standard_env():
         'overwrite' : { 'name' : 'st.overwrite' ,'args' : 1},
         '=' : { 'name' : 'st.overwrite' , 'args' : 1},
         'pow' : { 'name' : 'st.pow' , 'args' : 2 },
-        'sin' : { 'name' : 'st.sine' , 'args' : 1},
+        'cycle' : { 'name' : 'st.sine' , 'args' : 1},
+        'sin' : { 'name' : 'st.sin' , 'args' : 1 },
+        'tanh' : { 'name' : 'st.tanh' , 'args' : 1},
         'linlin' : { 'name' : 'st.linlin' , 'args' : 5 },
         'map' : {'name' : 'st.map' , 'args' : 5 },
         'scaleAC' : { 'name' : 'st.scaleAC', 'args' : 3 },
@@ -1129,7 +1134,7 @@ def standard_env():
         'rd' : { 'name' : 'st.rd' , 'args' : 1, 'class' : Rd },
         'take' : {'name': 'st.take', 'args' : 1 },
         'diff' : {'name' : 'st.diff' , 'args' : 1 },
-        'normalize' : { 'normstream' : 'st.normStream' , 'args' : inf },
+        'normalize' : { 'name' : 'st.normStream' , 'args' : inf,  'class' : ListStreamCall},
         'OSC.table1' : { 'name' : 'OSC.table1' , 'args' : 0, 'class' : Literal },
         'OSC.table2' : { 'name' : 'OSC.table2' , 'args' : 0, 'class' : Literal },
         'OSC.table3' : { 'name' : 'OSC.table3' , 'args' : 0, 'class' : Literal },

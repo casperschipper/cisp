@@ -1,0 +1,25 @@
+(fun step
+	(index
+		((hold (ch -1 1) (loop (ch 1 2 4 8 16 32) (st 4) (rv 1 8)))
+		(st -1))
+		(hold (st 0) (exprv 1 100000 10))))
+
+(fun blah
+(t
+(mtor (rv -32 32))
+(t (ch 0.001 0.002 0.01 0.4 0.8 1.6) (ch 0.01 0.4 0.8 1.6))))
+
+(fun top
+(t
+(rv 0 512)
+(ch 5 7)))
+
+(fun indexer
+	(bounded-walk top top (* step blah)))
+
+(step-pan-gen
+(index OSC.table9 indexer)
+(st 1)
+(st 1))
+
+This piece explores a landscape of waveforms 

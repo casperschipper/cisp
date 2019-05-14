@@ -9,6 +9,15 @@ import functools
 # How to do panning ?
 # how to add multiple pars to sc
 # how to do more feedback delays
+# have chuck based loops:
+#while (true) {
+#   action
+#    second => now;
+#    action
+#    second => now;
+#    action;
+#}
+
 
 # eval should remember if a list is generated from numbers (typed list), when a list is nested it should still know its origin
 
