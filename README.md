@@ -21,7 +21,7 @@ You will need to start chuck in loop mode, with my chugins and tools loaded, som
 
 # Using sublime build script
 
-To make coding faster, I use a build scripts wich runs the .lisp file into cisp.
+To make coding faster, I use a build script wich runs the .lisp file into cisp.
 
 # Basic syntax
 
@@ -31,7 +31,7 @@ To make coding faster, I use a build scripts wich runs the .lisp file into cisp.
 `(step-gen [amp] [number-of-samples])`
 
 
-* white noise
+* white noise *
 <pre>
 	(step-gen 
   		(rv -1 1) 
