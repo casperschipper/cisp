@@ -32,12 +32,12 @@
 		(write
 			buffy
 			(bounded-list-walk (st 0) (~ high) buffy stepper)
-			(seq (count2 44100) (latch (st 1) (rv 0 1000000))))
+			(seq (count2 44100) (latch (st 1) (rv 0 100))))
 		(st 1)
 		(t
 			(list-walk buffy stepper)
 			(/ 1.0 (mtof (rv 0 80)))))
-	4)
+	1)
 
 
 (step-gen

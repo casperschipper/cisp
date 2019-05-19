@@ -26,7 +26,7 @@
 		0 (
 			(guardTest (< 128) (+ (ch 126)))
 			(guardTest (> 0) (- (ch 126)))
-			(otherwise (hold (ch 1 1) (st 10))))))
+			(guard (hold (ch 1 1) (st 10))))))
 
 (fun mask 
 	(line (seq a a) (fractRandTimer (ch 0.1 0.2 (line (seq 0.1 1.5) (ch 1 3 5))))))

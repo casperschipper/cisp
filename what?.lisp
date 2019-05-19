@@ -7,7 +7,7 @@
 			
 			(count 1024)))
 
-(step-gen
+(schedule
 	writeHead
 	(st 1))
 

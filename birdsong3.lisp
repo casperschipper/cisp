@@ -21,5 +21,5 @@
 
 (clone (step-gen
 	(cycle (mtof freq))
-	(st 1) :pan (rvfi -1 1)) 8)
+	(st 1) :pan (rvfi -1 1)) 1)
 
