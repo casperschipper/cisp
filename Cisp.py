@@ -777,6 +777,19 @@ class MidiNoteStream(StreamCall):
     def printArguments(self):
         return MidiChuckInstrStr(*self.arguments)
 
+class OscStreamInst(StreamCall):
+    "This is  used to create SuperCollider OSC messages, using a synth and than some parameters"
+    def __repr__(self):
+        # this is the central construction of the function call:
+        return self.printArguments() 
+
+    def evaluateArgs(self):
+        x = self.arguments
+        self.arguments =  [str(x[0])] + [eval(exp, self.env, self.depth+1) for exp in x[1:]] # evaluate everything but the name of the instrument
+
+    def printArguments(self):
+        return OscStreamInstStr(*self.arguments)
+
 class MidiControlStream(MidiNoteStream):
     "This is a bridge to create a stream of midi controller changes"
     def printArguments(self):
@@ -915,6 +928,39 @@ class SuperChuckInstStrClass(EventGenerator):
 
         constructedString = """function void """+ funcName +"""() { 
         SuperChuck s;
+        """+deferedParsString+"""
+        s.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
+        s.timer("""+timer+""");
+        s.play();
+        day => now;
+        } spork ~ """
+        #print constructedString
+
+        return constructedString+funcName+"();\n"
+
+class OscStreamInstr(EventGenerator):
+    # this is a new class to be used in situations were the parameters do not follow standard.
+
+    def evaluateArgs(self):
+        "this avaluates the arguments"
+        instrumentName = self.arguments.pop(0) # do not eval instrumentName
+        self.arguments = [instrumentName] + [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
+
+    def __repr__(self):
+        funcName = unique.name('oscStreamFunc')
+        # the arguments are collected in a dict, use expansion on the list !!!!
+        instrumentName = self.arguments[0]
+        timer = self.arguments[1]
+
+
+        extraParsString = self.extraParsFormatted()
+        # here is the final string
+        #print "extraParsString",extraParsString
+        deferedParsString = self.deferedParsFormatted()
+        #print ("these are the defered streams: ",deferedParsString)
+
+        constructedString = """function void """+ funcName +"""() { 
+        OscStream s;
         """+deferedParsString+"""
         s.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
         s.timer("""+timer+""");
@@ -1101,6 +1147,7 @@ def standard_env():
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
+        'osc-stream' : { 'name' : 'OscStream', 'args' : range(1,64),   'class' OscStreamInst },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
         'slider' : { 'name' : 'st.midiCtrl' , 'args': [1] },
