@@ -27,7 +27,7 @@
 		(t
 			(list-walk buffy stepper)
 			(/ 1.0 (mtof (rv 0 80)))))
-	3)
+	1)
 
 
 (step-gen

@@ -1,18 +1,16 @@
-(# buffy (collect (st 0) 128))
+(# buffy (collect (rv -1 1) 128))
 
 (fun writeHead
-	(t
 		(write
 			buffy
-			(rv -1 1)
+			(+ (audioIn 0) (rv -0.1 0.1))
 			
-				(count 128))
-		(st 0.1)))
+				(count 128)))
 
 (~ a
-	(line
-		(ch 1 3 5 100 200 1000)
-		(ch 1 3 5)))
+	(t
+		(ch 1 2 3 0.5 40)
+		(t (ch .01 3 5) (ch .01 3 5))))
 
 
 (fun stepper
@@ -22,8 +20,8 @@
 
 (~ high
 	(t
-		(ch 32 4 64 128 256)
-		(fractRandTimer (grow 0.001 2 8))))
+		(ch 128 64)
+		(fractRandTimer (grow 0.01 2 8))))
 
 (clone
 	(step-pan-gen
@@ -31,12 +29,14 @@
 		(st 1)
 		(t
 			(list-walk buffy stepper)
-			(/ 1.0 (mtof (rv 0 80)))))
+			(/ 1.0 (mtof (rv 0 10)))))
 	3)
 
 
 (step-gen
 	(* writeHead 0)
 	(st 1))
+
+
 
 

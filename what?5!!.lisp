@@ -29,14 +29,15 @@
 
 (clone
 	(step-pan-gen
-		(write
+		(loop (write
 			buffy
 			(bounded-list-walk (st 0) (~ high) buffy stepper)
 			(seq (count2 44100) (latch (st 1) (rv 0 100))))
+		(ch (grow 2 2 8)) (ch (grow 2 2 8)))
 		(st 1)
 		(t
 			(list-walk buffy stepper)
-			(/ 1.0 (mtof (rv 0 80)))))
+			(/ 1.0 (mtof (rv -20 80)))))
 	1)
 
 

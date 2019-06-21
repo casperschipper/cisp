@@ -1,5 +1,5 @@
 (# timy
-	(1. 4 7 23 22 1 17 3 4 2 1 2 3 2 3 4 5 55 44 13 17 330 220 512 128 1 4 512 430))
+	(1. 4 7 23 22 1 17 3 4 2 1 2 3 2 3 4 5 55 44 13 17 330 220 512 128 1 4 512 4300 6500))
 
 (procedure casper
 	(# timy
@@ -14,7 +14,7 @@
 					(rv 1 7)
 					)
 				(latch
-					(rv 20 2000)
+					(rv 2000 8000)
 					(ch 1 7 20)
 					)
 				(latch 
@@ -51,7 +51,7 @@
 
 
 (clone 
-(pulse-fb-gen2
+(pulse-fb-gen
 	(index-lin
 		(list
 			(seq  -1 1)
@@ -77,6 +77,6 @@
 			(seq OSC.table3)
 			)
 		(line (rv 0 6) (ch 1 2 3 4 5 6)))
-	(t (mtof (+ (index (fillf 32 20 100) reader) (seq 0 7 12 19 24 28 true)) ) (fractRandTimer (ch 0.001 0.1 0.2 0.4 0.8 1.6)))
+	(t (mtof (+ (index (fillf 32 0 100) reader) (seq 0 7 12 19 24 28 true)) ) (fractRandTimer (ch 0.001 0.1 0.2 0.4 0.8 1.6)))
 	(index OSC.table1 reader))
 1)

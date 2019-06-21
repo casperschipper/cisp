@@ -5,7 +5,7 @@
 
 (fun b
 	(line
-		(ch 1000 1100)
+		(ch 1 2)
 		(rv 100 101)))
 
 (fun c 
@@ -25,8 +25,8 @@
 
 (fun freq
 		(linseg 
-			(ftom (list-walk (list 3 30 b 100 20000 c) (hold (seq 0 0 1 2 3) holder)))
-			(ftom (list-walk (list 5100. b 30 10 80 10) (hold (seq 1 2 0 3) holder)))
+			(ftom (list-walk (list 3 30 b 100 1 c) (hold (seq 0 0 1 2 3) holder)))
+			(ftom (list-walk (list 2 b 30 10 80 10) (hold (seq 1 2 0 3) holder)))
 			a))
 
 (clone (step-gen

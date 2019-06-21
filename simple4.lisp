@@ -1,3 +1,5 @@
+// THIS IS REALLY GOOD
+
 (fun bigOrSmall
 	(t
 	(seq (weights ((1 100) (1000 10))) (rv 1 3) (rv 1 55))

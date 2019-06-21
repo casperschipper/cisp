@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# THIS IS THE FILE
+
 import math
 import operator as op
 import re
@@ -52,6 +54,8 @@ class FileIO(object):
         for line in self.inFile:
             data += line
 
+        print "remove comments", self.remove_comments(data)
+        
         self.cleanFile.write(self.remove_comments(data))
         self.cleanFile.close()        
 
@@ -176,6 +180,7 @@ class Cisp(object):
         #TODO REMOVE
         # lex the text, convert S-expressions to python lists
         self.parsedText = self.parse(text)
+        
         # clean all the string stuff, combine paths with space inside
         self.parsedText = StringParser(self.parsedText).parse()
         #print "self.parsedText",self.parsedText
@@ -231,36 +236,54 @@ class StringParser:
 
     def nextToken(self):
         if (self.lst):
+            print "debug: self.lsg",self.lst
             return self.lst.pop(0)
         return False
 
     def parse(self):
         "This ugly beast takes care of file strings and comments"
-        result = [] 
+        result = []
+        print '1. parse is called', self.lst
+        
         
         item = self.nextToken()
+        
         while (item is not False): # first item passed, is not because of 0 should be parsed
+            #print "2. ok first step is ok"
             if type(item) == type([]): # if it is a list, parse it first than add to list
+                #print "3. item is list, so call a new one", item
                 parser = StringParser(item)
                 result = result + [parser.parse()]
             elif type(item) == type(""): # if the item is a string
-                if item[0] == '\"':
-                    combined = item # start a combined 
+                #print "4. item is a string", item
+                if item[0] == '"':
+                    #print "5. oooh, the first character is a quotation", item
+                    combined = item # start a combined
+                    #print "6. combined =", combined
                     item = self.nextToken() # move on to next
                     while (item is not False): # if there is one
+                        #print item, "7. item not false"
                         if type(item) == type(""):
                             combined = combined + ' ' + item
-                            if item[-1] == '\"': # we reached the end
+                            if item[-1] == '"': # we reached the end
+                                #print "8. we reached the end", item
                                 result = result + [combined] # store the combined result
+                                print result
                                 break
                         else:
                             print( "ERROR unexpected string break" )
+                        #print "9. next token"
                         item = self.nextToken() # get next token
+                    print "while finished"
+                    break
                 else: # it is just a string not a special one
+                    #print "10. not a special string", item
                     result = result + [item]
+                    #print "11. this is the result", result
             else: # it is not a string, but a number
                 result = result + [item]
-            item = self.nextToken() # get the next token 
+            item = self.nextToken() # get the next token
+        #print "12. return result", result
         return result
 
 
@@ -777,19 +800,6 @@ class MidiNoteStream(StreamCall):
     def printArguments(self):
         return MidiChuckInstrStr(*self.arguments)
 
-class OscStreamInst(StreamCall):
-    "This is  used to create SuperCollider OSC messages, using a synth and than some parameters"
-    def __repr__(self):
-        # this is the central construction of the function call:
-        return self.printArguments() 
-
-    def evaluateArgs(self):
-        x = self.arguments
-        self.arguments =  [str(x[0])] + [eval(exp, self.env, self.depth+1) for exp in x[1:]] # evaluate everything but the name of the instrument
-
-    def printArguments(self):
-        return OscStreamInstStr(*self.arguments)
-
 class MidiControlStream(MidiNoteStream):
     "This is a bridge to create a stream of midi controller changes"
     def printArguments(self):
@@ -949,6 +959,9 @@ class OscStreamInstr(EventGenerator):
     def __repr__(self):
         funcName = unique.name('oscStreamFunc')
         # the arguments are collected in a dict, use expansion on the list !!!!
+        print(self.arguments)
+        print("what is this")
+
         instrumentName = self.arguments[0]
         timer = self.arguments[1]
 
@@ -960,14 +973,13 @@ class OscStreamInstr(EventGenerator):
         #print ("these are the defered streams: ",deferedParsString)
 
         constructedString = """function void """+ funcName +"""() { 
-        OscStream s;
+        OSCStream s;
         """+deferedParsString+"""
         s.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
         s.timer("""+timer+""");
         s.play();
         day => now;
         } spork ~ """
-        #print constructedString
 
         return constructedString+funcName+"();\n"
 
@@ -1147,7 +1159,7 @@ def standard_env():
 
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
-        'osc-stream' : { 'name' : 'OscStream', 'args' : range(1,64),   'class' OscStreamInst },
+        'osc-stream' : { 'name' : 'OscStream', 'args' : range(1,64),   'class' : OscStreamInstr },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
         'slider' : { 'name' : 'st.midiCtrl' , 'args': [1] },
@@ -1168,6 +1180,7 @@ def standard_env():
         'clone' : {'name' : 'cloner' , 'args' : [1,2],                     'class':Cloner},
         'fractRandTimer' : { 'name' : 'st.fractRandTimer', 'args': inf},
         'grow' : {'name':'cs.grow' , 'args' : 3 },
+        'geo' : {'name' : 'cs.geo', 'args' : 3 },
         'num' : {'name' : 'cs.number' , 'args' : 1 },
         'number' : {'name' : 'cs.number', 'args' : 1},
         'flt' : { 'name' : 'cs.float' , 'args' : 1},
@@ -1214,7 +1227,11 @@ def standard_env():
         'define' : { 'name' : 'st.define', 'args' : 2, 'class' : Define },
         'customOperator' : { 'name' : 'customOperator', 'args' : 2, 'class' : CustomOperator },
         'delay' : { 'name' : 'st.delay' , 'args' : 3 },
-        'diff' : { 'name' : 'st.diff', 'args' : 1 }
+        'diff' : { 'name' : 'st.diff', 'args' : 1 },
+        'audioIn' : { 'name' : 'st.audioIn','args' : 1},
+        'zeroCount' : { 'name' : 'st.zeroCount' ,'args' : [1,2] },
+        'freqCount' : { 'name' : 'st.freqCount', 'args' : [1,2] },
+        'steno' : { 'name' : 'cs.steno' , 'args' : 1, 'type' : 'intArray', 'class' : ArrayGen },
     })
     return env
     
@@ -1276,9 +1293,10 @@ def makeStringFinder(arg):
 def eval(x, env=global_env, depth = 0,listlist = False):
     #env = global_env
     "Evaluate an expression in an environment. This is the actual parsing of tokens/symbols corresponding objects that generate chuck code"
-
+    print x, "eval"
     if isinstance(x, Symbol):      # variable reference, not a function call
-        if x[0] == '\"' and x[-1] == '\"': # it may be a path
+        if x[0] == '"' and x[-1] == '"': # it may be a path
+            print "it's a path !!", x
             return x # return the path, don't try to eval
         symbol_object = env.find(x)[x] # return the name
         if ('isFunction' in symbol_object.keys()):

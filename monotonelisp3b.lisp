@@ -40,4 +40,4 @@
 	 (+ pitchy (~ adder))))
 (st 1) :pan (rvfi -1 1))
 
-8)
+4)
