@@ -9,6 +9,7 @@ import os
 import random
 import functools
 import sys,getopt
+import string
 from time import sleep
 from time import time
 import uuid
@@ -64,7 +65,8 @@ class FileIO(object):
 
     def remove_comments(self,string):
         "remove comments & multi-line comments"
-        pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
+        # pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
+        pattern = r"(/\*.*?\*/|//[^\r\n]*$)"
         # first group captures quoted strings (double or single)
         # second group captures comments (//single-line or /* multi-line */)
         regex = re.compile(pattern, re.MULTILINE|re.DOTALL)
@@ -183,7 +185,7 @@ class Cisp(object):
         
         # clean all the string stuff, combine paths with space inside
         self.parsedText = StringParser(self.parsedText).parse()
-        #print "self.parsedText",self.parsedText
+        print "self.parsedText",self.parsedText
         
         # evaluate the python lists to chuck code
         self.evaluatedText = eval(self.parsedText)
@@ -236,7 +238,7 @@ class StringParser:
 
     def nextToken(self):
         if (self.lst):
-            print "debug: self.lsg",self.lst
+            #print "debug: self.lsg",self.lst
             return self.lst.pop(0)
         return False
 
@@ -245,42 +247,43 @@ class StringParser:
         result = []
         print '1. parse is called', self.lst
         
-        
         item = self.nextToken()
         
         while (item is not False): # first item passed, is not because of 0 should be parsed
-            #print "2. ok first step is ok"
+            print "2. ok first step is ok"
             if type(item) == type([]): # if it is a list, parse it first than add to list
-                #print "3. item is list, so call a new one", item
+                print "3. item is list, so call a new one", item
                 parser = StringParser(item)
                 result = result + [parser.parse()]
             elif type(item) == type(""): # if the item is a string
-                #print "4. item is a string", item
+                print "4. item is a string", item
                 if item[0] == '"':
-                    #print "5. oooh, the first character is a quotation", item
+                    print "5. oooh, the first character is a quotation", item
                     combined = item # start a combined
-                    #print "6. combined =", combined
+                    print "6. combined =", combined
                     item = self.nextToken() # move on to next
                     while (item is not False): # if there is one
-                        #print item, "7. item not false"
+                        print item, "7. item not false"
                         if type(item) == type(""):
                             combined = combined + ' ' + item
                             if item[-1] == '"': # we reached the end
-                                #print "8. we reached the end", item
+                                print "8. we reached the end", item
                                 result = result + [combined] # store the combined result
                                 print result
                                 break
                         else:
                             print( "ERROR unexpected string break" )
-                        #print "9. next token"
+                        print "9. next token"
                         item = self.nextToken() # get next token
-                    print "while finished"
+                    print "while finished NEED TO FIX HERE", result
+                    
                     break
                 else: # it is just a string not a special one
-                    #print "10. not a special string", item
+                    print "10. not a special string", item
                     result = result + [item]
-                    #print "11. this is the result", result
+                    print "11. this is the result", result
             else: # it is not a string, but a number
+                print "11b. a it is a number"
                 result = result + [item]
             item = self.nextToken() # get the next token
         #print "12. return result", result
@@ -393,7 +396,7 @@ class StreamCall(object):
         return self.name + "(" + self.printArguments() + ")" + self.setters()
 
     def evaluateArgs(self):
-        "this avaluates the arguments"
+        "this evaluates the arguments"
         self.arguments = [eval(exp, self.env, self.depth+1) for exp in self.arguments] 
 
     def checkArgs(self):
@@ -452,7 +455,7 @@ class StreamCall(object):
         # there must be some way of telling to the outside world that this should be treaded as list thing when embedded in an SEQ.
         return "".join(['.'+str(key)+'(' + str(value) + ')' for key,value in self.extra.items()])
 
-class SingleStatement(StreamCall):
+class SingleStatement(StreamCall): # note the ; at the end, not be embedded in other expresssions
     def __repr__(self):
         return self.name + "(" + self.printArguments() + ")" + self.setters() + ';\n\n'
 
@@ -1021,6 +1024,87 @@ class CustomOperator(StreamCall):
             """)
         return chuckCode.substitute(name=self.operatorName,operation=self.operatorCode)
 
+def flatten(seq):
+    listed = [x if type(x) == list else [x] for x in seq]
+    return [val for sublist in listed for val in sublist]
+
+        
+class Steno(StreamCall):
+    def __init__(self,name,arguments,environment,depth):
+        # name enviroment depth is not important
+        if len(arguments) != 1:
+            raise Exception("using steno with messy arguments?" + arguments)
+        stenoString = arguments[0] # take the first and only argument
+        if stenoString[0] != '"' or stenoString[-1] != '"':
+            raise Exception("steno argument not proper string" + stenoString)
+        stenoString = stenoString.replace('"','') # remove the string parts
+        self.parts = stenoString.split(' ')	# split by ' ' space
+
+    def parse(self): 
+	# generators, should deal with '1!2' and '1..10'
+	# [1,1] & [1,2,3,4,5,6,7,8,9,10]
+        return map(self.parsePart,self.parts)
+
+    def parsePart(self,item):
+	# deal with ints and floats
+	try:
+            return int(item)
+	except ValueError:
+            try:
+                return float(item)
+	    except ValueError:
+                # it aint a float or an int, so must be a gen:
+	        return self.gen(item)
+
+    def gen(self,item):
+        if len(item) == 1:
+            try:
+                return int(item)
+            except ValueError:
+                try:
+                    return item.index(string.ascii_lowercase)
+                except ValueError:
+                    raise Exception("this item is a bit weird:"+item)
+        else:
+            #print "is not single value"
+            if ("!" not in item) and (".." not in item): 
+                chars = list(item)
+                print chars, " chars"
+                # it is a 'abc' kind of steno
+                return map(lambda char : string.ascii_lowercase.index(char), chars)
+            else:
+                elements = item.partition("!")
+                # it is using some kind of shorthand
+                if (elements[1] != ""):
+                    try:
+                        value = int(elements[0])
+                        repeats = int(elements[2])
+                        return [value for _ in range(repeats)]
+                    except ValueError:
+                        raise Exception("sorry, don't know what to do with this:"+elements)
+                else:
+                    elements = item.partition("..")
+                    if (elements[1] != ""):
+                        try:
+                            start = int(elements[0])
+                            end = int(elements[2])
+                            return range(start,end)
+                        except ValueError:
+                            raise Exception("sorry, don't know what to do with this:"+elements)
+                    else:
+                        raise Exception('steno error, invalid use :' + item)
+
+    def __repr__(self): 
+        return str(flatten(self.parse()))
+
+    def __str__(self):
+    	return self.__repr__();
+
+# test
+# print str(Steno('1!10 1..10 1 2 3 2.3'))
+
+    
+
 def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)' , st_velo='st.st(80)' ):
     "creates a little Midi instrument inst"
     funcName = unique.name('midi_instr')
@@ -1231,7 +1315,7 @@ def standard_env():
         'audioIn' : { 'name' : 'st.audioIn','args' : 1},
         'zeroCount' : { 'name' : 'st.zeroCount' ,'args' : [1,2] },
         'freqCount' : { 'name' : 'st.freqCount', 'args' : [1,2] },
-        'steno' : { 'name' : 'cs.steno' , 'args' : 1, 'type' : 'intArray', 'class' : ArrayGen },
+        'steno' : { 'name' : 'steno' , 'args' : 1, 'type' : 'intArray', 'class' : Steno },
     })
     return env
     
@@ -1295,6 +1379,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
     "Evaluate an expression in an environment. This is the actual parsing of tokens/symbols corresponding objects that generate chuck code"
     print x, "eval"
     if isinstance(x, Symbol):      # variable reference, not a function call
+        print "x is detected as sumbol"
         if x[0] == '"' and x[-1] == '"': # it may be a path
             print "it's a path !!", x
             return x # return the path, don't try to eval
@@ -1337,7 +1422,7 @@ def eval(x, env=global_env, depth = 0,listlist = False):
             return str(SingleCall(literalName));
 
 
-        #print "streamcall detected:",x
+        print "streamcall detected:",x
         proc = x[0]    
         args = x[1:]
 
