@@ -1,0 +1,7 @@
+(fun freq
+	(mtof (+ (seq 0 5 7) 60))
+)
+
+(step-gen
+(seq -1 1)
+(/ 44100 (t freq 0.1)))

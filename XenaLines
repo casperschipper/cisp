@@ -1,0 +1,15 @@
+(fun a
+(hold
+(ch 1 2 4 8 10 12 13)
+(rv 1 30)))
+
+(fun b
+(line
+(seq 0 8)
+(ch 7 15)))
+
+(line-gen
+(seq -1 1)
+(index
+(a a a a a a a a)
+(rv b b)))
