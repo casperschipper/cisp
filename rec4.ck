@@ -5,7 +5,7 @@
 
 // get name
 me.arg(0) => string filename;
-if( filename.length() == 0 ) "AzimuthSSPRec" => filename;
+if( filename.length() == 0 ) "gendyBirds2" => filename;
 
 // pull samples from the dac
 dac.chan(0) => Gain g1 => WvOut c1 => blackhole;
@@ -28,4 +28,6 @@ filename + "-4.wav" => c4.wavFilename;
 
 // infinite time loop...
 // ctrl-c will stop it, or modify to desired duration
-while( true ) 1::second => now;
+60::second => now;
+<<<"ok done">>>;
+ms => now;

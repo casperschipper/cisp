@@ -1,5 +1,5 @@
 (# tab1 (collect 
-	(walk 1 (seq 1 (latch (ch 1 0 0 0 20 3 4) (st 100000)))) 10))
+	(walk 1 (seq 1 (latch (list-walk (0.0 1 22 3 3 1 2  1 21 1 3 1 3 12  21)) (st 100000)))) 10))
 
 (# tab2 (collect
 	(mup-walk 0.001 (st 2)) 10))
@@ -21,7 +21,7 @@
 	
 
 (line-gen
-(seq (fillf 32 -1 1))
+(seq (fillf 128 -1 1))
 (index tab1 
 	(line 
 		(seq a b)

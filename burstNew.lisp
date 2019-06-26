@@ -58,21 +58,35 @@
 		(seq 1000 20000)
 		(rv 20 45)))
 
-(fun ratioLine
+(fun ratioA
 	(line
-		(seq 0.1 2.0)
-		(ch .1 3 5)))
+		(ch 1.5 2.0 1.25 1.333333333 1.4 3.14159265 1.4142)
+		(ch 3 5 6)))
+
+(fun ratioCreator
+	(seq ratioA (/ 1.0 ratioA)))
+
+(fun oneDur
+	(line
+		(seq 0.001 2.0)
+		(ch 1 3 7)))
+
+(~ indexBuf
+	(line
+		(seq 0 30)
+		(st 60)))
 
 (osc-stream 
 	historyPatch
-	(st 0.1)
-	:offset (line (seq 0 30) (st 300))//(line (+ (~ bFun) (rv 0 (~ range))) (st 10000))
-	:duration (st 5)
-	:ratio (reset (bounded-mup-walk (st 0.01) (st 10) (ch 0.6666667 1.5)) (st 1.0) (st 20))
-	:channel (list-walk (list 1 2 3 4 5 6 7 8) (hold (ch -1 1) (rv 1 16)))
-	:filter (reset (bounded-mup-walk (st 20) (st 15000) (ch 0.6666667 1.5)) (st 440) (st 20))
-	:drift (st 0)
-	:filterQ (st 30.0)
-	:filterGain (st 10)
-	:loop (st 2)
+	(seq (steno "0.0 0!10 3.0"))
+	:offset (+ (~ indexBuf) (rv 0.0 0.01))
+	:duration (rv 0 (line (seq 1 9) (ch 3 4)))
+	:ratio  (ch 0.5 0.25 1.0 1.5 2. 4)
+	:channel (list-walk (list 1 2 3 4 5 6 7 8) (hold (ch -1 1) (ch (steno "bcdbcdbcbdbccbcdbcbbcdddbcdbceffggfggfgfgcgcdbcbdbccccdbcdbbbbbbbbbbbebebebhhghghge"))))
+	:filter (mtof (rv 0 128))
+	:drift (rv 0 10)
+	:filterQ (rv 1 100)
+	:filterGain (st 4)
+	:mainGain (st 0.3)
+	:loop (rv 1 20)
 )

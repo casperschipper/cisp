@@ -24,8 +24,8 @@
 
 (~ high
 	(t
-		(ch 1 20 1024 2048 4048)
-		(fractRandTimer (grow 0.001 2 8))))
+		(ch (steno "jsdhkdjhergviuarvuvbybqoefnvbhhvibauhvbaehouvbhjfbjrabvjhbfsdvbhfvbhsdfbjhvbfbhjvshfdbvhshjebjhvbhbv bhjserb vhnsber vv"))
+		(fractRandTimer (grow 0.01 2 8))))
 
 (clone
 	(step-pan-gen

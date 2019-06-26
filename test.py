@@ -2,11 +2,11 @@ class Foo:
 	def __init__(self,args):
 		self.args = args
 
-	def bar(self):
-		print self.args
+	def bar(self,arg):
+		print arg
 
-	def foobar(self):
-		self.bar()
+	def mapper(self):
+		map(args,arg)
 
 a = Foo("casper")
 a.foobar()

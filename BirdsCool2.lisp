@@ -21,8 +21,8 @@
 (fun freq
 	(* 
 		(hold
-		(list-walk (grow 800 1.5 14) (hold (seq three three) (ch three three)))
-		(* (list-walk (grow 1 2 10) (hold (seq three three) (seq three three))) 1)) transpose) )
+		(list-walk (steno "50..51 6000..6100 19000..19500") (hold (seq three three) (ch three three)))
+		(* (list-walk (grow 1 1.5 10) (hold (seq three three) (seq three three))) 1)) transpose) )
 
 (sync 0.14)
 
@@ -32,6 +32,7 @@
 	(rv 1000 30000)
 	))
 
-(step-gen
+(step-pan-gen
 (seq values values)
-(/ 44100 (loop freq lsize (st 30))))
+(/ 44100 (loop freq lsize (st 8)))
+(seq values values))
