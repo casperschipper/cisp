@@ -21,7 +21,7 @@
 (fun freq
 	(* 
 		(hold
-		(list-walk (steno "6000..6033 19000..19100") (hold (seq three three) (ch three three)))
+		(list-walk (steno "0..10 6000..6033 19000..19100") (hold (seq three three) (ch three three)))
 		(* (list-walk (grow 1 1.5 10) (hold (seq three three) (seq three three))) 1)) transpose) )
 
 (sync 0.14)

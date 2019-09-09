@@ -1263,6 +1263,7 @@ def standard_env():
         'sci' : { 'name' : 'sci', 'args' : [1,2,3,4,5,6],               'class':SuperChuckInst },
         'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
         'osc-stream' : { 'name' : 'OscStream', 'args' : range(1,64),   'class' : OscStreamInstr },
+        'osc-in' : { 'name' : 'st.oscin' , 'args' : 2 },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
         'slider' : { 'name' : 'st.midiCtrl' , 'args': [1] },
@@ -1316,7 +1317,9 @@ def standard_env():
         'table-cap' : { 'name' : 'st.tableCap' , 'args' : 1 },
         'table-size' : { 'name' : 'st.tableCap' , 'args' : 1 },
         'hzPhasor' : { 'name' : 'st.hzPhasor', 'args' : 1},
+        'rampgen' : { 'name' : 'st.rampGen' , 'args' : 2},
         'sineseg' : { 'name' : 'st.sineseg' , 'args' : 1},
+        'impulse' : { 'name' : 'st.impulse' , 'args' : [1,2]},
         'couple' : { 'name' : 'st.couple' , 'args' : 2 },
         'solo' : {'name' : 'ShredEventStack.popAll', 'args' : 0, 'class' : SingleCall, 'isFunction' : True},
         'guard' : { 'name' : 'st.guard', 'args' : 1 },
@@ -1335,6 +1338,7 @@ def standard_env():
         'zeroCount' : { 'name' : 'st.zeroCount' ,'args' : [1,2] },
         'freqCount' : { 'name' : 'st.freqCount', 'args' : [1,2] },
         'steno' : { 'name' : 'steno' , 'args' : 1, 'type' : 'intArray', 'class' : Steno },
+        'samp-schedule' : { 'name' : 'st.sampSchedule' , 'class' : SingleStatement },
     })
     return env
     

@@ -51,6 +51,8 @@
 	(~ writeBuff)
 	(st 0.001))
 
+(fun walkHold)
+
 (step-pan-gen
 (index history (+ (hold offset 4) (count2 (hold (ch 16 32 64 128 32 512) (ch 3 4 5 6)))))
 (st 1)

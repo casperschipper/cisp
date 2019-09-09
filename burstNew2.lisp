@@ -81,17 +81,22 @@
 		(seq 0 127)
 		(ch 3 4 7)))
 
+(fun durMup
+	(line
+		(ch .1 .9 9)
+		(rv 1 7)))
+
 (osc-stream 
 	historyPatch
-	(line (seq 0.01 0.5) (ch 1 3 5))
+	(line (seq 0.004 0.01) (ch 1 3 5))
 	:offset (+ (~ indexBuf) (rv 0.0 0.01))
-	:duration (rv 0 (line (seq 1 9) (ch 3 4)))
-	:ratio  (line (seq 0.9 1.1) (ch 1 3 4))
+	:duration (rv 1.0 (line (* (seq 1 2 3) durMup) (ch 3 4)))
+	:ratio  (line (rv 0.5 2.0) (ch .02 .05 .5))
 	:channel (list-walk (list 1 2 3 4 5 6 7 8) (hold (ch -1 1) (ch (steno "bcdbcdbcbdbccbcdbcbbcdddbcdbceffggfggfgfgcgcdbcbdbccccdbcdbbbbbbbbbbbebebebhhghghge"))))
 	:filter (mtof (rv midiLine midiLine))
 	:drift (rv 0 10)
-	:filterQ midiLine
+	:filterQ (* midiLine 0.1)
 	:filterGain (st 8)
-	:mainGain (st 0.3)
-	:loop (mtof (line (seq -10 90) (ch 0.1 3 5 1)))
+	:mainGain (st 1)
+	:loop (mtof (line (seq -20 0) (ch 0.1 3 5 1)))
 )
