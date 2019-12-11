@@ -1,0 +1,6 @@
+(sci2 
+voice
+(st 0.1)
+:freq (st 100)
+:duration (st .1)
+)

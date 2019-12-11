@@ -43,4 +43,5 @@
 		tab1
 		indexer)
 		(st 1)
+		:chan 1
 )

@@ -67,7 +67,7 @@
 	historyPatch
 	(~ duraline)
 	:offset (line (seq 0 30) (st 30))//(line (+ (~ bFun) (rv 0 (~ range))) (st 10000))
-	:duration (* (~ duraline) (~ durRatio))
+	:duration (* (~ duraline) 1)
 	:ratio 
 		(index
 			(
@@ -87,7 +87,7 @@
 		)
 		(t (count 2) (ch 5 7 11)))
 	:loop (index
-		(list (ch 1 3 2 4)
+		(list (ch 1 3 2 4 40 80 120)
 			(ch 2 3 5)
 			(ch (rv 3 7) (rv 2000 2100) (rv 20 20000))
 			(mtof (rv 40 100)))
@@ -96,5 +96,5 @@
 			(rv 10 13)))
 	:drift (st 0)
 	:filterQ (st 100)
-	:filterGain (st 3)
+	:filterGain (st 10)
 )

@@ -27,11 +27,17 @@
 		(ch (steno "jsdhkdjhergviuarvuvbybqoefnvbhhvibauhvbaehouvbhjfbjrabvjhbfsdvbhfvbhsdfbjhvbfbhjvshfdbvhshjebjhvbhbv bhjserb vhnsber vv"))
 		(fractRandTimer (grow 0.01 2 8))))
 
+(fun ffreq
+	(st 1000))
+
+(fun filter (input)
+	(biquad input ffreq 0.9 1.0))
+
 (clone
 	(step-pan-gen
 		(loop (write
 			buffy
-			(bounded-list-walk (st 0) (~ high) buffy stepper)
+			(filter (bounded-list-walk (st 0) (~ high) buffy stepper))
 			(seq (count2 44100) (latch (st 1) (rv 0 100))))
 		(ch (grow 2 2 8)) (ch (grow 2 2 8)))
 		(st 1)

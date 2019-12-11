@@ -1,6 +1,7 @@
+
 #!/usr/bin/python
 
-# THIS IS THE FILE
+# 8-12-2019
 
 import math
 import operator as op
@@ -26,7 +27,28 @@ from string import Template
 # with the table as parameter.
 # (~ append tab1 (rv 0 100)) would add a random value between 0 100 to a table
 
-#  /usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck  
+#  /usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck
+
+# being able to bind a midicontroller to a stream-synth / note generator
+# something like:
+# (attach mySynth (key 60))
+# mySynth only takes of or on
+# (attach mySynth (key 60) (controller 1))
+# (attach mySynth keyboard)
+
+# a key produces (pitch, noteOn | noteOff )
+# a midi controller produces (controller, value)
+
+# how to parse context:
+# a ( b ) ->  A ( B  )
+# c ( b ) ->  C ( B' ) B' is different since a is a different context to c
+
+# synth should be stream out of higher order.
+# right now, all synths takes values and times in between.
+# what if we make a synth/event gen that takes events as the arg.
+# a streamsynth that triggers the events.
+
+
 
 
 Symbol = str          # A Scheme Symbol is implemented as a Python str
@@ -494,12 +516,12 @@ class Cloner(StreamCall):
         return  string
 
 
-# NOT USED 
-class ListStream(StreamCall):
-    def printArguments(self):
-        "Explicit list definition"
-        args = ','.join(self.arguments)
-        return  '[' + mixedTypeListFix( args ) + ']'
+# # NOT USED 
+# class ListStream(StreamCall):
+#     def printArguments(self):
+#         "Explicit list definition"
+#         args = ','.join(self.arguments)
+#         return  '[' + mixedTypeListFix( args ) + ']'
 
 class ListStreamCall(StreamCall):
     "this should be used for Seq, Series and Choice"
@@ -685,6 +707,7 @@ fun void """+sparkName+"""() {
 
 s.init("""+amp+'\n,'+timer+"""\n\n);
 
+
 """+pancontrol+"""
 
 day => now;
@@ -801,10 +824,48 @@ class MidiNoteStream(StreamCall):
 
     def evaluateArgs(self):
         x = self.arguments
-        self.arguments = [eval(exp, self.env, self.depth+1) for exp in x] # evaluate everything but the name of the instrument
+        self.arguments = [eval(exp, self.env, self.depth+1) for exp in x] # evaluate all
 
     def printArguments(self):
         return MidiChuckInstrStr(*self.arguments)
+
+class MidiNoteCtrlStream(MidiNoteStream):
+    "This generates notes and controller values at the same time (just after note on)"
+
+    synthTemplate = Template("""
+
+function void $funcName () {
+    MidiNoteCtrlStream midi;
+    midi.timer($timer);
+    midi.pitch($pitch);
+    midi.dura($dura);
+    midi.velo($velo);
+    midi.ctrlNumber($ctrlNumber);
+    midi.ctrlValue($ctrlValue);
+    midi.channel($channel);
+    midi.start();
+    day => now;
+}
+spork ~ $funcName ();
+
+""")
+    
+    def printArguments(self):
+        return self.midiChuckNoteCtrlInstrStr(*self.arguments)
+
+    def midiChuckNoteCtrlInstrStr(self,st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', ctrlNumber = '1', st_ctrlValue = 'st.st(0)', midiChannel = '1'):
+        "creates a midi instrument with a controller value per note (just after the note on)"
+        funcName = unique.name('midi_notectrl_instr')
+   
+        return self.synthTemplate.substitute(funcName = funcName
+                                    , timer = st_timer
+                                    , pitch = st_pitch
+                                    , dura = st_dur
+                                    , velo = st_velo
+                                    , ctrlNumber = ctrlNumber
+                                    , ctrlValue = st_ctrlValue
+                                    , channel = midiChannel)
+    
 
 class MidiControlStream(MidiNoteStream):
     "This is a bridge to create a stream of midi controller changes"
@@ -966,7 +1027,7 @@ class OscStreamInstr(EventGenerator):
         funcName = unique.name('oscStreamFunc')
         # the arguments are collected in a dict, use expansion on the list !!!!
         print(self.arguments)
-        print("what is this")
+    
 
         instrumentName = self.arguments[0]
         timer = self.arguments[1]
@@ -1089,7 +1150,7 @@ class Steno(StreamCall):
                 chars = list(item)
                 #print chars, " chars"
                 # it is a 'abc' kind of steno
-                return map(self.mapChar, chars)
+                return map(float,map(self.mapChar, chars))
             else:
                 elements = item.partition("!")
                 # it is using some kind of shorthand
@@ -1097,7 +1158,7 @@ class Steno(StreamCall):
                     try:
                         value = int(elements[0])
                         repeats = int(elements[2])
-                        return [value for _ in range(repeats)]
+                        return map(float,[value for _ in range(repeats)])
                     except ValueError:
                         raise Exception("sorry, don't know what to do with this:"+elements)
                 else:
@@ -1107,7 +1168,7 @@ class Steno(StreamCall):
                         try:
                             start = int(elements[0])
                             end = int(elements[2])
-                            return range(start,end)
+                            return map(float,range(start,end))
                         except ValueError:
                             raise Exception("sorry, don't know what to do with this:"+elements)
                     else:
@@ -1138,6 +1199,7 @@ def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st
 }
 spork ~ """+funcName+"""();
 """
+
 def MidiCtrlStr(st_timer = 'st.st(1)',st_channel = '1', st_controller = 'st.st(1)', st_value='st.st(0)'):
     funcName = unique.name('midi_instr')
     return """function void """+funcName+"""() { 
@@ -1175,6 +1237,8 @@ class SingleCall(object):
     def __str__(self):
         return self.__repr__() 
 
+# standard env
+    
 def standard_env():
     "Here are most of the standard functions in Cisp"
     env = Env()
@@ -1192,6 +1256,7 @@ def standard_env():
         'ch' : { 'name' : 'st.ch','args':inf,           'class':ListStreamCall},
         'weights' : { 'name' : 'st.weights', 'args': inf, 'class':ListListStreamCall },
         'stream-weights' : { 'name' : 'st.weightStream', 'args' : 2 },
+        'sometimes' : { 'name' : 'st.sometimes', 'args' : 3 },
         'series' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'floor' : { 'name' : 'st.floor' , 'args' : 1   },
@@ -1204,23 +1269,33 @@ def standard_env():
 
         'index' : { 'name' : 'st.index', 'args':2 },
         'index-lin' : { 'name' : 'st.indexLin', 'args':2 },
+        'mod-index' : { 'name' : 'st.modIndex', 'args': 3},
+        'mup-mod-index' : { 'name' : 'st.mupModIndex', 'args':3},
+        'lookup' : {'name' : 'st.lookup' , 'args' : 2 },
+        'lookupStream' : { 'name' : 'st.lookupStream' , 'args' : 2},
+        'fractHold' : { 'name' : 'st.fractHold' , 'args' : 2 },
         'walk' : { 'name' : 'st.walk','args':2 },
         'reset' : {'name' : 'st.reset', 'args' : 3 },
+        'timed-reset' : {'name' : 'st.timedReset' , 'args' : 3},
+        'trigger-reset' : { 'name' : 'st.trigReset', 'args' : 3},
+        't-reset' : {'name' : 'st.timedReset' , 'args' : 3},
         'hold' : {'name' : 'st.hold', 'args':2 },
         'latch' : {'name' : 'st.latch', 'args':2 },
         'tlatch' : {'name' : 'st.tLatch', 'args':2},
         'tLatch' : {'name' : 'st.tLatch', 'args':2},
+        'compose' : {'name' : 'st.compose', 'args' : 2},
         'line' : {'name' : 'st.line', 'args':2},
         'linseg' : {'name' : 'st.linseg', 'args' : [3,4] },
         'mup-walk' : {'name' : 'st.mupWalk', 'args':2},
         'bounded-walk' : { 'name' : 'st.boundedWalk','args':3 },
         'bouncy-walk' : { 'name' : 'st.bouncyWalk', 'args':3 },
         'bounded-list-walk' : { 'name' : 'st.boundedListWalk', 'args': [1,2,3,4] },
-        'bounded-mup-walk' : { 'name' : 'st.boundedMupWalk', 'args': 3 },
+        'bounded-mup-walk' : { 'name' : 'st.boundedMupWalk', 'args': [3,4] },
         'bouncy-list-walk' : { 'name' : 'st.bouncyListWalk', 'args' : 2},
         'list-walk' : {'name' : 'st.walkList', 'args':[1,2]},
         'list-walk-lin' : {'name':'st.listWalkLin', 'args': 2 },
         'write' : { 'name' : 'st.write', 'args' : [3,4] }, # table, value, index
+        'collatz' : { 'name' : 'st.collatz', 'args' : 1 },
         'loop' : {'name' : 'st.loop', 'args': 3 },
         't': {'name':'st.t','args': 2 },
         'count' : { 'name' : 'st.count','args': 1  },
@@ -1231,6 +1306,7 @@ def standard_env():
         '-' : { 'name' : 'st.sub', 'args' : inf },
         '*' : { 'name' : 'st.mup', 'args' : inf },
         '/' : { 'name' : 'st.div', 'args' : inf },
+        'modulo' : {'name' : 'st.modulo', 'args' : 2 },
         '<<' : { 'name' : 'st.bitShiftL', 'args' : 2 },
         '>>' : { 'name' : 'st.bitShiftR', 'args' : 2 },
         '&&' : { 'name' : 'st.bitAnd', 'args' :2 },
@@ -1266,7 +1342,10 @@ def standard_env():
         'osc-in' : { 'name' : 'st.oscin' , 'args' : 2 },
         'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
+        'midi-note-ctrl' : { 'name' : 'MidiNoteCtrlStream', 'args' : [6,7], 'class' : MidiNoteCtrlStream },  # timer pitch dur velo ctrlNumber Ctrlvalue option:channel
         'slider' : { 'name' : 'st.midiCtrl' , 'args': [1] },
+        'keyboard' : { 'name' : 'st.keyboard', 'args' : 1 },
+        'single-key' : { 'name' : 'st.singleKey' , 'args' : 2},
         'bus' : { 'name' : 'st.bus', 'args': 2 },
         '~' : { 'name' : 'st.bus', 'args' : 2 },
         'collect' : {'name' : 'st.collect', 'args' : 2,          },
@@ -1274,6 +1353,7 @@ def standard_env():
         'fill' : {'name':'cs.fill', 'args' : 3, 'type' : 'intArray',    'class':ArrayGen },
         'fillf' : {'name': 'cs.fillf', 'args' : 3, 'type':'floatArray', 'class':ArrayGen },
         'sine' : {'name' : 'cs.sine', 'args' : 2, 'type' : 'floatArray', 'class':ArrayGen },
+        'alloc' : {'name' : 'cs.alloc', 'args' : 1, 'type' : 'floatArray', 'class':ArrayGen },
         'phasor' : {'name' : 'st.phasor', 'args' : 1 },
         '#' : {'name' : 'makeTable', 'args' : 2 ,                       'class':MakeTable },
         'makeTable' : {'name' : 'makeTable', 'args' : 2,                'class':MakeTable },
@@ -1318,7 +1398,8 @@ def standard_env():
         'table-size' : { 'name' : 'st.tableCap' , 'args' : 1 },
         'hzPhasor' : { 'name' : 'st.hzPhasor', 'args' : 1},
         'rampgen' : { 'name' : 'st.rampGen' , 'args' : 2},
-        'sineseg' : { 'name' : 'st.sineseg' , 'args' : 1},
+        'sineseg' : { 'name' : 'st.sineseg' , 'args' : [1,2]},
+        'hzSineseg' : { 'name' : 'st.hzSineseg' , 'args' : [1,2] },
         'impulse' : { 'name' : 'st.impulse' , 'args' : [1,2]},
         'couple' : { 'name' : 'st.couple' , 'args' : 2 },
         'solo' : {'name' : 'ShredEventStack.popAll', 'args' : 0, 'class' : SingleCall, 'isFunction' : True},
@@ -1333,17 +1414,22 @@ def standard_env():
         'define' : { 'name' : 'st.define', 'args' : 2, 'class' : Define },
         'customOperator' : { 'name' : 'customOperator', 'args' : 2, 'class' : CustomOperator },
         'delay' : { 'name' : 'st.delay' , 'args' : 3 },
+        'biquad' : { 'name' : ' st.biquad', 'args': 5 },
         'diff' : { 'name' : 'st.diff', 'args' : 1 },
         'audioIn' : { 'name' : 'st.audioIn','args' : 1},
+        'dacin' : { 'name' : 'st.dacin' , 'args' : 1 },
         'zeroCount' : { 'name' : 'st.zeroCount' ,'args' : [1,2] },
+        'avg' : { 'name' : 'st.avg' , 'args' : [1,2] },
         'freqCount' : { 'name' : 'st.freqCount', 'args' : [1,2] },
+        'trig' : { 'name' : 'st.trig', 'args' : 2 },
         'steno' : { 'name' : 'steno' , 'args' : 1, 'type' : 'intArray', 'class' : Steno },
         'samp-schedule' : { 'name' : 'st.sampSchedule' , 'class' : SingleStatement },
+        'beat' : { 'name' : 'st.beat', 'args' : 2  },
+        
     })
     return env
     
 global_env = standard_env()
-
 # *** helper functions
 
 def is_number(s):
@@ -1493,10 +1579,18 @@ class ReplaceShred(RunShred):
         #print "code replace " + self.outputfile
 
 class Stop(RunShred):
-    "replace the last shred"
+    "remove all"
     def run(self):
         os.system("/usr/local/bin/chuck + removeAll.ck")
         #print "code replace " + self.outputfile
+
+class Oldest(RunShred):
+    def run(self):
+        os.system("/usr/local/bin/chuck + popOldest.ck");
+
+class Pop(RunShred):
+    def run(self):
+        os.system("/usr/local/bin/chuck + pop.ck");
 
 class Panic(RunShred):
     "removall add new"
@@ -1569,7 +1663,9 @@ def main(argv):
       "replace" : ReplaceShred,
       "stop" : Stop,
       "panic" : Panic,
-      "all" : All
+      "all" : All,
+       "oldest" : Oldest,
+      "pop" : Pop
    }
 
    command = runshreds[command]

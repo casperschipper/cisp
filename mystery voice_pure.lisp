@@ -50,7 +50,7 @@ SynthDef(\voice, { | freq = 200, amp = 0.1, number = 3 |
 
 (sci2
 	voice
-	(t (ch 0.1 0.22 0.13 0.17 0.03) (ch 0.1 0.2 0.3 1.0 3.0 8.0))
+	(t (ch 0.01) (ch 0.1 0.2 0.3 1.0 3.0 8.0))
 	:freq 
 	(wr casper
 		(apply 
@@ -58,7 +58,7 @@ SynthDef(\voice, { | freq = 200, amp = 0.1, number = 3 |
 			(
 			(|= (< 100) (bounded-walk 100 1000 (ch -100 100)))
 			(|= (> 20000) (bounded-walk 100 1000 (ch -100 100)))
-			(otherwise 
+			(|= (> 0) 
 				(index
 					(list
 						(latch (+ (rd casper) (* (rd casper) (ch -0.5 -0.25 0.5 0.25 0.1))) latcher)

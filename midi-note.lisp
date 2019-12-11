@@ -15,7 +15,7 @@
 
 (midi-note
 (st 0.13666667)
-(seq fif 61 66 seven)
+(seq 36)
 (st 0.10)
 (seq 40 80 100)
 )

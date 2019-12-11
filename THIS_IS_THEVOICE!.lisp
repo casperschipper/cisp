@@ -62,7 +62,7 @@ SynthDef(\voice, { | freq = 200, amp = 0.1, number = 3 |
 
 (sci2
 	voice
-	(line (rv 0.1 0.6) (ch 1.0 3.0 8.0))
+	(line (rv 0.01 0.03) (ch 1.0 3.0 8.0))
 	:freq 
 	(wr casper
 		(apply 
@@ -71,11 +71,11 @@ SynthDef(\voice, { | freq = 200, amp = 0.1, number = 3 |
 			(|= (< 10) (st 50))
 			(|= (> 2000) (st 50))
 			(otherwise 
-				(index
+				(+ (index
 					(list
 						(latch (+ (rd casper) (ch 100 100 99 101 200)) latcher)
 						(latch (* (rd casper) (ch 2.0 1.5 0.75 0.6 0.5)) latcher))
-				chooser)
+				chooser))
 			))))
 	:amp (st 0.01)
 

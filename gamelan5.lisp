@@ -28,7 +28,7 @@ Out.ar(0, Pan2.ar(filtered,pos) );
 (sci2
 	gamPing
 	(seq 0.15 0.13)
-	:freq (* (reset (bounded-walk 25 20000 step2) (st 50) (hold (seq 7 9 11 12 7) (ch 1 1 1 1 1 1 1 1 2))) mupper)
+	:freq (* (reset (bounded-walk 1000 20000 step2) (st 50) (hold (seq 7 9 11 12 7) (ch 1 1 1 1 1 1 1 1 2))) mupper)
 	:duration (* (mtof (slider 1 :d 64)) 0.005)
 	:gain (seq 0.1 0.1 0. 0.1 0.1 0 0.1 0.1 0.1 0.)
 	:pos (loop (seq -1 0 1) (st 2) (st 10))

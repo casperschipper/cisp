@@ -1,4 +1,4 @@
-(fun a 
+ (fun a 
 	(line
 		(ch 1 10 100)
 		(ch 3 4 5)))
@@ -31,7 +31,7 @@
 (fun freq
 	(* 
 		(hold
-		(list-walk (steno "4400..4500 8000..8010 14000..14100") (hold (seq three three) (ch three three)))
+		(list-walk (steno "9000 9100") (hold (seq three three) (ch three three)))
 		(* (list-walk (grow 1 2 10) (hold (seq three three) (seq three three))) 1)) transpose) )
 
 (sync 0.14)
