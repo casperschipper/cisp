@@ -22,9 +22,8 @@ Build my chugins:
 
 Clone my tools:
 [My chuck Tools](https://github.com/casperschipper/ChucK-Tools)<br>
-Python
 
-My live coding sessions are set up like this:
+__My live coding sessions are set up like this:__
 
 Cisp.py takes a scheme like input file (example.lisp), and translates it to a chuck file (output.ck), which is added to the chuck virtual machine (by Cisp). Output.ck is not in "vanilla" chuck, it is using my Chuck-Tools library and chugins (for non-standard synthesis).
 
@@ -32,7 +31,7 @@ You will need to start chuck in loop mode, with my chugins and tools loaded, som
 
 `chuck --loop --chugin-path:yourChuginPath ~/pathToChuckTools/tools.ck`
 
-yourChuginPath is probably /usr/local/lib/chuck :-)
+yourChuginPath is probably /usr/local/lib/chuck 
 
 # Using sublime build script
 
