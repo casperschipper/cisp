@@ -4,6 +4,10 @@ Cisp is my live coding tool that is specifically targeted at:
 1. Non-standard synthesis (the use of compositional techniques directly on generating waveforms).
 2. Algorithmic composition generating live Midi or OSC output.
 
+[video demo](https://www.casperschipper.nl/v2/uncategorized/a-few-noisy-etudes-in-cisp/)
+
+[performance at Segmod event]
+
 # Requirements / Setup
 
 [ChucK Command Line]https://github.com/ccrma/chuck<br>
@@ -98,6 +102,5 @@ which can be scheduled as
 
 `(schedule foo (st 0.5))` // which means that foo gets written every 0.5 seconds
 
-video demo's will follow soon !
 
 
