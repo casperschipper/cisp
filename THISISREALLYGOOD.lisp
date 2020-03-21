@@ -1,24 +1,30 @@
-(# mem1 (alloc 10))
+(# m1 (alloc 20))
+(# m2 (alloc 20))
 
-(fun pitch
-	(t
-		(seq 3 2 5)
-		(ch 7 11 15)))
+(fun idx
+	(count 128))
 
-(fun slow
+(fun makeIndex (arg)
+	(* (+ arg 1) (table-cap OSC.table1)))
+
+(fun top
+	(st 0))
+
+(fun addDev (dev)
+	(+ dev (rv 0.0 top)))
+
+(~ readPos
 	(line
-		(seq -1 1)
-		(ch 3 15 4 1 .1 .4)))
+		(seq 0 128)
+		(st 0.01)))
 
-(fun amp
-	(write mem1 
-		(lookup OSC.table1 
-			(+ (seq mem1) slow))
-		(count (- (table-cap mem1) 1 ))))
-
-
-(clone
-(step-gen
-	amp
-	pitch
-	:pan (rvfi -1 1)) 8)
+(step-pan-gen
+	(write 
+		m1 
+		(index-lin OSC.table1 (addDev (makeIndex (index m1 (~ readPos))))) 
+		(+ (~ readPos) 1))
+	(st 1)
+	(write 
+		m2 
+		(index-lin OSC.table1 (addDev (makeIndex (index m2 (~ readPos)))))
+		(+ (~ readPos) 1)))

@@ -1,25 +1,32 @@
+/*
+(~ boundL
+	(line (seq 0.5 30)
+		(st 7)))
+
+(~ boundH
+	(line (seq 0.5 30)
+		(st 11))) */
+
 (fun foo
-	(*
-		(line 
-			(sometimes (rv 0.1 1.0) (st 0.0001) (st 10)) 
-			(ch .1 .3 .7))
-		(ch -1 1)))
+	(rv -0.1 0.1))
 
+(seq 1 2 (seq 1 2 3))
 
-(line-gen
-	(seq
-		(bounded-walk (st -1) (st 1) foo)
-		(bounded-walk (st -1) (st 1) foo)
-		(bounded-walk (st -1) (st 1) foo)
-		(bounded-walk (st -1) (st 1) foo)
-		(bounded-walk (st -1) (st 1) foo)
-		(bounded-walk (st -1) (st 1) foo)
-		)
-	(seq
-		(bounded-walk (st 1) (st 10) foo)
-		(bounded-walk (st 1) (st 10) foo)
-		(bounded-walk (st 1) (st 10) foo)
-		(bounded-walk (st 1) (st 10) foo)
-		(bounded-walk (st 1) (st 10) foo)
-		(bounded-walk (st 1) (st 10) foo)
-		))
+(clone
+	(line-gen
+		(seq
+			(bounded-walk (st -1) (st 1) foo)
+			(bounded-walk (st -1) (st 1) foo)
+			(bounded-walk (st -1) (st 1) foo)
+			(bounded-walk (st -1) (st 1) foo)
+			(bounded-walk (st -1) (st 1) foo)
+			(bounded-walk (st -1) (st 1) foo)
+			)
+		(seq
+			(bounded-walk (~ boundL) (~ boundH) foo)
+			(bounded-walk (~ boundL) (~ boundH) foo)
+			(bounded-walk (~ boundL) (~ boundH) foo)
+			(bounded-walk (~ boundL) (~ boundH) foo)
+			(bounded-walk (~ boundL) (~ boundH) foo)
+			(bounded-walk (~ boundL) (~ boundH) foo)
+			)) 4)

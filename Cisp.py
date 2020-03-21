@@ -48,6 +48,9 @@ from string import Template
 # what if we make a synth/event gen that takes events as the arg.
 # a streamsynth that triggers the events.
 
+# synth that produces events so we can trigger other streams with it.
+# event streams in scheme?
+
 
 
 
@@ -829,6 +832,12 @@ class MidiNoteStream(StreamCall):
     def printArguments(self):
         return MidiChuckInstrStr(*self.arguments)
 
+
+class MidiNoteChannelStream(MidiNoteStream):
+    "this is MidiNoteStream where the channel is controlled per note"
+    def printArguments(self):
+        return MidiChuckChannelInstrStr(*self.arguments)    
+
 class MidiNoteCtrlStream(MidiNoteStream):
     "This generates notes and controller values at the same time (just after note on)"
 
@@ -1200,6 +1209,22 @@ def MidiChuckInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st
 spork ~ """+funcName+"""();
 """
 
+def MidiChuckChannelInstrStr(st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)' , st_velo='st.st(80)', st_channel='st.st(0)' ):
+    "creates a little Midi instrument inst"
+    funcName = unique.name('midi_instr')
+    return """function void """+funcName+"""() { 
+    MidiNoteChannelStream midi;
+    midi.timer("""+st_timer+""");
+    midi.pitch("""+st_pitch+""");
+    midi.velo("""+st_velo+""");
+    midi.dura("""+st_dur+""");
+    midi.channel("""+st_channel+""");
+    midi.start();
+    day => now;
+}
+spork ~ """+funcName+"""();
+"""
+
 def MidiCtrlStr(st_timer = 'st.st(1)',st_channel = '1', st_controller = 'st.st(1)', st_value='st.st(0)'):
     funcName = unique.name('midi_instr')
     return """function void """+funcName+"""() { 
@@ -1261,6 +1286,7 @@ def standard_env():
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'floor' : { 'name' : 'st.floor' , 'args' : 1   },
         'test' : { 'name' : 'st.test' , 'args' : [1,2], 'class':SingleStatement },
+        'monitor' : { 'name' : 'st.monitor', 'args' : 1 },
         'mtof' : { 'name' : 'st.mtof' , 'args' : 1 },
         'mtor' : { 'name' : 'st.mtor' , 'args' : 1 },
         'ftom' : { 'name' : 'st.ftom' , 'args' : 1 },
@@ -1340,10 +1366,11 @@ def standard_env():
         'sci2' : { 'name' : 'sci', 'args' : range(1,64),              'class':SuperChuckInstStrClass },
         'osc-stream' : { 'name' : 'OscStream', 'args' : range(1,64),   'class' : OscStreamInstr },
         'osc-in' : { 'name' : 'st.oscin' , 'args' : 2 },
-        'midi-note' : {'name' : 'sci', 'args' : [3,4] ,                 'class':MidiNoteStream },
+        'midi-note' : {'name' : 'MidiNoteStream', 'args' : [3,4] ,                 'class':MidiNoteStream },
+        'midi-note-channel' : { 'name' : 'midi-note-channel', 'args' : 5, 'class' : MidiNoteChannelStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
         'midi-note-ctrl' : { 'name' : 'MidiNoteCtrlStream', 'args' : [6,7], 'class' : MidiNoteCtrlStream },  # timer pitch dur velo ctrlNumber Ctrlvalue option:channel
-        'slider' : { 'name' : 'st.midiCtrl' , 'args': [1] },
+        'slider' : { 'name' : 'st.midiCtrl' , 'args': [1,2,3] },
         'keyboard' : { 'name' : 'st.keyboard', 'args' : 1 },
         'single-key' : { 'name' : 'st.singleKey' , 'args' : 2},
         'bus' : { 'name' : 'st.bus', 'args': 2 },
@@ -1414,6 +1441,7 @@ def standard_env():
         'define' : { 'name' : 'st.define', 'args' : 2, 'class' : Define },
         'customOperator' : { 'name' : 'customOperator', 'args' : 2, 'class' : CustomOperator },
         'delay' : { 'name' : 'st.delay' , 'args' : 3 },
+        'delayi' : { 'name' : 'st.delayi' , 'args' : 3 },
         'biquad' : { 'name' : ' st.biquad', 'args': 5 },
         'diff' : { 'name' : 'st.diff', 'args' : 1 },
         'audioIn' : { 'name' : 'st.audioIn','args' : 1},
@@ -1425,6 +1453,7 @@ def standard_env():
         'steno' : { 'name' : 'steno' , 'args' : 1, 'type' : 'intArray', 'class' : Steno },
         'samp-schedule' : { 'name' : 'st.sampSchedule' , 'class' : SingleStatement },
         'beat' : { 'name' : 'st.beat', 'args' : 2  },
+        'beati' : { 'name' : 'st.beati' , 'args' : 2 }
         
     })
     return env
@@ -1652,10 +1681,15 @@ def main(argv):
    #print 'Output file is "', outputfile 
    
    # this is the important call, that actually creates the chuck files
-   FileIO(inputfile,outputfile)
+   
 
    print command,":COMMAND"
 
+   if (command in ['run','+','gen','replace','all','oldest']):
+      FileIO(inputfile,outputfile)
+   else:
+      print("skipping file generation")
+   
    runshreds = {
       "run" : RunShred,
       "+" : AddShred,

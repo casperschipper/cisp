@@ -1,0 +1,11 @@
+# in de trein naar berlijn eind 2019
+
+(midi-note
+	(* (beat 120 8) (seq 1.05 0.95))
+	(+ (hold (+ (hold (seq (- 55 7) 55 72) (seq 5 7 5 7 5 7 3))
+		(reset 
+			(walk 0 (seq 3 4)) 
+			(st 0) 
+			(seq 3 5 7 (seq 5 11)))) 2) (seq 0 7 true))
+	(seq 0.1)
+	(seq 40 (rv 80 120)))

@@ -5,7 +5,9 @@
 
 // get name
 me.arg(0) => string filename;
-if( filename.length() == 0 ) "newTrecht" => filename;
+if( filename.length() == 0 ) "doedel-veel-midi" => filename;
+
+filename + "-" + Math.random2(0,99999) => filename;
 
 // pull samples from the dac
 dac.chan(0) => Gain g1 => WvOut c1 => blackhole;
@@ -20,6 +22,11 @@ filename + "-2.wav" => c2.wavFilename;
 1 => g1.gain;
 1 => g2.gain;
 
+int s;
+
 // infinite time loop...
 // ctrl-c will stop it, or modify to desired duration
-while( true ) 1::second => now;
+while( true ) { 
+    1::second => now;  
+    <<<"rec2.ck: " + (s++) + " sec">>>; 
+}

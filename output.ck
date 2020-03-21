@@ -1,51 +1,14 @@
 
 
-    cs.alloc(1) @=> float previous[];
-
-fun Stream littlePush () {
-return 
-st.line(
-    st.seq([0.,128]),
-    st.rv(5,70));
-}
-st.audioIn();
-
-fun Stream writer () {
-return 
-st.write(previous,
-    st.indexLin(OSC.table1,
-        st.sum(
-            st.mup(
-                st.sum(
-                    st.seq(previous),1),64),littlePush())),
-    st.st(1));
-}
-fun Stream writer2 () {
-return 
-st.write(OSC.table1,
-    st.seq(previous),
-    st.t(
-        st.seq([
-  st.st(0) $ Stream,
-  st.count(128)]),
-        st.rv(3,5)));
-}
-
-st.sampSchedule(
-    st.sum(writer(),writer2()),
-    st.st(1));
-
-
-
 fun void shred_1() {
-LineSynth s => Safe safe =>dac;
+StepSynth s => Safe safe =>dac;
 
 
 
 s.init(
-    st.seq(previous)
+    st.guardedWalk(-1,[st.guardTest(    st.bigger(1),    st.overwrite(-1))$ Guard,st.guardTest(    st.smaller(1),    st.sum(        st.walkList([0,0,0,0.010000000000,0.000100000000,0.002000000000],            st.ch([-1.,1]))))])
 ,
-    st.st(10)
+    st.st(1)
 
 );
 
