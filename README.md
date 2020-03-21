@@ -4,20 +4,38 @@ Cisp is my live coding tool that is specifically targeted at:
 1. Non-standard synthesis (the use of compositional techniques directly on generating waveforms).
 2. Algorithmic composition generating live Midi or OSC output.
 
-# Requirements
+[video demo](https://www.casperschipper.nl/v2/uncategorized/a-few-noisy-etudes-in-cisp/)
 
-[ChucK Command Line](http://chuck.cs.princeton.edu/release/)<br>
-[My chugins](https://github.com/casperschipper/chugins) (specifically: Linseg, DelayC)<br> 
+[performance at Segmod event]
+
+# Requirements / Setup
+
+[ChucK Command Line]https://github.com/ccrma/chuck<br>
+
+Build chuck:
+1. Clone the chuck repo
+2. `make osx|windowns|linux`
+3. `sudo make install`
+
+*installing the binary version seems to cause a conflict with the chugins, so build from source.*
+
+Build my chugins:
+1. [My chugins](https://github.com/casperschipper/chugins-2019) (specifically: Linseg, DelayC)<br> 
+2. `make osx|windows|linux`
+3. `make install`
+
+Clone my tools:
 [My chuck Tools](https://github.com/casperschipper/ChucK-Tools)<br>
-Python
 
-My live coding sessions are set up like this:
+__My live coding sessions are set up like this:__
 
 Cisp.py takes a scheme like input file (example.lisp), and translates it to a chuck file (output.ck), which is added to the chuck virtual machine (by Cisp). Output.ck is not in "vanilla" chuck, it is using my Chuck-Tools library and chugins (for non-standard synthesis).
 
 You will need to start chuck in loop mode, with my chugins and tools loaded, something like this:
 
 `chuck --loop --chugin-path:yourChuginPath ~/pathToChuckTools/tools.ck`
+
+yourChuginPath is probably /usr/local/lib/chuck 
 
 # Using sublime build script
 
@@ -63,7 +81,7 @@ To make coding faster, I use a build script wich runs the .lisp file into cisp.
 	(seq 10 20 30)
 	(ch 1 2 3 5))
 	
-	</pre>
+</pre>
 
 ### easy bus
 
@@ -84,6 +102,5 @@ which can be scheduled as
 
 `(schedule foo (st 0.5))` // which means that foo gets written every 0.5 seconds
 
-video demo's will follow soon !
 
 
