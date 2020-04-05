@@ -1,23 +1,25 @@
 
 
-fun void shred_1() {
-StepSynth s => Safe safe =>dac;
 
+function void midi_chuck_channel_streams_1() {
+    MidiNoteChannelStream s;
+    s.timer(
+    st.st(1.0));
+    s.pitch(
+    st.index([60,64,67,72],        
+st.bus("i")));
+    s.dura(
+    st.st(0.100000000000));
+    s.velo(
+    st.st(100));
+    s.channel(
+    st.st(1));
+    
+    s.start();
 
-
-s.init(
-    st.guardedWalk(-1,[st.guardTest(    st.bigger(1),    st.overwrite(-1))$ Guard,st.guardTest(    st.smaller(1),    st.sum(        st.walkList([0,0,0,0.010000000000,0.000100000000,0.002000000000],            st.ch([-1.,1]))))])
-,
-    st.st(1)
-
-);
-
-
-
-
-day => now;
 }
-spork ~ shred_1();
+spork ~ midi_chuck_channel_streams_1 ();
+
 
 <<<"shred id: ",me.id()>>>;
 Event end;

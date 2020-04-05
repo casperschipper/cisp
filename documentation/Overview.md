@@ -309,7 +309,7 @@ f x
 
 This is a signal clipper, where it cannot get lower than 10 or higher than 100, if in between it just returns the input.
 
-In CISP, guards are used within walks (iterative functions) and instead of returning a value, a curried function is returned to apply to the current value. It is thus a generalisitation of walks or mup-walks. 
+In CISP, guards are used within walks (iterative functions) and instead of returning a value, a curried function is returned to apply to the current value. It is thus a generalization of walks or mup-walks. 
 
 For example
 

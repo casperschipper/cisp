@@ -833,10 +833,41 @@ class MidiNoteStream(StreamCall):
         return MidiChuckInstrStr(*self.arguments)
 
 
-class MidiNoteChannelStream(MidiNoteStream):
-    "this is MidiNoteStream where the channel is controlled per note"
-    def printArguments(self):
-        return MidiChuckChannelInstrStr(*self.arguments)    
+class MidiNoteChannelStream(EventGenerator):
+    "this will also do deffered parameters"
+    chuckTemplate = Template("""
+
+function void $funcName() {
+    MidiNoteChannelStream s;
+    s.timer($timer);
+    s.pitch($pitch);
+    s.dura($dura);
+    s.velo($velo);
+    s.channel($channel);
+    $deferedPars
+    s.start();
+
+}
+spork ~ $funcName ();
+
+""")
+    def __repr__(self):
+        "this is the central construction of the function call"
+        return self.printTemplate()
+    
+    def printTemplate(self):
+        return self.chuckMidiNoteChannelStream(*self.arguments)
+
+    def chuckMidiNoteChannelStream(self,st_timer = 'st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)'):
+        funcName = unique.name('midi_chuck_channel_streams')
+        return self.chuckTemplate.substitute( funcName = funcName
+                                              , timer = st_timer
+                                              , pitch = st_pitch
+                                              , dura = st_dur
+                                              , velo = st_velo
+                                              , channel = st_channel
+                                              , deferedPars = self.deferedParsFormatted())
+  
 
 class MidiNoteCtrlStream(MidiNoteStream):
     "This generates notes and controller values at the same time (just after note on)"
@@ -856,7 +887,6 @@ function void $funcName () {
     day => now;
 }
 spork ~ $funcName ();
-
 """)
     
     def printArguments(self):

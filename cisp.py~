@@ -833,7 +833,7 @@ class MidiNoteStream(StreamCall):
         return MidiChuckInstrStr(*self.arguments)
 
 
-class MidiNoteChannelStream(MidiNoteStream):
+class MidiNoteChannelStream(EventGenerator):
     "this is MidiNoteStream where the channel is controlled per note"
     def printArguments(self):
         return MidiChuckChannelInstrStr(*self.arguments)    
@@ -1286,6 +1286,7 @@ def standard_env():
         'ser' : { 'name' : 'st.series','args':inf,   'class':ListStreamCall},
         'floor' : { 'name' : 'st.floor' , 'args' : 1   },
         'test' : { 'name' : 'st.test' , 'args' : [1,2], 'class':SingleStatement },
+        'monitor' : { 'name' : 'st.monitor', 'args' : 1 },
         'mtof' : { 'name' : 'st.mtof' , 'args' : 1 },
         'mtor' : { 'name' : 'st.mtor' , 'args' : 1 },
         'ftom' : { 'name' : 'st.ftom' , 'args' : 1 },
@@ -1440,6 +1441,7 @@ def standard_env():
         'define' : { 'name' : 'st.define', 'args' : 2, 'class' : Define },
         'customOperator' : { 'name' : 'customOperator', 'args' : 2, 'class' : CustomOperator },
         'delay' : { 'name' : 'st.delay' , 'args' : 3 },
+        'delayi' : { 'name' : 'st.delayi' , 'args' : 3 },
         'biquad' : { 'name' : ' st.biquad', 'args': 5 },
         'diff' : { 'name' : 'st.diff', 'args' : 1 },
         'audioIn' : { 'name' : 'st.audioIn','args' : 1},
