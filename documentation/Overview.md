@@ -1,11 +1,22 @@
 # CISP
 
 Cisp is a python program that takes a scheme-like input program and translates it into ChucK code.
-The ChucK code generated is using my "Chuck-Tools" classes and functions:
 
+# Requirements
+
+The ChucK code generated makes use of my Chuck Tools library:
 <https://github.com/casperschipper/ChucK-Tools>
 
+Chuck-Tools is depending on a few custom "chugins", you can build them from my fork of the official chugins repo:
+<https://github.com/casperschipper/chugins-2019>
+Follow the build instructions contained in that repo.
+
 ## How to use
+
+Open a terminal, You first start Chuck virtual machine (VM) with --loop, with my tools and ugens loaded, something like this:
+/usr/local/bin/chuck --out2 --in4 --chugin-path:/usr/local/lib/chuck --loop Chuck-Tools/Tools.ck
+
+Then, you write you scheme file (ending with .lisp) and you use cisp.py program to translate it into chuck.
 
 cisp.py arguments:
 
@@ -197,7 +208,9 @@ For example: walk 10 (seq -3 4) will return 7 11 8 12 etc..
 - initial 
 - step
 
-Create a walk, but instead of add, one multiplies the value. It was named after the MUP generator of the analog studio in Sonology.
+Create a walk, but instead of add, multiplies the previous value.
+If the created signal is used as a frequency or wavelength the step stream will result in a signal with musical intervals.
+It was named after the MUP generator of the analog studio in Sonology.
 
 
 ### bounded-walk

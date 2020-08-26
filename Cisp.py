@@ -1,4 +1,3 @@
-
 #!/usr/bin/python
 
 # 8-12-2019
@@ -839,13 +838,15 @@ class MidiNoteChannelStream(EventGenerator):
 
 function void $funcName() {
     MidiNoteChannelStream s;
+    $deferedPars
     s.timer($timer);
     s.pitch($pitch);
     s.dura($dura);
     s.velo($velo);
     s.channel($channel);
-    $deferedPars
     s.start();
+
+    365*day => now;
 
 }
 spork ~ $funcName ();
@@ -862,6 +863,47 @@ spork ~ $funcName ();
         funcName = unique.name('midi_chuck_channel_streams')
         return self.chuckTemplate.substitute( funcName = funcName
                                               , timer = st_timer
+                                              , pitch = st_pitch
+                                              , dura = st_dur
+                                              , velo = st_velo
+                                              , channel = st_channel
+                                              , deferedPars = self.deferedParsFormatted())
+
+class MidiSyncStream(EventGenerator):
+    "this will also do deffered parameters"
+    chuckTemplate = Template("""
+
+    function void $funcName() {
+    MidiSyncStream s;
+    s.initClock($in_port);
+    s.port($out_port);
+    $deferedPars
+    s.pitch($pitch);
+    s.dura($dura);
+    s.velo($velo);
+    s.channel($channel);
+    s.delta($delta);
+    s.start();
+
+    365*day => now;
+
+}
+spork ~ $funcName ();
+
+""")
+    def __repr__(self):
+        "this is the central construction of the function call"
+        return self.printTemplate()
+    
+    def printTemplate(self):
+        return self.chuckMidiSyncStream(*self.arguments)
+
+    def chuckMidiSyncStream(self, in_port = '0', out_port = '0', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)', st_delta='st.st(12)'):
+        funcName = unique.name('midi_chuck_channel_streams')
+        return self.chuckTemplate.substitute( funcName = funcName
+                                              , in_port = in_port
+                                              , out_port = out_port
+                                              , delta = st_delta
                                               , pitch = st_pitch
                                               , dura = st_dur
                                               , velo = st_velo
@@ -1332,6 +1374,7 @@ def standard_env():
         'fractHold' : { 'name' : 'st.fractHold' , 'args' : 2 },
         'walk' : { 'name' : 'st.walk','args':2 },
         'reset' : {'name' : 'st.reset', 'args' : 3 },
+        'latch-walk' : { 'name' : 'st.latchWalk', 'args': 2},
         'timed-reset' : {'name' : 'st.timedReset' , 'args' : 3},
         'trigger-reset' : { 'name' : 'st.trigReset', 'args' : 3},
         't-reset' : {'name' : 'st.timedReset' , 'args' : 3},
@@ -1398,6 +1441,7 @@ def standard_env():
         'osc-in' : { 'name' : 'st.oscin' , 'args' : 2 },
         'midi-note' : {'name' : 'MidiNoteStream', 'args' : [3,4] ,                 'class':MidiNoteStream },
         'midi-note-channel' : { 'name' : 'midi-note-channel', 'args' : 5, 'class' : MidiNoteChannelStream },
+        'midi-sync' : { 'name' : 'midi-sync-stream', 'args' : 7, 'class' : MidiSyncStream },
         'midi-ctrl' : {'name' : 'MidiControlStream', 'args': [3,4],     'class':MidiControlStream },
         'midi-note-ctrl' : { 'name' : 'MidiNoteCtrlStream', 'args' : [6,7], 'class' : MidiNoteCtrlStream },  # timer pitch dur velo ctrlNumber Ctrlvalue option:channel
         'slider' : { 'name' : 'st.midiCtrl' , 'args': [1,2,3] },

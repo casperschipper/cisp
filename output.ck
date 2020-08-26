@@ -1,24 +1,26 @@
 
+st.sampSchedule(
+    st.write(OSC.table1,
+        st.boundedWalk(40,120,
+            st.hold(
+                st.seq([0.,0,0,12,-12]),
+                st.seq([1.,2]))),
+        st.count(0)),
+    st.line(
+        st.seq([4410.,4410]),
+        st.ch([1.,3,7])));
 
 
-function void midi_chuck_channel_streams_1() {
-    MidiNoteChannelStream s;
-    s.timer(
-    st.st(1.0));
-    s.pitch(
-    st.index([60,64,67,72],        
-st.bus("i")));
-    s.dura(
-    st.st(0.100000000000));
-    s.velo(
-    st.st(100));
-    s.channel(
-    st.st(1));
-    
-    s.start();
+st.bus(
+st.st(1),"tableMax");
 
-}
-spork ~ midi_chuck_channel_streams_1 ();
+
+st.bus(
+st.seq([
+  st.latch(
+      st.seq([1.,2,0]),
+      st.rv(1,2)) $ Stream,
+  st.ch([3.,0,0,0])]),"deltaBus");
 
 
 <<<"shred id: ",me.id()>>>;
