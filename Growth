@@ -1,0 +1,5 @@
+(# mem 1024)
+
+(step-gen
+(seq mem)
+(st 1))
