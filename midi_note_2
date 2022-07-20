@@ -1,0 +1,14 @@
+(sync 0.14)
+
+(fun one 
+	(seq 1 1 1 1 1 1 1 1 1 1 1 1 4))
+
+(fun three
+	(seq 3 3 3 3 3 3 3 3 4 4 4 4 4 4 3 3 ))
+
+(midi-note
+	(st 0.14)
+	(loop (+ 48 (list-walk (0 2 three 5 7 9 11 12 14 -2 -4 -5) (list-walk (2 2 one -3) (ch -1 1)))) (st 2) (st 3))
+	(st 0.01)
+	(st 100)
+	)
