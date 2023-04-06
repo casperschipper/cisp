@@ -1,0 +1,15 @@
+(# mem (list 0.))
+// this is just a cell to keep last position
+
+// let's go!
+(samp-schedule 
+	(write mem 
+		(index 
+			(list 
+				(rv 0 3)
+				(seq 0 1 2 3)
+				(st 3)
+				(st 0))
+		(seq mem)) 
+
+

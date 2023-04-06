@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# 8-12-2019
+# 06-04-2023
 
 import math
 import operator as op
@@ -911,6 +911,104 @@ spork ~ $funcName ();
         return self.chuckTemplate.substitute(funcName=funcName, timer=st_timer, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, deferedPars=self.deferedParsFormatted())
 
 
+class MidiNoteChannelSyncTriggerStream(EventGenerator):
+    "this will also do deffered parameters"
+    chuckTemplate = Template("""
+
+function void $funcName() {
+    MidiNoteChannelSyncTriggerStream s;
+    $deferedPars
+    s.pitch($pitch);
+    s.dura($dura);
+    s.velo($velo);
+    s.channel($channel);
+    s.trigger($trigger);
+    s.start();
+
+    365*day => now;
+
+}
+spork ~ $funcName ();
+
+""")
+
+    def __repr__(self):
+        "this is the central construction of the function call"
+        return self.printTemplate()
+
+    def printTemplate(self):
+        return self.chuckMidiNoteChannelStream(*self.arguments)
+
+    def chuckMidiNoteChannelStream(self, st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)', st_trigger='st.st(1)'):
+        funcName = unique.name('midi_chuck_channel_streams')
+        return self.chuckTemplate.substitute(funcName=funcName, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, trigger=st_trigger, deferedPars=self.deferedParsFormatted())
+
+class MidiNoteChannelSyncStream(EventGenerator):
+    "this will also do deffered parameters"
+    chuckTemplate = Template("""
+
+function void $funcName() {
+    MidiNoteChannelSyncStream s;
+    $deferedPars
+    s.pitch($pitch);
+    s.dura($dura);
+    s.velo($velo);
+    s.channel($channel);
+    s.start();
+
+    365*day => now;
+
+}
+spork ~ $funcName ();
+
+""")
+
+    def __repr__(self):
+        "this is the central construction of the function call"
+        return self.printTemplate()
+
+    def printTemplate(self):
+        return self.chuckMidiNoteChannelStream(*self.arguments)
+
+    def chuckMidiNoteChannelStream(self, st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)'):
+        funcName = unique.name('midi_chuck_channel_streams')
+        return self.chuckTemplate.substitute(funcName=funcName, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, deferedPars=self.deferedParsFormatted())
+
+
+class MidiNoteChannelStream(EventGenerator):
+    "this will also do deffered parameters"
+    chuckTemplate = Template("""
+
+function void $funcName() {
+    MidiNoteChannelStream s;
+    $deferedPars
+    s.timer($timer);
+    s.pitch($pitch);
+    s.dura($dura);
+    s.velo($velo);
+    s.channel($channel);
+    s.start();
+
+    365*day => now;
+
+}
+spork ~ $funcName ();
+
+""")
+
+    def __repr__(self):
+        "this is the central construction of the function call"
+        return self.printTemplate()
+
+    def printTemplate(self):
+        return self.chuckMidiNoteChannelStream(*self.arguments)
+
+    def chuckMidiNoteChannelStream(self, st_timer='st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)'):
+        funcName = unique.name('midi_chuck_channel_streams')
+        return self.chuckTemplate.substitute(funcName=funcName, timer=st_timer, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, deferedPars=self.deferedParsFormatted())
+
+
+
 class MidiSyncStream(EventGenerator):
     "this will also do deffered parameters"
     chuckTemplate = Template("""
@@ -1417,12 +1515,13 @@ def standard_env():
         'sync': {'name': 'cs.sync', 'args': 1, 'class': SingleStatement},
         'clip': {'name': 'st.clip', 'args': 3, },
 
-        'index': {'name': 'st.index', 'args': 2},
+        'index': {'name': 'st.index', 'args': [2,3]},
         'index-lin': {'name': 'st.indexLin', 'args': 2},
         'mod-index': {'name': 'st.modIndex', 'args': 3},
         'mup-mod-index': {'name': 'st.mupModIndex', 'args': 3},
         'lookup': {'name': 'st.lookup', 'args': 2},
         'lookupStream': {'name': 'st.lookupStream', 'args': 2},
+        'statemachine' : { 'name' : 'st.statemachine', 'args' : 1 },
         'fractHold': {'name': 'st.fractHold', 'args': 2},
         'walk': {'name': 'st.walk', 'args': 2},
         'reset': {'name': 'st.reset', 'args': 3},
@@ -1446,6 +1545,7 @@ def standard_env():
         'list-walk': {'name': 'st.walkList', 'args': [1, 2]},
         'list-walk-lin': {'name': 'st.listWalkLin', 'args': 2},
         'write': {'name': 'st.write', 'args': [3, 4]},  # table, value, index
+        'writeover' : { 'name' : 'st.writeover', 'args': [4,5] }, # table , value, index, mix
         'collatz': {'name': 'st.collatz', 'args': 1},
         'loop': {'name': 'st.loop', 'args': 3},
         't': {'name': 'st.t', 'args': 2},
@@ -1493,6 +1593,8 @@ def standard_env():
         'osc-in': {'name': 'st.oscin', 'args': 2},
         'midi-note': {'name': 'MidiNoteStream', 'args': [3, 4],                 'class': MidiNoteStream},
         'midi-note-channel': {'name': 'midi-note-channel', 'args': 5, 'class': MidiNoteChannelStream},
+        'midi-note-channel-sync' : { 'name' : 'midi-note-channel-sync', 'args': 4, 'class': MidiNoteChannelSyncStream },
+        'midi-note-channel-trigger' : { 'name' : 'midi-note-channel-trigger' , 'args' : 5, 'class' : MidiNoteChannelSyncTriggerStream },
         'midi-sync': {'name': 'midi-sync-stream', 'args': 7, 'class': MidiSyncStream},
         'midi-ctrl': {'name': 'MidiControlStream', 'args': [3, 4],     'class': MidiControlStream},
         # timer pitch dur velo ctrlNumber Ctrlvalue option:channel
@@ -1580,8 +1682,8 @@ def standard_env():
         'steno': {'name': 'steno', 'args': 1, 'type': 'intArray', 'class': Steno},
         'samp-schedule': {'name': 'st.sampSchedule', 'class': SingleStatement},
         'beat': {'name': 'st.beat', 'args': 2},
-        'beati': {'name': 'st.beati', 'args': 2}
-
+        'beati': {'name': 'st.beati', 'args': 2},
+        'leakDC' : {'name': 'st.leakDC', 'args' : 2 }
     })
     return env
 
@@ -1687,7 +1789,7 @@ def eval(x, env=global_env, depth=0, listlist=False):
             len(x[1:]) == 1
             return ('  '*depth)+returnOldBus(x[1])
     else:
-        if len(x) is 1:
+        if len(x) == 1:
             # function without any args, get name
             literalName = (env.find(x[0])[x[0]]).get('name')
             # call it as a singleCall:
@@ -1814,13 +1916,13 @@ def main(argv):
         elif opt in ("-c", "--command"):
             command = arg
 
-    if outputfile is '':
+    if outputfile == '':
         print("outputfile not given, using default")
         outputfile = 'output.ck'
-    if inputfile is '':
+    if inputfile == '':
         print("missing inputfile, using the default")
         inputfile = 'test.lisp'
-    if command is '':
+    if command == '':
         print("no command, using overwrite")
         command = 'replace'
 

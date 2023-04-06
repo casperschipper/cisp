@@ -1,0 +1,10 @@
+
+
+(step-gen
+	(list 
+		(rv -1 1)
+		(st -1)
+		(seq (fillf 32 -1 1) true)
+		)
+	(st 1)
+)

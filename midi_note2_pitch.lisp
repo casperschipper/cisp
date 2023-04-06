@@ -1,6 +1,7 @@
-(~ pitch
-	(hold (reset 
-		(walk 60 (seq 2 5 7))
-		(st 63)
-		(seq 4 5)) 
-	(hold (seq 1 1 1 1 1 3 2) (seq 1 2))))x
+(~ pitch 
+	(+ (seq (list-walk (list 60 65) (ch -1 1)) (hold (ch 67 72) (st 2)))
+		(hold (seq 0 4 7 -2) ())
+	))
+
+(~ velo
+	(seq 100 80 40))

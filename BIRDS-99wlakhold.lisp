@@ -13,7 +13,7 @@
 		(list-walk (steno "sjdhfgsdjhfbajvhbcadhbcvjasdcvgcvbcgiuavbeucbaeibaifhbieha") stepper)
 		(list-walk (steno "asgdsfbsdvfbsdvfbsvdbcbcnbbsbsbdbsndnsbdfsdsbsbsbjshfgjshdgfkjahguehbflhebvlfuhabefhblaes") stepper)) 1))
 
-(# table (steno "0.0 skjdfhksjdhfkajhdskjfahsdkfadsf"))
+(# table (steno "skjdfhksjdhfkajhdskjfahsdkfadsf"))
 
 (fun holder
 	(seq (steno "bbbbebbebebbebefgehfbefbfhebfegfbehfgefhegbfhegef")))

@@ -4,8 +4,8 @@
 	(~ velo)
 	(st 1))
 
-(~ pitch (seq 60 64 67))
-
-(~ dura (st 0.125))
-
+(~ pitch (st 60))
+(~ dura (st 0.1a))
 (~ velo (st 100))
+
+
