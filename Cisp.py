@@ -816,7 +816,7 @@ spork ~ """+sparkName+"""();
         return chuckCode
 
     def checkArgs(self):
-        if len(self.arguments) in [5, 6]:
+        if not (len(self.arguments) in [5, 6]):
             print("error, wrong number of args (should be 5 or 6, amp time pan freq fb): ", str(
                 len(self.arguments)))
             return False
@@ -1512,6 +1512,8 @@ def standard_env():
         'mtof': {'name': 'st.mtof', 'args': 1},
         'mtor': {'name': 'st.mtor', 'args': 1},
         'ftom': {'name': 'st.ftom', 'args': 1},
+        'mtod' : {'name' : 'st.mtosec' , 'args' : 1},
+        'mtosec' : { 'name' : 'st.mtosec', 'args': 1},
         'sync': {'name': 'cs.sync', 'args': 1, 'class': SingleStatement},
         'clip': {'name': 'st.clip', 'args': 3, },
 
@@ -1683,7 +1685,8 @@ def standard_env():
         'samp-schedule': {'name': 'st.sampSchedule', 'class': SingleStatement},
         'beat': {'name': 'st.beat', 'args': 2},
         'beati': {'name': 'st.beati', 'args': 2},
-        'leakDC' : {'name': 'st.leakDC', 'args' : 2 }
+        'leakDC' : {'name': 'st.leakDC', 'args' : 2 },
+        'lowpass' : { 'name' : 'st.lowpass', 'args' : 4 }
     })
     return env
 

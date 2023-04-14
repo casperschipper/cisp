@@ -8,7 +8,7 @@
 
 (fun a
 	(line
-		(seq 0 c)
+		(seq 0 c)	
 		(t (bounded-mup-walk 0.01 2.0 (ch 0.66667 1.5)) (ch 0.3 0.5 1.0 2.0))))
 
 

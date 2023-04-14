@@ -1,5 +1,5 @@
 (# tab1
-	(200. 3 4 100000 10 11 74 16 16 1012))
+	(1000.0 100.0 10. 1. 2. 3. 4 8 1000 200000))
 
 
 (fun top
@@ -16,7 +16,7 @@
 
 (clone
 (step-gen
-	(cycle (* 20000 (lowpass (hold (seq -1 1) holder) (st 100.0) (st 0.3) (st 3.0))))
+	(cycle (* 100000 (lowpass (hold (seq -1 (rv 0 0.3) 1) holder) (st 2000.0) (st 0.01) (st 3.0))))
 	(st 1)
 	:pan (rvfi -1 1))
 3)
