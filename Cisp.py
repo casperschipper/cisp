@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# 06-04-2023
+# 17-04-2023
 
 import math
 import operator as op
@@ -822,6 +822,38 @@ spork ~ """+sparkName+"""();
             return False
         return True
 
+
+class NodeSynth(DirectSynth):
+    "A bunch of Chaos.13 like node"
+    # translator of names:
+
+    def __repr__(self):
+        # generate a name, lookup synth name, construct a Synth shred, spork it.
+        sparkName = unique.name('shred')
+
+        if (len(self.arguments) == 10):
+            size, amp, pan, out, dur, top, timer, record, inp, fund = self.arguments
+        else:
+            raise("node error")
+
+        chuckCode = """
+fun void """+sparkName+"""() {
+"""+self.name+""" s => Safe safe => dac;
+
+s.init("""+size+','+amp+','+pan+','+out+','+dur+','+top+','+timer+','+record+','+inp+','+fund+""");
+
+day => now;
+}
+spork ~ """+sparkName+"""();
+"""  # creates a function sparkname and immediately execute
+        return chuckCode
+
+    def checkArgs(self):
+        if not (len(self.arguments) in [10]):
+            print("wrong number of args. \nshould be: size, amp, pan, out(str), stdur(str), sttimer(str),strecord(str), input(st), fund(st) ", str(
+                len(self.arguments)))
+            return False
+        return True
 
 def streamArray(seq, env, depth):
     "streamArray"
@@ -1686,7 +1718,9 @@ def standard_env():
         'beat': {'name': 'st.beat', 'args': 2},
         'beati': {'name': 'st.beati', 'args': 2},
         'leakDC' : {'name': 'st.leakDC', 'args' : 2 },
-        'lowpass' : { 'name' : 'st.lowpass', 'args' : 4 }
+        'lowpass' : { 'name' : 'st.lowpass', 'args' : 4 },
+        'node' : { 'name' : 'NodeSynth' , 'args' : 10, 'class' : NodeSynth },
+        'reset-node' : { 'name' : 'st.resetNode' , 'args' : 0, 'class' : SingleStatement }
     })
     return env
 

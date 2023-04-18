@@ -51,7 +51,7 @@ SynthDef(\sqr, { | freq = 110.0, dur = 1.0, amp = 1.0, pos = 0.0 |
 
 SynthDef(\simple, { | freq = 660.0, dur = 1.0, amp = 0.01, pos = 0.0 |
 	var env = EnvGen.ar(Env.perc(dur,dur), doneAction:2);
-	var sig = SinOsc.ar(Pulse.ar(freq/1.61414)*freq);
+	var sig = SinOsc.ar(freq) ;
 	Out.ar(0,Pan2.ar(sig*amp*env,pos));
 }).send(s);
 
@@ -67,7 +67,7 @@ s.scope;
 s.freeAll;
 
 b.plot;
-s.boot;
+s.reboot;
 s.quit;
 s.boot;
 

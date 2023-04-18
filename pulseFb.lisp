@@ -2,7 +2,7 @@
 	(fillf 44100 0 0))
 
 (samp-schedule
-	(write tab1 (audioIn 0) (count (table-cap tab1)))
+	(write tab1 (audioIn (st 0)) (count (table-cap tab1)))
 	(st 1))
 	
 
@@ -24,6 +24,7 @@
 		(seq 2.0 0.5)
 		(ch 0.25 0.5 1.0 2.0 3.0 5.0 10.0)))
 
-(clone 
+
 (pulse-fb-gen (index-lin tab1 (bounded-walk (st 0) (table-cap tab1) transer)) (st 1) pan freq feedb)
-3)
+(pulse-fb-gen (index-lin tab1 (bounded-walk (st 0) (table-cap tab1) transer)) (st 1) pan freq feedb)
+(pulse-fb-gen (index-lin tab1 (bounded-walk (st 0) (table-cap tab1) transer)) (st 1) pan freq feedb)

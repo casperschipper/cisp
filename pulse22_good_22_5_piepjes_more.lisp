@@ -50,5 +50,5 @@
 		(count (table-cap recording1))
 		(st 0.1)) 1)
 	(st 1)
-	:pan (rvi 0 1))
+	:pan (rvi -1 1))
 4)
