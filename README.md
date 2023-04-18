@@ -96,11 +96,25 @@ To make coding faster, I use a build script wich runs the .lisp file into cisp.
 
 ### write to table
 
-`(~ foo (write casper (count 128) (rv 1 128))`
+`(~ foo (write casper (rv -1 1) (count 128))`
+
+The arguments for write are: table name, value generator, write index into the table.
 
 which can be scheduled as
+`(schedule (~ foo) (st 0.5))` // which means that foo is executed each 0.5 seconds
 
-`(schedule foo (st 0.5))` // which means that foo gets written every 0.5 seconds
+You can also use a more direct notation, for example:
+
+(samp-schedule ARG1 ARG2)
+
+evaluates its ARG1 stream each ARG2 samples.
+
+`(samp-schedule 
+	(write casper (rv -1 1) (count 128)) 
+	(st 1))
+`
+
+
 
 
 
