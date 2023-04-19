@@ -1,13 +1,57 @@
 Server.killAll;
-s.boot;
+s.quit;
 
+(
+s.options.numOutputBusChannels = 4;
+s.options.memSize_(65536);
+s.options.maxNodes_(4096);
 Server.supernova;
-s.options.memSize_(8192*4);
-s.plotTree;
+s.boot;
+)
 
-s.device =
+(
+SynthDef(\simple, { | freq = 660.0, dur = 1.0, amp = 0.01, pos = 0.0 |
+	var env = EnvGen.ar(Env.perc(dur,dur), doneAction:2);
+	var sig = SinOsc.ar(freq);
+	Out.ar(0,PanAz.ar(4,in:sig*amp*env,pos:pos,width:2.0));
+}).send(s);
+)
 
-Server.options.devices;
+(
+Synth(\simple);
+)
+
+
+
+s.freeAll;
+
+
+Server.killAll;
+
+
+s.quit;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// OTHER STUFFFFFFF
+s.freeAll;
 
 b = Buffer.alloc(s,100000,1);
 b.plot;
@@ -37,9 +81,9 @@ SynthDef(\playbuf2, { | bufnum, start, loopsize = 44100.0, dur = 1.0, rate = 1.0
 }).send(s);
 
 SynthDef(\saw, { | freq = 220.0, dur = 1.0, amp = 1.0, pos = 0.0 |
-	var sig = Saw.ar(freq) + SinOsc.ar(freq/2.0) + SinOsc.ar(freq*2) + SinOsc.ar(freq*4);
+	var sig = Saw.ar(freq:freq);
 	var env = EnvGen.ar(Env.perc(dur/2.0,dur/2.0),doneAction:2);
-	Out.ar(0,Pan2.ar(env*sig*amp,pos));
+	Out.ar(0,Pan4.ar(env*sig*amp,pos));
 }).send(s);
 
 SynthDef(\sqr, { | freq = 110.0, dur = 1.0, amp = 1.0, pos = 0.0 |
@@ -49,11 +93,7 @@ SynthDef(\sqr, { | freq = 110.0, dur = 1.0, amp = 1.0, pos = 0.0 |
 	Out.ar(0,Pan2.ar(sig*amp*env,pos));
 }).send(s);
 
-SynthDef(\simple, { | freq = 660.0, dur = 1.0, amp = 0.01, pos = 0.0 |
-	var env = EnvGen.ar(Env.perc(dur,dur), doneAction:2);
-	var sig = SinOsc.ar(freq) ;
-	Out.ar(0,Pan2.ar(sig*amp*env,pos));
-}).send(s);
+
 
 SynthDef(\sqr2, { | freq = 110.0, dur = 1.0, amp = 1.0, pos = 0.0 |
 	var env = EnvGen.ar(Env.perc(dur,dur), doneAction:2);
@@ -62,6 +102,11 @@ SynthDef(\sqr2, { | freq = 110.0, dur = 1.0, amp = 1.0, pos = 0.0 |
 }).send(s);
 )
 
+
+s.meter;
+
+s.boot;
+s.meter;
 x.free;
 s.scope;
 s.freeAll;

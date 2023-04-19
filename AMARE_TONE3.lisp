@@ -7,7 +7,7 @@
 
 (fun a (t 
 		(seq (rv 0.99 top) 2 3 4 5 6 7)
-		(rv 0.1 0.2)
+		(rv 0.1 0.2)	
 		))
 
 (fun mupper

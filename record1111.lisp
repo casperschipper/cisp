@@ -24,7 +24,7 @@
 (clone
 (step-gen
 (leakDC
-	(* (index-lin tab1 (+ offset (bounded-walk (st 0) (st 44100) (t (/ a a) (ch 0.1 0.2 0.5 2.0 4.0))))) 10)
+	(* (index-lin tab1 (+ (bounded-walk (st 0) (st 44100) (t (/ a a) (ch 0.1 0.2 0.5 2.0 4.0))))) 10)
 	(st 0.96))
 (st 1)
 :pan (rvfi -1 1))
