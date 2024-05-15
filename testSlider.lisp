@@ -1,1 +1,0 @@
-(test (slider 3 1 1))

@@ -1,12 +1,15 @@
-(fun a 
-	(hold 
-		(seq 0 2 7 12 14 13 -4 4 3)
-		(ch 3 4 3 2 3 4 5 6 5 4 3)))
+(~ a
+	(reset 
+		(walk 60 (ch -12 12))
+		(st 60)
+		(st 3)))
 
-(sync 0.12)
+(~ c 
+	(reset (walk 60 (ch -12 12)))
+	 (walk 60 (ch -5 5) (st 4)))
 
-(midi-note
-(st 0.36)
-(+ (st 45) (seq (+ 0 a) (+ 7 a) (+ a 12)))
-(st 1.0)
-(st 64))
+(~ b 
+	(reset 
+		(walk 60 (ch -7 7))
+		(st 60)
+		(st 5)))

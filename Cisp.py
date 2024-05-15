@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# 17-04-2023
+# 29-03-2024
 
 import math
 import operator as op
@@ -52,8 +52,8 @@ from string import Template
 # event streams in scheme?
 
 
-Symbol = str          # A Scheme Symbol is implemented as a Python str
-List = list         # A Scheme List is implemented as a Python list
+Symbol = str  # A Scheme Symbol is implemented as a Python str
+List = list  # A Scheme List is implemented as a Python list
 # A Scheme Number is implemented as a Python int or float
 Number = (int, float)
 
@@ -64,19 +64,19 @@ class FileIO(object):
     "File input output module"
 
     def __init__(self, fileInName, fileOutName):
-        self.inFile = open(fileInName, 'r')
-        self.outFile = open(fileOutName, 'w')
+        self.inFile = open(fileInName, "r")
+        self.outFile = open(fileOutName, "w")
 
-        unique_filename = 'tmp'
+        unique_filename = "tmp"
 
         self.cleanFile(unique_filename)
         self.processInfile()
 
         os.remove(unique_filename)
-        print('the file', unique_filename, 'was deleted.')
+        print("the file", unique_filename, "was deleted.")
 
     def cleanFile(self, unique_filename):
-        self.cleanFile = open(unique_filename, 'w')
+        self.cleanFile = open(unique_filename, "w")
         data = ""
         for line in self.inFile:
             data += line
@@ -86,12 +86,12 @@ class FileIO(object):
         self.cleanFile.write(self.remove_comments(data))
         self.cleanFile.close()
 
-        self.inFile = open(unique_filename, 'r')
+        self.inFile = open(unique_filename, "r")
 
     def remove_comments(self, string):
         "remove comments & multi-line comments"
         pattern = r"(\".*?\"|\'.*?\')|(/\*.*?\*/|//[^\r\n]*$)"
-        #pattern = r"(/\*.*?\*/|//[^\r\n]*$)"
+        # pattern = r"(/\*.*?\*/|//[^\r\n]*$)"
         # first group captures quoted strings (double or single)
         # second group captures comments (//single-line or /* multi-line */)
         regex = re.compile(pattern, re.MULTILINE | re.DOTALL)
@@ -103,6 +103,7 @@ class FileIO(object):
                 return ""  # so we will return empty to remove the comment
             else:  # otherwise, we will return the 1st group
                 return match.group(1)  # captured quoted-string
+
         return regex.sub(_replacer, string)
 
     def writeLine(self, line):
@@ -110,47 +111,48 @@ class FileIO(object):
 
     def processInfile(self):
         "Stack all the lines together, process each line"
-        fullLine = ''
+        fullLine = ""
         nOpen, nClosed, thisLineCount = 0, 0, 0
 
         # making sure we parse a full S-expression
         for line in self.inFile:
             nOpen += self.countOpen(line)
             nClosed += self.countClosed(line)
-            thisLineCount = (nOpen - nClosed)
+            thisLineCount = nOpen - nClosed
             if nOpen > 0:
                 if thisLineCount != 0:
-                    fullLine += line.replace('\n', '')
+                    fullLine += line.replace("\n", "")
                 else:
-                    fullLine += line.replace('\n', '')
+                    fullLine += line.replace("\n", "")
                     self.parseLine(fullLine)
-                    fullLine = ''
+                    fullLine = ""
                     nOpen, nClosed, thisLineCount = 0, 0, 0
 
         self.outFile.write('\n<<<"shred id: ",me.id()>>>;')
         # add an end event
         self.outFile.write(
-            '\nEvent end;\n(new ShredEventStack).push(end);\nend => now;')
+            "\nEvent end;\n(new ShredEventStack).push(end);\nend => now;"
+        )
         self.outFile.close()
 
     def parseLine(self, string):
         parser = Cisp(string)
         result = parser.result()
         # print 'result:'
-        #print (result)
+        # print (result)
         self.writeLine(result)
 
     def countOpen(self, string):
         count = 0
         for x in string:
-            if x == '(':
+            if x == "(":
                 count += 1
         return count
 
     def countClosed(self, string):
         count = 0
         for x in string:
-            if x == ')':
+            if x == ")":
                 count += 1
         return count
 
@@ -159,10 +161,10 @@ class FileIO(object):
         level = 0
         flag = 0
         for x in string:
-            if x == '(':
+            if x == "(":
                 flag = True  # there is at least one parenthesis
                 level = level + 1
-            elif x == ')':
+            elif x == ")":
                 level = level - 1
         return (level == 0) and flag
 
@@ -189,16 +191,16 @@ class UniqueName(object):
         self.creation = str(int(time()))
 
     def thisShred(self):
-        return 'shred-'+self.creation
+        return "shred-" + self.creation
 
     def name(self, prefix):
         "returns a unique name based on a prefix, if used before adds _2 _3 etc.."
         if prefix in self.prefixDict.keys():
             self.prefixDict[prefix] += 1
-            return prefix+"_" + str(self.prefixDict[prefix])
+            return prefix + "_" + str(self.prefixDict[prefix])
         else:
             self.prefixDict[prefix] = 1
-            return prefix+"_1"
+            return prefix + "_1"
 
 
 unique = UniqueName()
@@ -224,7 +226,7 @@ class Cisp(object):
 
     def tokenize(self, chars):
         "Convert a string of characters into a list of tokens."
-        return chars.replace('(', ' ( ').replace(')', ' ) ').split()
+        return chars.replace("(", " ( ").replace(")", " ) ").split()
 
     def parse(self, program):
         "Read a Cisp expression from a string."
@@ -233,16 +235,16 @@ class Cisp(object):
     def read_from_tokens(self, tokens):
         "Read an expression from a sequence of tokens."
         if len(tokens) == 0:
-            raise SyntaxError('unexpected EOF while reading')
+            raise SyntaxError("unexpected EOF while reading")
         token = tokens.pop(0)
-        if '(' == token:
+        if "(" == token:
             L = []
-            while tokens[0] != ')':
+            while tokens[0] != ")":
                 L.append(self.read_from_tokens(tokens))
             tokens.pop(0)  # pop off ')'
             return L
-        elif ')' == token:
-            raise SyntaxError('unexpected )')
+        elif ")" == token:
+            raise SyntaxError("unexpected )")
         else:
             return self.atom(token)
 
@@ -260,6 +262,7 @@ class Cisp(object):
         "does something with a token"
         return token
 
+
 # Env = dict          # An environment is a mapping of {variable: value}
 
 
@@ -268,7 +271,7 @@ class StringParser:
         self.lst = seq
 
     def nextToken(self):
-        if (self.lst):
+        if self.lst:
             # print "debug: self.lsg",self.lst
             return self.lst.pop(0)
         return False
@@ -280,9 +283,13 @@ class StringParser:
 
         item = self.nextToken()
 
-        while (item is not False):  # first item passed, is not because of 0 should be parsed
+        while (
+            item is not False
+        ):  # first item passed, is not because of 0 should be parsed
             # print "2. ok first step is ok"
-            if type(item) == type([]):  # if it is a list, parse it first than add to list
+            if type(item) == type(
+                []
+            ):  # if it is a list, parse it first than add to list
                 # print "3. item is list, so call a new one", item
                 parser = StringParser(item)
                 result = result + [parser.parse()]
@@ -293,14 +300,14 @@ class StringParser:
                     combined = item  # start a combined
                     # print "6. combined =", combined
                     item = self.nextToken()  # move on to next
-                    if (item is False):
+                    if item is False:
                         # this is really silly coding.. :-/
                         result = result + [combined]
 
-                    while (item is not False):  # if there is one
+                    while item is not False:  # if there is one
                         # print item, "7. item not false"
                         if type(item) == type(""):
-                            combined = combined + ' ' + item
+                            combined = combined + " " + item
                             if item[-1] == '"':  # we reached the end
                                 # print "8. we reached the end", item
                                 # store the combined result
@@ -338,7 +345,7 @@ class Env(dict):
         try:
             return self if (var in self) else self.outer.find(var)
         except AttributeError:
-            print('value:' + var + ' not found.')
+            print("value:" + var + " not found.")
 
 
 class StreamFuncDef(object):
@@ -363,8 +370,17 @@ class StreamFuncDef(object):
         if arguments == None:
             arguments = []
         # add Stream type before all values. Join with ',' .
-        arguments = ",".join(["Stream "+x for x in arguments])
-        return "fun Stream " + functionName + " ("+arguments+") {\n" + "return "+body+";\n}\n"
+        arguments = ",".join(["Stream " + x for x in arguments])
+        return (
+            "fun Stream "
+            + functionName
+            + " ("
+            + arguments
+            + ") {\n"
+            + "return "
+            + body
+            + ";\n}\n"
+        )
 
     def parse(self):
         x = self.defList
@@ -372,7 +388,7 @@ class StreamFuncDef(object):
         if len(x) > 3:
             (_, var, arg, body) = x  # _ = 'fun'
 
-            functionDiscr = {var: {'name': var, 'args': len(arg)}}
+            functionDiscr = {var: {"name": var, "args": len(arg)}}
 
             env.update(functionDiscr)
 
@@ -380,29 +396,30 @@ class StreamFuncDef(object):
 
             for item in arg:
                 # parameter stored in a local env, to not polute global env
-                localEnv.update({item: {'name': item}})
+                localEnv.update({item: {"name": item}})
 
-            env[var]['args'] = len(arg)  # store the number of args in env
+            env[var]["args"] = len(arg)  # store the number of args in env
             body = eval(body, localEnv)
         else:  # no arguments, only name and body
             (_, var, body) = x
-            functionDiscr = {var: {'name': var, 'args': 0, 'isFunction': True}}
+            functionDiscr = {var: {"name": var, "args": 0, "isFunction": True}}
             env.update(functionDiscr)
             arg = None
             body = eval(body, env)
         return self.makeFunction(var, arg, body)
 
+
 # A couple of helper functions
 
 
 def makeNewBus(busName, body):
-    " Make a Chuck Stream Bus, a bus is a shared stream. When a caller gets a new value it updates the state inside"
-    return "\nst.bus("+body+",\""+busName+"\")"
+    "Make a Chuck Stream Bus, a bus is a shared stream. When a caller gets a new value it updates the state inside"
+    return "\nst.bus(" + body + ',"' + busName + '")'
 
 
 def returnOldBus(busName):
-    " Return a new value "
-    return "\nst.bus(\""+busName+"\")"
+    "Return a new value"
+    return '\nst.bus("' + busName + '")'
 
 
 def anyIn(seq1, seq2):
@@ -414,7 +431,7 @@ def anyIn(seq1, seq2):
 
 
 class StreamCall(object):
-    " this tranlates a function call "
+    "this tranlates a function call"
 
     def __init__(self, name, arguments, environment, depth):
         self.cispname = name
@@ -441,24 +458,34 @@ class StreamCall(object):
 
     def evaluateArgs(self):
         "this evaluates the arguments"
-        self.arguments = [eval(exp, self.env, self.depth+1)
-                          for exp in self.arguments]
+        self.arguments = [eval(exp, self.env, self.depth + 1) for exp in self.arguments]
 
     def checkArgs(self):
         "retrieve the number of args expected"
-        numOfArgs = (self.env.find(self.cispname)[self.cispname]).get('args')
+        numOfArgs = (self.env.find(self.cispname)[self.cispname]).get("args")
         if not numOfArgs:
-            numOfArgs = 'inf'
+            numOfArgs = "inf"
 
         if type(numOfArgs) == type(1):
             numOfArgs = [numOfArgs]
-            #print('it is now this:'+ str(numOfArgs))
-        if not 'inf' in numOfArgs and not len(self.arguments) in numOfArgs:
-            raise Exception('function:' + self.name + ' has '+str(len(self.arguments)) +
-                            ' args, expects: '+str(numOfArgs) + '\n' + 'argumnets were:' + str(self.arguments) + '\n')
+            # print('it is now this:'+ str(numOfArgs))
+        if not "inf" in numOfArgs and not len(self.arguments) in numOfArgs:
+            raise Exception(
+                "function:"
+                + self.name
+                + " has "
+                + str(len(self.arguments))
+                + " args, expects: "
+                + str(numOfArgs)
+                + "\n"
+                + "argumnets were:"
+                + str(self.arguments)
+                + "\n"
+            )
 
     def splitKeyed(self):
         "Strip the keyed arguments (:key values)  from the arguments list"
+
         def snext(iterator):
             # safe next, returns false instead of raising error
             return next(iterator, False)
@@ -466,7 +493,7 @@ class StreamCall(object):
         def isKey(string):
             # returns key if starts with ':'
             if isinstance(string, str):
-                if string[0] == ':':
+                if string[0] == ":":
                     return string[1:]
             return False
 
@@ -477,7 +504,7 @@ class StreamCall(object):
         item = snext(iterator)
         isKeyedArg = False
 
-        while(item is not False):
+        while item is not False:
             key = isKey(item)
             if key:
                 # move to next arg
@@ -499,13 +526,18 @@ class StreamCall(object):
 
     def setters(self):
         # there must be some way of telling to the outside world that this should be treaded as list thing when embedded in an SEQ.
-        return "".join(['.'+str(key)+'(' + str(value) + ')' for key, value in self.extra.items()])
+        return "".join(
+            [
+                "." + str(key) + "(" + str(value) + ")"
+                for key, value in self.extra.items()
+            ]
+        )
 
 
 # note the ; at the end, not be embedded in other expresssions
 class SingleStatement(StreamCall):
     def __repr__(self):
-        return self.name + "(" + self.printArguments() + ")" + self.setters() + ';\n\n'
+        return self.name + "(" + self.printArguments() + ")" + self.setters() + ";\n\n"
 
 
 class Cloner(StreamCall):
@@ -534,8 +566,10 @@ class Cloner(StreamCall):
 
     def __repr__(self):
         "this is the central construction of the function call"
-        string = self.printArguments()
-        string = (string + ';\n\n') * self.numberOfClones
+        code_shred = self.printArguments()
+        string = ""
+        for i in range(0, self.numberOfClones):
+            string = string + code_shred.replace("shred_1", "shred_" + str(i + 2))
         return string
 
 
@@ -546,25 +580,25 @@ class Cloner(StreamCall):
 #         args = ','.join(self.arguments)
 #         return  '[' + mixedTypeListFix( args ) + ']'
 
+
 class ListStreamCall(StreamCall):
     "this should be used for Seq, Series and Choice"
 
     def evaluateArgs(self):
         "this avaluates the arguments"
         self.depth = 0
-        self.arguments = [eval(exp, self.env, self.depth+1)
-                          for exp in self.arguments]
+        self.arguments = [eval(exp, self.env, self.depth + 1) for exp in self.arguments]
 
     def printArguments(self):
         "checks if holdmode true, adds that to the end of the arguments, after the list"
-        if self.arguments[-1] == 'true':
+        if self.arguments[-1] == "true":
             self.arguments = self.arguments[:-1]
-            holdMode = ',true'
+            holdMode = ",true"
         else:
-            holdMode = ''
-        if (self.checkIfArgsIsArrayPointer()):
-            return ','.join(mixedTypeListFix(self.arguments)) + holdMode
-        return '[' + ','.join(mixedTypeListFix(self.arguments)) + ']' + holdMode
+            holdMode = ""
+        if self.checkIfArgsIsArrayPointer():
+            return ",".join(mixedTypeListFix(self.arguments)) + holdMode
+        return "[" + ",".join(mixedTypeListFix(self.arguments)) + "]" + holdMode
 
     def checkIfArgsIsArrayPointer(self):
         "check arguments, only True with single argument"
@@ -578,10 +612,9 @@ class ListListStreamCall(StreamCall):
 
     def evaluateArgs(self):
         self.depth = 0
-        self.arguments = [eval(exp, self.env, self.depth+1)
-                          for exp in self.arguments]
-        if matchStrings(self.arguments, 'st'):
-            self.name = eval('stream-weights')
+        self.arguments = [eval(exp, self.env, self.depth + 1) for exp in self.arguments]
+        if matchStrings(self.arguments, "st"):
+            self.name = eval("stream-weights")
 
 
 class BusCall(StreamCall):
@@ -596,8 +629,7 @@ class BusCall(StreamCall):
 
     def evaluateArgs(self):
         "this avaluates the arguments"
-        self.arguments = [eval(exp, self.env, self.depth+1)
-                          for exp in self.arguments]
+        self.arguments = [eval(exp, self.env, self.depth + 1) for exp in self.arguments]
 
 
 class ArrayGen(StreamCall):
@@ -607,20 +639,34 @@ class ArrayGen(StreamCall):
 
 class PanSynth(StreamCall):
     def __repr__(self):
-        sparkName = unique.name('shred')
+        sparkName = unique.name("shred")
 
         amp, timer, panner = self.arguments
 
-        chuckCode = """
-fun void """+sparkName+"""() {
-"""+self.name+""" s;
+        chuckCode = (
+            """
+fun void """
+            + sparkName
+            + """() {
+"""
+            + self.name
+            + """ s;
 
-s.init("""+amp+'\n,'+timer+'\n,'+panner+"""\n);
+s.init("""
+            + amp
+            + "\n,"
+            + timer
+            + "\n,"
+            + panner
+            + """\n);
 
 day => now;
 }
-spork ~ """+sparkName+"""();
-"""  # creates a function sparkname and immediately execute
+spork ~ """
+            + sparkName
+            + """();
+"""
+        )  # creates a function sparkname and immediately execute
         return chuckCode
 
 
@@ -630,20 +676,32 @@ class WriteSchedule(StreamCall):
     def __repr__(self):
         print("self.name WRITESCHEDULE = ", self.name)
         # generate a name, construct a  shred, spork it.
-        sparkName = unique.name('shred')
+        sparkName = unique.name("shred")
 
         amp, timer = self.arguments
 
-        chuckCode = """
-fun void """+sparkName+"""() {
-"""+self.name+""" s;
+        chuckCode = (
+            """
+fun void """
+            + sparkName
+            + """() {
+"""
+            + self.name
+            + """ s;
 // shred to write value to table (st.write), amp is ignored
-s.init("""+amp+'\n,'+timer+"""\n\n);
+s.init("""
+            + amp
+            + "\n,"
+            + timer
+            + """\n\n);
 
 day => now;
 }
-spork ~ """+sparkName+"""();
-"""  # immediately execute
+spork ~ """
+            + sparkName
+            + """();
+"""
+        )  # immediately execute
         return chuckCode
 
 
@@ -651,17 +709,28 @@ class EventGenerator(StreamCall):
     "An event generator"
 
     def deferedParsFormatted(self):
-        #print ("self.defered dict",self.defered)
-        return "".join(["s.addDefered(\"" + key + "\"," + value + ");\n" for key, value in self.defered.items()])
+        # print ("self.defered dict",self.defered)
+        return "".join(
+            [
+                's.addDefered("' + key + '",' + value + ");\n"
+                for key, value in self.defered.items()
+            ]
+        )
 
     def extraParsFormatted(self):
         "this formats the extra parameters"
         # print "self.extra dict",self.extra
-        return "".join(["s.addPar(\"" + key + "\"," + value + ");\n" for key, value in self.extra.items()])
+        return "".join(
+            [
+                's.addPar("' + key + '",' + value + ");\n"
+                for key, value in self.extra.items()
+            ]
+        )
 
     def splitKeyed(self):
         # print "something is ok"
         "Specially adjusted for once per event stream. Strip the keyed arguments (:key values)  from the arguments list"
+
         def snext(iterator):
             # safe next, returns false instead of raising error
             return next(iterator, False)
@@ -669,19 +738,21 @@ class EventGenerator(StreamCall):
         def isKey(string):
             # returns key if starts with ':'
             if isinstance(string, str):
-                if string[0] == ':':
+                if string[0] == ":":
                     return string[1:]
             return False
 
         def isDefer(string):
             # returns key if defer ;
-            if (isinstance(string, str)):
-                if string[0] == ';':
+            if isinstance(string, str):
+                if string[0] == ";":
                     return string[1:]
             return False
 
         self.extra = {}
-        self.defered = {}  # this contains all the defered streams, evaluated once per event
+        self.defered = (
+            {}
+        )  # this contains all the defered streams, evaluated once per event
 
         normalArgs = []
 
@@ -689,7 +760,7 @@ class EventGenerator(StreamCall):
         item = snext(iterator)
         isKeyedArg = False
 
-        while(item is not False):
+        while item is not False:
             key = isKey(item)
             defer = isDefer(item)
 
@@ -721,7 +792,7 @@ class DirectSynth(EventGenerator):
 
     def __repr__(self):
         # generate a name, lookup synth name, construct a Synth shred, spork it.
-        sparkName = unique.name('shred')
+        sparkName = unique.name("shred")
         print("self.arguments")
         amp, timer = self.arguments
 
@@ -729,31 +800,50 @@ class DirectSynth(EventGenerator):
 
         if "pan" in self.extra.keys():
             panUnit = "Pan4 p => dac;"
-            pancontrol = "p.pan("+self.extra["pan"]+");"
+            pancontrol = "p.pan(" + self.extra["pan"] + ");"
         elif "chan" in self.extra.keys():
-            panUnit = "dac.chan("+self.extra["chan"]+" $ int);\n"
+            panUnit = "dac.chan(" + self.extra["chan"] + " $ int);\n"
         else:
             panUnit = panUnit + "dac;\n"
 
-        chuckCode = """
-fun void """+sparkName+"""() {
-"""+self.name+""" s => Safe safe =>""" + panUnit + self.deferedParsFormatted()+"""\n
+        chuckCode = (
+            """
+fun void """
+            + sparkName
+            + """() {
+"""
+            + self.name
+            + """ s => Safe safe =>"""
+            + panUnit
+            + self.deferedParsFormatted()
+            + """\n
 
-s.init("""+amp+'\n,'+timer+"""\n\n);
+s.init("""
+            + amp
+            + "\n,"
+            + timer
+            + """\n\n);
 
 
-"""+pancontrol+"""
+"""
+            + pancontrol
+            + """
 
 day => now;
 }
-spork ~ """+sparkName+"""();
-"""  # creates a function sparkname and immediately execute
+spork ~ """
+            + sparkName
+            + """();
+"""
+        )  # creates a function sparkname and immediately execute
         return chuckCode
 
     def checkArgs(self):
         if len(self.arguments) != 2:
-            print("error, stepgen wrong number of args (should be 2): " +
-                  len(self.arguments))
+            print(
+                "error, stepgen wrong number of args (should be 2): "
+                + len(self.arguments)
+            )
             return False
         return True
 
@@ -764,26 +854,46 @@ class ChannelSynth(EventGenerator):
 
     def __repr__(self):
         # generate a name, lookup synth name, construct a Synth shred, spork it.
-        sparkName = unique.name('shred')
+        sparkName = unique.name("shred")
         print("self.arguments", self.arguments)
         value, dura, amp, channel = self.arguments
 
-        chuckCode = """
-fun void """+sparkName+"""() {
-"""+self.name+""" s ;""" + self.deferedParsFormatted()+"""\n
+        chuckCode = (
+            """
+fun void """
+            + sparkName
+            + """() {
+"""
+            + self.name
+            + """ s ;"""
+            + self.deferedParsFormatted()
+            + """\n
 
-s.init("""+value+'\n,'+dura+'\n,'+amp+'\n,'+channel+"""\n\n);
+s.init("""
+            + value
+            + "\n,"
+            + dura
+            + "\n,"
+            + amp
+            + "\n,"
+            + channel
+            + """\n\n);
 
 day => now;
 }
-spork ~ """+sparkName+"""();
-"""  # creates a function sparkname and immediately execute
+spork ~ """
+            + sparkName
+            + """();
+"""
+        )  # creates a function sparkname and immediately execute
         return chuckCode
 
     def checkArgs(self):
         if len(self.arguments) != 4:
-            print("error, ChannelSynth wrong number of args (should be 4): " +
-                  str(len(self.arguments)))
+            print(
+                "error, ChannelSynth wrong number of args (should be 4): "
+                + str(len(self.arguments))
+            )
             return False
         return True
 
@@ -794,31 +904,52 @@ class FBSynth(DirectSynth):
 
     def __repr__(self):
         # generate a name, lookup synth name, construct a Synth shred, spork it.
-        sparkName = unique.name('shred')
+        sparkName = unique.name("shred")
 
         schedule = ""
-        if (len(self.arguments) == 5):
+        if len(self.arguments) == 5:
             amp, timer, pan, freq, fb = self.arguments
         else:
             amp, timer, pan, freq, fb, schedule = self.arguments
-            schedule = ","+schedule
+            schedule = "," + schedule
 
-        chuckCode = """
-fun void """+sparkName+"""() {
-"""+self.name+""" s => Safe safe => dac;
+        chuckCode = (
+            """
+fun void """
+            + sparkName
+            + """() {
+"""
+            + self.name
+            + """ s => Safe safe => dac;
 
-s.init("""+amp+','+timer+','+pan+','+freq+','+fb+schedule+"""\n\n);
+s.init("""
+            + amp
+            + ","
+            + timer
+            + ","
+            + pan
+            + ","
+            + freq
+            + ","
+            + fb
+            + schedule
+            + """\n\n);
 
 day => now;
 }
-spork ~ """+sparkName+"""();
-"""  # creates a function sparkname and immediately execute
+spork ~ """
+            + sparkName
+            + """();
+"""
+        )  # creates a function sparkname and immediately execute
         return chuckCode
 
     def checkArgs(self):
         if not (len(self.arguments) in [5, 6]):
-            print("error, wrong number of args (should be 5 or 6, amp time pan freq fb): ", str(
-                len(self.arguments)))
+            print(
+                "error, wrong number of args (should be 5 or 6, amp time pan freq fb): ",
+                str(len(self.arguments)),
+            )
             return False
         return True
 
@@ -829,31 +960,62 @@ class NodeSynth(DirectSynth):
 
     def __repr__(self):
         # generate a name, lookup synth name, construct a Synth shred, spork it.
-        sparkName = unique.name('shred')
+        sparkName = unique.name("shred")
 
-        if (len(self.arguments) == 10):
+        if len(self.arguments) == 10:
             size, amp, pan, out, dur, top, timer, record, inp, fund = self.arguments
         else:
-            raise("node error")
+            raise ("node error")
 
-        chuckCode = """
-fun void """+sparkName+"""() {
-"""+self.name+""" s => Safe safe => dac;
+        chuckCode = (
+            """
+fun void """
+            + sparkName
+            + """() {
+"""
+            + self.name
+            + """ s => Safe safe => dac;
 
-s.init("""+size+','+amp+','+pan+','+out+','+dur+','+top+','+timer+','+record+','+inp+','+fund+""");
+s.init("""
+            + size
+            + ","
+            + amp
+            + ","
+            + pan
+            + ","
+            + out
+            + ","
+            + dur
+            + ","
+            + top
+            + ","
+            + timer
+            + ","
+            + record
+            + ","
+            + inp
+            + ","
+            + fund
+            + """);
 
 day => now;
 }
-spork ~ """+sparkName+"""();
-"""  # creates a function sparkname and immediately execute
+spork ~ """
+            + sparkName
+            + """();
+"""
+        )  # creates a function sparkname and immediately execute
         return chuckCode
 
     def checkArgs(self):
         if not (len(self.arguments) in [10]):
-            print("wrong number of args. \nshould be: size, amp, pan, out(str), stdur(str), sttimer(str),strecord(str), input(st), fund(st) ", str(
-                len(self.arguments)))
+            print(
+                "wrong number of args. \nshould be: size, amp, pan, out(str), stdur(str), sttimer(str),strecord(str), input(st), fund(st) ",
+                str(len(self.arguments)),
+            )
             return False
         return True
+
 
 def streamArray(seq, env, depth):
     "streamArray"
@@ -865,8 +1027,8 @@ def streamArray(seq, env, depth):
         seq = mixedTypeListFix(seq)
 
     seq = ",".join(seq)
-    string = '['+seq+']'
-    string = string.replace('\n', '')
+    string = "[" + seq + "]"
+    string = string.replace("\n", "")
     return string
 
 
@@ -887,8 +1049,9 @@ class SuperChuckInst(StreamCall):
     def evaluateArgs(self):
         x = self.arguments
         # evaluate everything but the name of the instrument
-        self.arguments = [str(x[0])] + [eval(exp, self.env,
-                                             self.depth+1) for exp in x[1:]]
+        self.arguments = [str(x[0])] + [
+            eval(exp, self.env, self.depth + 1) for exp in x[1:]
+        ]
 
     def printArguments(self):
         return SuperChuckInstStr(*self.arguments)
@@ -903,8 +1066,9 @@ class MidiNoteStream(StreamCall):
 
     def evaluateArgs(self):
         x = self.arguments
-        self.arguments = [eval(exp, self.env, self.depth+1)
-                          for exp in x]  # evaluate all
+        self.arguments = [
+            eval(exp, self.env, self.depth + 1) for exp in x
+        ]  # evaluate all
 
     def printArguments(self):
         return MidiChuckInstrStr(*self.arguments)
@@ -912,7 +1076,8 @@ class MidiNoteStream(StreamCall):
 
 class MidiNoteChannelStream(EventGenerator):
     "this will also do deffered parameters"
-    chuckTemplate = Template("""
+    chuckTemplate = Template(
+        """
 
 function void $funcName() {
     MidiNoteChannelStream s;
@@ -929,7 +1094,8 @@ function void $funcName() {
 }
 spork ~ $funcName ();
 
-""")
+"""
+    )
 
     def __repr__(self):
         "this is the central construction of the function call"
@@ -938,14 +1104,30 @@ spork ~ $funcName ();
     def printTemplate(self):
         return self.chuckMidiNoteChannelStream(*self.arguments)
 
-    def chuckMidiNoteChannelStream(self, st_timer='st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)'):
-        funcName = unique.name('midi_chuck_channel_streams')
-        return self.chuckTemplate.substitute(funcName=funcName, timer=st_timer, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, deferedPars=self.deferedParsFormatted())
+    def chuckMidiNoteChannelStream(
+        self,
+        st_timer="st.s(0.25)",
+        st_pitch="st.s(59)",
+        st_dur="st.s(0.25)",
+        st_velo="st.s(80)",
+        st_channel="st.s(1)",
+    ):
+        funcName = unique.name("midi_chuck_channel_streams")
+        return self.chuckTemplate.substitute(
+            funcName=funcName,
+            timer=st_timer,
+            pitch=st_pitch,
+            dura=st_dur,
+            velo=st_velo,
+            channel=st_channel,
+            deferedPars=self.deferedParsFormatted(),
+        )
 
 
 class MidiNoteChannelSyncTriggerStream(EventGenerator):
     "this will also do deffered parameters"
-    chuckTemplate = Template("""
+    chuckTemplate = Template(
+        """
 
 function void $funcName() {
     MidiNoteChannelSyncTriggerStream s;
@@ -962,7 +1144,8 @@ function void $funcName() {
 }
 spork ~ $funcName ();
 
-""")
+"""
+    )
 
     def __repr__(self):
         "this is the central construction of the function call"
@@ -971,13 +1154,30 @@ spork ~ $funcName ();
     def printTemplate(self):
         return self.chuckMidiNoteChannelStream(*self.arguments)
 
-    def chuckMidiNoteChannelStream(self, st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)', st_trigger='st.st(1)'):
-        funcName = unique.name('midi_chuck_channel_streams')
-        return self.chuckTemplate.substitute(funcName=funcName, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, trigger=st_trigger, deferedPars=self.deferedParsFormatted())
+    def chuckMidiNoteChannelStream(
+        self,
+        st_pitch="st.s(59)",
+        st_dur="st.s(0.25)",
+        st_velo="st.s(80)",
+        st_channel="st.s(1)",
+        st_trigger="st.s(1)",
+    ):
+        funcName = unique.name("midi_chuck_channel_streams")
+        return self.chuckTemplate.substitute(
+            funcName=funcName,
+            pitch=st_pitch,
+            dura=st_dur,
+            velo=st_velo,
+            channel=st_channel,
+            trigger=st_trigger,
+            deferedPars=self.deferedParsFormatted(),
+        )
+
 
 class MidiNoteChannelSyncStream(EventGenerator):
     "this will also do deffered parameters"
-    chuckTemplate = Template("""
+    chuckTemplate = Template(
+        """
 
 function void $funcName() {
     MidiNoteChannelSyncStream s;
@@ -993,7 +1193,8 @@ function void $funcName() {
 }
 spork ~ $funcName ();
 
-""")
+"""
+    )
 
     def __repr__(self):
         "this is the central construction of the function call"
@@ -1002,14 +1203,28 @@ spork ~ $funcName ();
     def printTemplate(self):
         return self.chuckMidiNoteChannelStream(*self.arguments)
 
-    def chuckMidiNoteChannelStream(self, st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)'):
-        funcName = unique.name('midi_chuck_channel_streams')
-        return self.chuckTemplate.substitute(funcName=funcName, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, deferedPars=self.deferedParsFormatted())
+    def chuckMidiNoteChannelStream(
+        self,
+        st_pitch="st.s(59)",
+        st_dur="st.s(0.25)",
+        st_velo="st.s(80)",
+        st_channel="st.s(1)",
+    ):
+        funcName = unique.name("midi_chuck_channel_streams")
+        return self.chuckTemplate.substitute(
+            funcName=funcName,
+            pitch=st_pitch,
+            dura=st_dur,
+            velo=st_velo,
+            channel=st_channel,
+            deferedPars=self.deferedParsFormatted(),
+        )
 
 
 class MidiNoteChannelStream(EventGenerator):
     "this will also do deffered parameters"
-    chuckTemplate = Template("""
+    chuckTemplate = Template(
+        """
 
 function void $funcName() {
     MidiNoteChannelStream s;
@@ -1026,7 +1241,8 @@ function void $funcName() {
 }
 spork ~ $funcName ();
 
-""")
+"""
+    )
 
     def __repr__(self):
         "this is the central construction of the function call"
@@ -1035,15 +1251,30 @@ spork ~ $funcName ();
     def printTemplate(self):
         return self.chuckMidiNoteChannelStream(*self.arguments)
 
-    def chuckMidiNoteChannelStream(self, st_timer='st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)'):
-        funcName = unique.name('midi_chuck_channel_streams')
-        return self.chuckTemplate.substitute(funcName=funcName, timer=st_timer, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, deferedPars=self.deferedParsFormatted())
-
+    def chuckMidiNoteChannelStream(
+        self,
+        st_timer="st.s(0.25)",
+        st_pitch="st.s(59)",
+        st_dur="st.s(0.25)",
+        st_velo="st.s(80)",
+        st_channel="st.s(1)",
+    ):
+        funcName = unique.name("midi_chuck_channel_streams")
+        return self.chuckTemplate.substitute(
+            funcName=funcName,
+            timer=st_timer,
+            pitch=st_pitch,
+            dura=st_dur,
+            velo=st_velo,
+            channel=st_channel,
+            deferedPars=self.deferedParsFormatted(),
+        )
 
 
 class MidiSyncStream(EventGenerator):
     "this will also do deffered parameters"
-    chuckTemplate = Template("""
+    chuckTemplate = Template(
+        """
 
     function void $funcName() {
     MidiSyncStream s;
@@ -1062,7 +1293,8 @@ class MidiSyncStream(EventGenerator):
 }
 spork ~ $funcName ();
 
-""")
+"""
+    )
 
     def __repr__(self):
         "this is the central construction of the function call"
@@ -1071,15 +1303,35 @@ spork ~ $funcName ();
     def printTemplate(self):
         return self.chuckMidiSyncStream(*self.arguments)
 
-    def chuckMidiSyncStream(self, in_port='0', out_port='0', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(1)', st_delta='st.st(12)'):
-        funcName = unique.name('midi_chuck_channel_streams')
-        return self.chuckTemplate.substitute(funcName=funcName, in_port=in_port, out_port=out_port, delta=st_delta, pitch=st_pitch, dura=st_dur, velo=st_velo, channel=st_channel, deferedPars=self.deferedParsFormatted())
+    def chuckMidiSyncStream(
+        self,
+        in_port="0",
+        out_port="0",
+        st_pitch="st.s(59)",
+        st_dur="st.s(0.25)",
+        st_velo="st.s(80)",
+        st_channel="st.s(1)",
+        st_delta="st.s(12)",
+    ):
+        funcName = unique.name("midi_chuck_channel_streams")
+        return self.chuckTemplate.substitute(
+            funcName=funcName,
+            in_port=in_port,
+            out_port=out_port,
+            delta=st_delta,
+            pitch=st_pitch,
+            dura=st_dur,
+            velo=st_velo,
+            channel=st_channel,
+            deferedPars=self.deferedParsFormatted(),
+        )
 
 
 class MidiNoteCtrlStream(MidiNoteStream):
     "This generates notes and controller values at the same time (just after note on)"
 
-    synthTemplate = Template("""
+    synthTemplate = Template(
+        """
 
 function void $funcName () {
     MidiNoteCtrlStream midi;
@@ -1094,16 +1346,35 @@ function void $funcName () {
     day => now;
 }
 spork ~ $funcName ();
-""")
+"""
+    )
 
     def printArguments(self):
         return self.midiChuckNoteCtrlInstrStr(*self.arguments)
 
-    def midiChuckNoteCtrlInstrStr(self, st_timer='st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', ctrlNumber='1', st_ctrlValue='st.st(0)', midiChannel='1'):
+    def midiChuckNoteCtrlInstrStr(
+        self,
+        st_timer="st.s(0.25)",
+        st_pitch="st.s(59)",
+        st_dur="st.s(0.25)",
+        st_velo="st.s(80)",
+        ctrlNumber="1",
+        st_ctrlValue="st.s(0)",
+        midiChannel="1",
+    ):
         "creates a midi instrument with a controller value per note (just after the note on)"
-        funcName = unique.name('midi_notectrl_instr')
+        funcName = unique.name("midi_notectrl_instr")
 
-        return self.synthTemplate.substitute(funcName=funcName, timer=st_timer, pitch=st_pitch, dura=st_dur, velo=st_velo, ctrlNumber=ctrlNumber, ctrlValue=st_ctrlValue, channel=midiChannel)
+        return self.synthTemplate.substitute(
+            funcName=funcName,
+            timer=st_timer,
+            pitch=st_pitch,
+            dura=st_dur,
+            velo=st_velo,
+            ctrlNumber=ctrlNumber,
+            ctrlValue=st_ctrlValue,
+            channel=midiChannel,
+        )
 
 
 class MidiControlStream(MidiNoteStream):
@@ -1120,15 +1391,15 @@ class MakeTable(StreamCall):
         # do not evaluate the name
         x = self.arguments
         self.tableName = x[0]
-        self.generator = eval(x[1], self.env, self.depth+1)
+        self.generator = eval(x[1], self.env, self.depth + 1)
 
     def __repr__(self):
         if self.tableName in self.env.keys():
-            return "cs.replacef("+self.generator+","+self.tableName+');\n\n'
+            return "cs.replacef(" + self.generator + "," + self.tableName + ");\n\n"
 
         self.env[self.tableName] = {}
-        self.env[self.tableName]['name'] = self.tableName
-        return self.generator + ' @=> ' + 'float ' + self.tableName + '[];\n\n'
+        self.env[self.tableName]["name"] = self.tableName
+        return self.generator + " @=> " + "float " + self.tableName + "[];\n\n"
 
 
 class Wr(StreamCall):
@@ -1138,10 +1409,10 @@ class Wr(StreamCall):
         # do not evaluate the name
         x = self.arguments
         self.valueName = x[0] + unique.thisShred()
-        self.value = eval(x[1], self.env, self.depth+1)
+        self.value = eval(x[1], self.env, self.depth + 1)
 
     def __repr__(self):
-        return ' st.wr("'+self.valueName+'",'+self.value+') '
+        return ' st.wr("' + self.valueName + '",' + self.value + ") "
 
 
 class Rd(StreamCall):
@@ -1152,7 +1423,7 @@ class Rd(StreamCall):
         self.valueName = self.arguments[0] + unique.thisShred()
 
     def __repr__(self):
-        return 'st.rd("'+self.valueName+'") '
+        return 'st.rd("' + self.valueName + '") '
 
 
 class Define(StreamCall):
@@ -1162,10 +1433,10 @@ class Define(StreamCall):
         # do not evaluate the name
         x = self.arguments
         self.valueName = x[0]
-        self.value = eval(x[1], self.env, self.depth+1)
+        self.value = eval(x[1], self.env, self.depth + 1)
 
     def __repr__(self):
-        return ' st.define("'+self.valueName+'",'+self.value+');\n\n '
+        return ' st.define("' + self.valueName + '",' + self.value + ");\n\n "
 
 
 class MakeProcedure(StreamCall):
@@ -1174,36 +1445,48 @@ class MakeProcedure(StreamCall):
     def evaluateArgs(self):
         x = self.arguments
         self.procedureName = x[0]
-        self.procedureBody = eval(x[1], self.env, self.depth+1)
+        self.procedureBody = eval(x[1], self.env, self.depth + 1)
 
         # to safely use stream namespace, replace all 'st' with 'ST'
-        self.procedureBody = self.procedureBody.replace('st.', 'ST.')
+        self.procedureBody = self.procedureBody.replace("st.", "ST.")
 
         # print "self.procedureBody", self.procedureBody
         self.env[self.procedureName] = {}
-        self.env[self.procedureName]['name'] = self.procedureName
+        self.env[self.procedureName]["name"] = self.procedureName
         # SOMETHING WITH PROCEDURES NEED TO BE STORED IN ENVIROMENT
 
     def __repr__(self):
-        className = unique.name('Procedure')
-        return """
-        class """+className+""" extends Stream {
+        className = unique.name("Procedure")
+        return (
+            """
+        class """
+            + className
+            + """ extends Stream {
         st ST; // this is for namespace reasons, st is already used within Stream class.
 
         fun float next() {
-        \t\t"""+self.procedureBody+""";
+        \t\t"""
+            + self.procedureBody
+            + """;
+            return 0.0;
         \t}
         }\n\n
-        """+className+' '+self.procedureName+';\n\n'
+        """
+            + className
+            + " "
+            + self.procedureName
+            + ";\n\n"
+        )
 
 
 def mixedTypeListFix(seq):
-    " this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present "
+    "this deals with arrays that contain mixed type values, and makes them all streams if one or more streams are present"
+
     def makeFloatyString(seq):
         # add a dot to the first float in seq, to force float array in ChucK !
-        if '.' in seq[0]:
+        if "." in seq[0]:
             return seq
-        return [seq[0] + '.'] + seq[1:]
+        return [seq[0] + "."] + seq[1:]
 
     if len(seq) == 1:  # do not try to cast a list/array
         return seq
@@ -1218,22 +1501,22 @@ def mixedTypeListFix(seq):
 
 def makeStream(arg):
     "make a static value stream"
-    return 'st.st('+arg+')'
+    return "st.s(" + arg + ")"
 
 
 def firstCharIsBracket(arg):
     "remove noncharacters and check if the first thing is a bracket (could be weights)"
-    return (arg.replace(' ', '').replace('\n', ''))[0] == '['
+    return (arg.replace(" ", "").replace("\n", ""))[0] == "["
 
 
 def castClass(arg):
-    "used in mixed type arrays, to force uniformity. In ChucK, the first element decides the array type. There are "
-    if 'guard' in arg or 'Guard' in arg:
+    "used in mixed type arrays, to force uniformity. In ChucK, the first element decides the array type. There are"
+    if "guard" in arg or "Guard" in arg:
         print("there is a guard")
-        return arg + '$ Guard'
+        return arg + "$ Guard"
     if firstCharIsBracket(arg):
         return arg
-    return arg+' $ Stream'
+    return arg + " $ Stream"
 
 
 class SuperChuckInstStrClass(EventGenerator):
@@ -1242,11 +1525,12 @@ class SuperChuckInstStrClass(EventGenerator):
     def evaluateArgs(self):
         "this avaluates the arguments"
         instrumentName = self.arguments.pop(0)  # do not eval instrumentName
-        self.arguments = [instrumentName] + \
-            [eval(exp, self.env, self.depth+1) for exp in self.arguments]
+        self.arguments = [instrumentName] + [
+            eval(exp, self.env, self.depth + 1) for exp in self.arguments
+        ]
 
     def __repr__(self):
-        funcName = unique.name('superChuckFunc')
+        funcName = unique.name("superChuckFunc")
         # the arguments are collected in a dict, use expansion on the list !!!!
         instrumentName = self.arguments[0]
         timer = self.arguments[1]
@@ -1255,19 +1539,32 @@ class SuperChuckInstStrClass(EventGenerator):
         # here is the final string
         # print "extraParsString",extraParsString
         deferedParsString = self.deferedParsFormatted()
-        #print ("these are the defered streams: ",deferedParsString)
+        # print ("these are the defered streams: ",deferedParsString)
 
-        constructedString = """function void """ + funcName + """() { 
+        constructedString = (
+            """function void """
+            + funcName
+            + """() { 
         SuperChuck s;
-        """+deferedParsString+"""
-        s.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
-        s.timer("""+timer+""");
+        """
+            + deferedParsString
+            + """
+        s.instrument(\""""
+            + instrumentName
+            + """\");\n"""
+            + extraParsString
+            + "\n"
+            + """
+        s.timer("""
+            + timer
+            + """);
         s.play();
         day => now;
         } spork ~ """
+        )
         # print constructedString
 
-        return constructedString+funcName+"();\n"
+        return constructedString + funcName + "();\n"
 
 
 class OscStreamInstr(EventGenerator):
@@ -1276,11 +1573,12 @@ class OscStreamInstr(EventGenerator):
     def evaluateArgs(self):
         "this avaluates the arguments"
         instrumentName = self.arguments.pop(0)  # do not eval instrumentName
-        self.arguments = [instrumentName] + \
-            [eval(exp, self.env, self.depth+1) for exp in self.arguments]
+        self.arguments = [instrumentName] + [
+            eval(exp, self.env, self.depth + 1) for exp in self.arguments
+        ]
 
     def __repr__(self):
-        funcName = unique.name('oscStreamFunc')
+        funcName = unique.name("oscStreamFunc")
         # the arguments are collected in a dict, use expansion on the list !!!!
         print(self.arguments)
 
@@ -1291,35 +1589,76 @@ class OscStreamInstr(EventGenerator):
         # here is the final string
         # print "extraParsString",extraParsString
         deferedParsString = self.deferedParsFormatted()
-        #print ("these are the defered streams: ",deferedParsString)
+        # print ("these are the defered streams: ",deferedParsString)
 
-        constructedString = """function void """ + funcName + """() { 
+        constructedString = (
+            """function void """
+            + funcName
+            + """() { 
         OSCStream s;
-        """+deferedParsString+"""
-        s.instrument(\""""+instrumentName+"""\");\n"""+extraParsString+"\n"+"""
-        s.timer("""+timer+""");
+        """
+            + deferedParsString
+            + """
+        s.instrument(\""""
+            + instrumentName
+            + """\");\n"""
+            + extraParsString
+            + "\n"
+            + """
+        s.timer("""
+            + timer
+            + """);
         s.play();
         day => now;
         } spork ~ """
+        )
 
-        return constructedString+funcName+"();\n"
+        return constructedString + funcName + "();\n"
 
 
-def SuperChuckInstStr(instrumentName='saw', st_timer='st.st(1.0)', st_freq='st.st(440)', st_dur='st.st(1.0)', st_amp='st.st(0.1)', st_pan='st.st(0.0)', entryDelay=0.0):
-    funcName = unique.name('superChuckFunc')
-    return """function void """+funcName+"""() { 
+def SuperChuckInstStr(
+    instrumentName="saw",
+    st_timer="st.s(1.0)",
+    st_freq="st.s(440)",
+    st_dur="st.s(1.0)",
+    st_amp="st.s(0.1)",
+    st_pan="st.s(0.0)",
+    entryDelay=0.0,
+):
+    funcName = unique.name("superChuckFunc")
+    return (
+        """function void """
+        + funcName
+        + """() { 
     SuperChuck sc;
-    sc.instrument(\""""+instrumentName+"""\");
-    sc.timer("""+st_timer+""");
-    sc.freq("""+st_freq+""");
-    sc.duration("""+st_dur+""");
-    sc.amp("""+st_amp+""");
-    sc.pan("""+st_pan+");" + str(entryDelay) + """ * second => now;
+    sc.instrument(\""""
+        + instrumentName
+        + """\");
+    sc.timer("""
+        + st_timer
+        + """);
+    sc.freq("""
+        + st_freq
+        + """);
+    sc.duration("""
+        + st_dur
+        + """);
+    sc.amp("""
+        + st_amp
+        + """);
+    sc.pan("""
+        + st_pan
+        + ");"
+        + str(entryDelay)
+        + """ * second => now;
     sc.start();
     day => now;
 }
-spork ~ """+funcName+"""();
+spork ~ """
+        + funcName
+        + """();
 """
+    )
 
 
 class CustomOperator(StreamCall):
@@ -1330,18 +1669,20 @@ class CustomOperator(StreamCall):
         print("ARGUMENTS", self.arguments)
         self.operatorName = self.arguments.pop(0)
         self.operatorName = unique.name(self.operatorName)
-        self.operatorCode = self.arguments.pop(0).replace("\"", '')
+        self.operatorCode = self.arguments.pop(0).replace('"', "")
         print(self.operatorCode, "OPERATORCODE")
 
     def __repr__(self):
-        chuckCode = Template("""
+        chuckCode = Template(
+            """
             class CustomOperator${name} extends ST_operator {
                 fun float operator(float a,float b) {
                     return ( ${operation} ) $$ float;
                 }
             }
             CustomOperator${name} ${name};
-            """)
+            """
+        )
         return chuckCode.substitute(name=self.operatorName, operation=self.operatorCode)
 
 
@@ -1358,8 +1699,8 @@ class Steno(StreamCall):
         stenoString = arguments[0]  # take the first and only argument
         if stenoString[0] != '"' or stenoString[-1] != '"':
             raise Exception("steno argument not proper string" + stenoString)
-        stenoString = stenoString.replace('"', '')  # remove the string parts
-        self.parts = stenoString.split(' ')  # split by ' ' space
+        stenoString = stenoString.replace('"', "")  # remove the string parts
+        self.parts = stenoString.split(" ")  # split by ' ' space
 
     def parse(self):
         # generators, should deal with '1!2' and '1..10'
@@ -1411,27 +1752,29 @@ class Steno(StreamCall):
             else:
                 elements = item.partition("!")
                 # it is using some kind of shorthand
-                if (elements[1] != ""):
+                if elements[1] != "":
                     try:
                         value = int(elements[0])
                         repeats = int(elements[2])
                         return map(float, [value for _ in range(repeats)])
                     except ValueError:
                         raise Exception(
-                            "sorry, don't know what to do with this:"+elements)
+                            "sorry, don't know what to do with this:" + elements
+                        )
                 else:
                     elements = item.partition("..")
                     print(elements)
-                    if (elements[1] != ""):
+                    if elements[1] != "":
                         try:
                             start = int(elements[0])
                             end = int(elements[2])
                             return map(float, range(start, end))
                         except ValueError:
                             raise Exception(
-                                "sorry, don't know what to do with this:"+elements)
+                                "sorry, don't know what to do with this:" + elements
+                            )
                     else:
-                        raise Exception('steno error, invalid use :' + item)
+                        raise Exception("steno error, invalid use :" + item)
 
     def __repr__(self):
         return str(flatten(self.parse()))
@@ -1439,56 +1782,114 @@ class Steno(StreamCall):
     def __str__(self):
         return self.__repr__()
 
+
 # test
 # print str(Steno('1!10 1..10 1 2 3 2.3'))
 
 
-def MidiChuckInstrStr(st_timer='st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)'):
+def MidiChuckInstrStr(
+    st_timer="st.s(0.25)",
+    st_pitch="st.s(59)",
+    st_dur="st.s(0.25)",
+    st_velo="st.s(80)",
+):
     "creates a little Midi instrument inst"
-    funcName = unique.name('midi_instr')
-    return """function void """+funcName+"""() { 
+    funcName = unique.name("midi_instr")
+    return (
+        """function void """
+        + funcName
+        + """() { 
     MidiStream midi;
-    midi.timer("""+st_timer+""");
-    midi.pitch("""+st_pitch+""");
-    midi.velo("""+st_velo+""");
-    midi.dura("""+st_dur+""");
+    midi.timer("""
+        + st_timer
+        + """);
+    midi.pitch("""
+        + st_pitch
+        + """);
+    midi.velo("""
+        + st_velo
+        + """);
+    midi.dura("""
+        + st_dur
+        + """);
     midi.start();
     day => now;
 }
-spork ~ """+funcName+"""();
+spork ~ """
+        + funcName
+        + """();
 """
+    )
 
 
-def MidiChuckChannelInstrStr(st_timer='st.st(0.25)', st_pitch='st.st(59)', st_dur='st.st(0.25)', st_velo='st.st(80)', st_channel='st.st(0)'):
+def MidiChuckChannelInstrStr(
+    st_timer="st.s(0.25)",
+    st_pitch="st.s(59)",
+    st_dur="st.s(0.25)",
+    st_velo="st.s(80)",
+    st_channel="st.s(0)",
+):
     "creates a little Midi instrument inst"
-    funcName = unique.name('midi_instr')
-    return """function void """+funcName+"""() { 
+    funcName = unique.name("midi_instr")
+    return (
+        """function void """
+        + funcName
+        + """() { 
     MidiNoteChannelStream midi;
-    midi.timer("""+st_timer+""");
-    midi.pitch("""+st_pitch+""");
-    midi.velo("""+st_velo+""");
-    midi.dura("""+st_dur+""");
-    midi.channel("""+st_channel+""");
+    midi.timer("""
+        + st_timer
+        + """);
+    midi.pitch("""
+        + st_pitch
+        + """);
+    midi.velo("""
+        + st_velo
+        + """);
+    midi.dura("""
+        + st_dur
+        + """);
+    midi.channel("""
+        + st_channel
+        + """);
     midi.start();
     day => now;
 }
-spork ~ """+funcName+"""();
+spork ~ """
+        + funcName
+        + """();
 """
+    )
 
 
-def MidiCtrlStr(st_timer='st.st(1)', st_channel='1', st_controller='st.st(1)', st_value='st.st(0)'):
-    funcName = unique.name('midi_instr')
-    return """function void """+funcName+"""() { 
+def MidiCtrlStr(
+    st_timer="st.s(1)", st_channel="1", st_controller="st.s(1)", st_value="st.s(0)"
+):
+    funcName = unique.name("midi_instr")
+    return (
+        """function void """
+        + funcName
+        + """() { 
     MidiControlStream midi;
-    midi.channel("""+st_channel+""");
-    midi.timer("""+st_timer+""");
-    midi.controller("""+st_controller+""");
-    midi.value("""+st_value+""");
+    midi.channel("""
+        + st_channel
+        + """);
+    midi.timer("""
+        + st_timer
+        + """);
+    midi.controller("""
+        + st_controller
+        + """);
+    midi.value("""
+        + st_value
+        + """);
     midi.start();
     day => now;
 }
-spork ~ """+funcName+"""();
+spork ~ """
+        + funcName
+        + """();
 """
+    )
 
 
 class Literal(object):
@@ -1509,10 +1910,11 @@ class SingleCall(object):
         self.value = string
 
     def __repr__(self):
-        return self.value + '();\n\n'
+        return self.value + "();\n\n"
 
     def __str__(self):
         return self.__repr__()
+
 
 # standard env
 
@@ -1520,208 +1922,305 @@ class SingleCall(object):
 def standard_env():
     "Here are most of the standard functions in Cisp"
     env = Env()
-    inf = 'inf'
+    inf = "inf"
 
-    env.update({
-        # this is a literal
-        'true': {'name': 'true',    'args': 0,           'class': Literal},
-        'pi': {'name': '3.1415927535', 'args': 0, 'class': Literal},
-        'twopi': {'name': '6.2831853072', 'args': 0, 'class': Literal},
-        'seq': {'name': 'st.seq',    'args': inf,         'class': ListStreamCall},
-        'rv': {'name': 'st.rv',    'args': 2},
-        'rf': {'name': 'st.rf', 'args': 2},
-        'exprv': {'name': 'st.exprv', 'args': 3},
-        'line': {'name': 'st.line', 'args': 2},
-        'ch': {'name': 'st.ch', 'args': inf,           'class': ListStreamCall},
-        'weights': {'name': 'st.weights', 'args': inf, 'class': ListListStreamCall},
-        'stream-weights': {'name': 'st.weightStream', 'args': 2},
-        'sometimes': {'name': 'st.sometimes', 'args': 3},
-        'series': {'name': 'st.series', 'args': inf,   'class': ListStreamCall},
-        'ser': {'name': 'st.series', 'args': inf,   'class': ListStreamCall},
-        'floor': {'name': 'st.floor', 'args': 1},
-        'test': {'name': 'st.test', 'args': [1, 2], 'class': SingleStatement},
-        'monitor': {'name': 'st.monitor', 'args': 1},
-        'mtof': {'name': 'st.mtof', 'args': 1},
-        'mtor': {'name': 'st.mtor', 'args': 1},
-        'ftom': {'name': 'st.ftom', 'args': 1},
-        'mtod' : {'name' : 'st.mtosec' , 'args' : 1},
-        'mtosec' : { 'name' : 'st.mtosec', 'args': 1},
-        'sync': {'name': 'cs.sync', 'args': 1, 'class': SingleStatement},
-        'clip': {'name': 'st.clip', 'args': 3, },
-
-        'index': {'name': 'st.index', 'args': [2,3]},
-        'index-lin': {'name': 'st.indexLin', 'args': 2},
-        'mod-index': {'name': 'st.modIndex', 'args': 3},
-        'mup-mod-index': {'name': 'st.mupModIndex', 'args': 3},
-        'lookup': {'name': 'st.lookup', 'args': 2},
-        'lookupStream': {'name': 'st.lookupStream', 'args': 2},
-        'statemachine' : { 'name' : 'st.statemachine', 'args' : 1 },
-        'fractHold': {'name': 'st.fractHold', 'args': 2},
-        'walk': {'name': 'st.walk', 'args': 2},
-        'reset': {'name': 'st.reset', 'args': 3},
-        'latch-walk': {'name': 'st.latchWalk', 'args': 2},
-        'timed-reset': {'name': 'st.timedReset', 'args': 3},
-        'trigger-reset': {'name': 'st.trigReset', 'args': 3},
-        't-reset': {'name': 'st.timedReset', 'args': 3},
-        'hold': {'name': 'st.hold', 'args': 2},
-        'latch': {'name': 'st.latch', 'args': 2},
-        'tlatch': {'name': 'st.tLatch', 'args': 2},
-        'tLatch': {'name': 'st.tLatch', 'args': 2},
-        'compose': {'name': 'st.compose', 'args': 2},
-        'line': {'name': 'st.line', 'args': 2},
-        'linseg': {'name': 'st.linseg', 'args': [3, 4]},
-        'mup-walk': {'name': 'st.mupWalk', 'args': 2},
-        'bounded-walk': {'name': 'st.boundedWalk', 'args': 3},
-        'bouncy-walk': {'name': 'st.bouncyWalk', 'args': 3},
-        'bounded-list-walk': {'name': 'st.boundedListWalk', 'args': [1, 2, 3, 4]},
-        'bounded-mup-walk': {'name': 'st.boundedMupWalk', 'args': [3, 4]},
-        'bouncy-list-walk': {'name': 'st.bouncyListWalk', 'args': 2},
-        'list-walk': {'name': 'st.walkList', 'args': [1, 2]},
-        'list-walk-lin': {'name': 'st.listWalkLin', 'args': 2},
-        'write': {'name': 'st.write', 'args': [3, 4]},  # table, value, index
-        'writeover' : { 'name' : 'st.writeover', 'args': [4,5] }, # table , value, index, mix
-        'collatz': {'name': 'st.collatz', 'args': 1},
-        'loop': {'name': 'st.loop', 'args': 3},
-        't': {'name': 'st.t', 'args': 2},
-        'count': {'name': 'st.count', 'args': 1},
-        'count2': {'name': 'st.count2', 'args': [1, 2]},
-        'list': {'name': 'list', 'args': inf},
-        'st': {'name': 'st.st', 'args': 1},
-        '+': {'name': 'st.sum', 'args': inf},
-        '-': {'name': 'st.sub', 'args': inf},
-        '*': {'name': 'st.mup', 'args': inf},
-        '/': {'name': 'st.div', 'args': inf},
-        'modulo': {'name': 'st.modulo', 'args': 2},
-        '<<': {'name': 'st.bitShiftL', 'args': 2},
-        '>>': {'name': 'st.bitShiftR', 'args': 2},
-        '&&': {'name': 'st.bitAnd', 'args': 2},
-        '||': {'name': 'st.bitOr', 'args': 2},
-        '^': {'name': 'st.pow', 'args': 2},
-        '>': {'name': 'st.bigger', 'args': [1, 2]},
-        '<': {'name': 'st.smaller', 'args': [1, 2]},
-        'q': {'name': 'st.q', 'args': 2},
-        'overwrite': {'name': 'st.overwrite', 'args': 1},
-        '=': {'name': 'st.overwrite', 'args': 1},
-        'pow': {'name': 'st.pow', 'args': 2},
-        'cycle': {'name': 'st.sine', 'args': 1},
-        'sin': {'name': 'st.sin', 'args': 1},
-        'tanh': {'name': 'st.tanh', 'args': 1},
-        'linlin': {'name': 'st.linlin', 'args': 5},
-        'map': {'name': 'st.map', 'args': 5},
-        'scaleAC': {'name': 'st.scaleAC', 'args': 3},
-        'step-gen': {'name': 'StepSynth', 'args': 2,                'class': DirectSynth},
-        'pulse-gen': {'name': 'PulseSynth', 'args': 2,              'class': DirectSynth},
-        'line-gen': {'name': 'LineSynth', 'args': 2,                'class': DirectSynth},
-        'channel-synth': {'name': 'ChannelSynth', 'args': [3, 4], 'class': ChannelSynth},
-        'pulse-fb-gen': {'name': 'PulseFBSynth', 'args': [5, 6], 'class': FBSynth},
-        'pulse-fb-gen2': {'name': 'PulseFBSynth2', 'args': [5, 6], 'class': FBSynth},
-        'step-pan-gen': {'name': 'StepPanSynth', 'args': 3,         'class': PanSynth},
-        'pulse-pan-gen': {'name': 'PulsePanSynth', 'args': 3,       'class': PanSynth},
-        'line-pan-gen': {'name': 'LinePanSynth', 'args': 3,         'class': PanSynth},
-        'pulse-fb-synth': {'name': 'PulseFBSynth', 'args': [5, 6],       'class': FBSynth},
-        'pulse-fb-synth2': {'name': 'PulseFBSynth2', 'args': [5, 6],   'class': FBSynth},
-
-        'sci': {'name': 'sci', 'args': [1, 2, 3, 4, 5, 6],               'class': SuperChuckInst},
-        'sci2': {'name': 'sci', 'args': range(1, 64),              'class': SuperChuckInstStrClass},
-        'osc-stream': {'name': 'OscStream', 'args': range(1, 64),   'class': OscStreamInstr},
-        'osc-in': {'name': 'st.oscin', 'args': 2},
-        'midi-note': {'name': 'MidiNoteStream', 'args': [3, 4],                 'class': MidiNoteStream},
-        'midi-note-channel': {'name': 'midi-note-channel', 'args': 5, 'class': MidiNoteChannelStream},
-        'midi-note-channel-sync' : { 'name' : 'midi-note-channel-sync', 'args': 4, 'class': MidiNoteChannelSyncStream },
-        'midi-note-channel-trigger' : { 'name' : 'midi-note-channel-trigger' , 'args' : 5, 'class' : MidiNoteChannelSyncTriggerStream },
-        'midi-sync': {'name': 'midi-sync-stream', 'args': 7, 'class': MidiSyncStream},
-        'midi-ctrl': {'name': 'MidiControlStream', 'args': [3, 4],     'class': MidiControlStream},
-        # timer pitch dur velo ctrlNumber Ctrlvalue option:channel
-        'midi-note-ctrl': {'name': 'MidiNoteCtrlStream', 'args': [6, 7], 'class': MidiNoteCtrlStream},
-        'slider': {'name': 'st.midiCtrl', 'args': [1, 2, 3]},
-        'keyboard': {'name': 'st.keyboard', 'args': 1},
-        'single-key': {'name': 'st.singleKey', 'args': 2},
-        'bus': {'name': 'st.bus', 'args': 2},
-        '~': {'name': 'st.bus', 'args': 2},
-        'collect': {'name': 'st.collect', 'args': 2, },
-
-        'fill': {'name': 'cs.fill', 'args': 3, 'type': 'intArray',    'class': ArrayGen},
-        'fillf': {'name': 'cs.fillf', 'args': 3, 'type': 'floatArray', 'class': ArrayGen},
-        'sine': {'name': 'cs.sine', 'args': 2, 'type': 'floatArray', 'class': ArrayGen},
-        'alloc': {'name': 'cs.alloc', 'args': 1, 'type': 'floatArray', 'class': ArrayGen},
-        'phasor': {'name': 'st.phasor', 'args': 1},
-        '#': {'name': 'makeTable', 'args': 2,                       'class': MakeTable},
-        'makeTable': {'name': 'makeTable', 'args': 2,                'class': MakeTable},
-        'read': {'name': 'cs.buffToArray', 'args': 1},
-        'procedure': {'name': 'Procedure', 'args': 2,                'class': MakeProcedure},
-        'schedule': {'name': 'st.schedule', 'args': 2,             'class': SingleStatement},
-        'print': {'name': 'cs.printf', 'args': 1,                      'class': SingleStatement},
-        'clone': {'name': 'cloner', 'args': [1, 2],                     'class': Cloner},
-        'fractRandTimer': {'name': 'st.fractRandTimer', 'args': inf},
-        'grow': {'name': 'cs.grow', 'args': 3},
-        'geo': {'name': 'cs.geo', 'args': 3},
-        'num': {'name': 'cs.number', 'args': 1},
-        'number': {'name': 'cs.number', 'args': 1},
-        'flt': {'name': 'cs.float', 'args': 1},
-        'rvi': {'name': 'cs.rv', 'args': 2},
-        'rvfi': {'name': 'cs.rvf', 'args': 2},
-        'chi': {'name': 'cs.choose', 'args': inf},
-        'chfi': {'name': 'cs.choosef', 'args': inf},
-        'replacef': {'name': 'cs.replacef', 'args': 2},
-        'replace': {'name': 'cs.replace', 'args': 2},
-        'wr': {'name': 'st.wr', 'args': 2, 'class': Wr},
-        'rd': {'name': 'st.rd', 'args': 1, 'class': Rd},
-        'take': {'name': 'st.take', 'args': 1},
-        'diff': {'name': 'st.diff', 'args': 1},
-        'normalize': {'name': 'st.normStream', 'args': inf,  'class': ListStreamCall},
-        'OSC.table1': {'name': 'OSC.table1', 'args': 0, 'class': Literal},
-        'OSC.table2': {'name': 'OSC.table2', 'args': 0, 'class': Literal},
-        'OSC.table3': {'name': 'OSC.table3', 'args': 0, 'class': Literal},
-        'OSC.table4': {'name': 'OSC.table4', 'args': 0, 'class': Literal},
-        'OSC.table5': {'name': 'OSC.table5', 'args': 0, 'class': Literal},
-        'OSC.table6': {'name': 'OSC.table6', 'args': 0, 'class': Literal},
-        'OSC.table7': {'name': 'OSC.table7', 'args': 0, 'class': Literal},
-        'OSC.table8': {'name': 'OSC.table8', 'args': 0, 'class': Literal},
-        'OSC.table9': {'name': 'OSC.table9', 'args': 0, 'class': Literal},
-        'read-write': {'name': 'st.readWrite', 'args': [3, 4, 5]},
-        'write-schedule': {'name': 'WriteSchedule', 'args': 2, 'class': WriteSchedule},
-        'onepole': {'name': 'st.onepole', 'args': 2},
-        'waveoscl': {'name': 'st.waveOscL', 'args': 2},
-        'waveOscL': {'name': 'st.waveOscL', 'args': 2},
-        'waveosc': {'name': 'st.waveOsc', 'args': 2},
-        'table-cap': {'name': 'st.tableCap', 'args': 1},
-        'table-size': {'name': 'st.tableCap', 'args': 1},
-        'hzPhasor': {'name': 'st.hzPhasor', 'args': 1},
-        'rampgen': {'name': 'st.rampGen', 'args': 2},
-        'sineseg': {'name': 'st.sineseg', 'args': [1, 2]},
-        'hzSineseg': {'name': 'st.hzSineseg', 'args': [1, 2]},
-        'impulse': {'name': 'st.impulse', 'args': [1, 2]},
-        'couple': {'name': 'st.couple', 'args': 2},
-        'solo': {'name': 'ShredEventStack.popAll', 'args': 0, 'class': SingleCall, 'isFunction': True},
-        'guard': {'name': 'st.guard', 'args': 1},
-        'guardTest': {'name': 'st.guardTest', 'args': 2},
-        'otherwise': {'name': 'st.otherwise', 'args': 1},
-        '|': {'name': 'st.guardTest', 'args': 2},
-        '|=': {'name': 'st.guardTestValue', 'args': 2},
-        'guardControl': {'name': 'st.guardControl', 'args': 2},
-        'guardedWalk': {'name': 'st.guardedWalk', 'args': 2},
-        'apply': {'name': 'st.apply', 'args': 2},
-        'define': {'name': 'st.define', 'args': 2, 'class': Define},
-        'customOperator': {'name': 'customOperator', 'args': 2, 'class': CustomOperator},
-        'delay': {'name': 'st.delay', 'args': 3},
-        'delayi': {'name': 'st.delayi', 'args': 3},
-        'biquad': {'name': ' st.biquad', 'args': 5},
-        'diff': {'name': 'st.diff', 'args': 1},
-        'audioIn': {'name': 'st.audioIn', 'args': 1},
-        'dacin': {'name': 'st.dacin', 'args': 1},
-        'zeroCount': {'name': 'st.zeroCount', 'args': [1, 2]},
-        'avg': {'name': 'st.avg', 'args': [1, 2]},
-        'freqCount': {'name': 'st.freqCount', 'args': [1, 2]},
-        'trig': {'name': 'st.trig', 'args': 2},
-        'steno': {'name': 'steno', 'args': 1, 'type': 'intArray', 'class': Steno},
-        'samp-schedule': {'name': 'st.sampSchedule', 'class': SingleStatement},
-        'beat': {'name': 'st.beat', 'args': 2},
-        'beati': {'name': 'st.beati', 'args': 2},
-        'leakDC' : {'name': 'st.leakDC', 'args' : 2 },
-        'lowpass' : { 'name' : 'st.lowpass', 'args' : 4 },
-        'node' : { 'name' : 'NodeSynth' , 'args' : 10, 'class' : NodeSynth },
-        'reset-node' : { 'name' : 'st.resetNode' , 'args' : 0, 'class' : SingleStatement }
-    })
+    env.update(
+        {
+            # this is a literal
+            "true": {"name": "true", "args": 0, "class": Literal},
+            "pi": {"name": "3.1415927535", "args": 0, "class": Literal},
+            "twopi": {"name": "6.2831853072", "args": 0, "class": Literal},
+            "seq": {"name": "st.seq", "args": inf, "class": ListStreamCall},
+            "rv": {"name": "st.rv", "args": 2},
+            "rf": {"name": "st.rf", "args": 2},
+            "exprv": {"name": "st.exprv", "args": 3},
+            "line": {"name": "st.line", "args": 2},
+            "ch": {"name": "st.ch", "args": inf, "class": ListStreamCall},
+            "weights": {"name": "st.weights", "args": inf, "class": ListListStreamCall},
+            "stream-weights": {"name": "st.weightStream", "args": 2},
+            "sometimes": {"name": "st.sometimes", "args": 3},
+            "series": {"name": "st.series", "args": inf, "class": ListStreamCall},
+            "ser": {"name": "st.series", "args": inf, "class": ListStreamCall},
+            "floor": {"name": "st.floor", "args": 1},
+            "test": {"name": "st.test", "args": [1, 2], "class": SingleStatement},
+            "monitor": {"name": "st.monitor", "args": 1},
+            "mtof": {"name": "st.mtof", "args": 1},
+            "mtor": {"name": "st.mtor", "args": 1},
+            "ftom": {"name": "st.ftom", "args": 1},
+            "mtod": {"name": "st.mtosec", "args": 1},
+            "mtosec": {"name": "st.mtosec", "args": 1},
+            "sync": {"name": "cs.sync", "args": 1, "class": SingleStatement},
+            "clip": {
+                "name": "st.clip",
+                "args": 3,
+            },
+            "index": {"name": "st.index", "args": [2, 3]},
+            "index-lin": {"name": "st.indexLin", "args": 2},
+            "mod-index": {"name": "st.modIndex", "args": 3},
+            "mup-mod-index": {"name": "st.mupModIndex", "args": 3},
+            "lookup": {"name": "st.lookup", "args": 2},
+            "lookupStream": {"name": "st.lookupStream", "args": 2},
+            "statemachine": {"name": "st.statemachine", "args": 1},
+            "fractHold": {"name": "st.fractHold", "args": 2},
+            "walk": {"name": "st.walk", "args": 2},
+            "reset": {"name": "st.reset", "args": 3},
+            "latch-walk": {"name": "st.latchWalk", "args": 2},
+            "timed-reset": {"name": "st.timedReset", "args": 3},
+            "trigger-reset": {"name": "st.trigReset", "args": 3},
+            "t-reset": {"name": "st.timedReset", "args": 3},
+            "hold": {"name": "st.hold", "args": 2},
+            "latch": {"name": "st.latch", "args": 2},
+            "tlatch": {"name": "st.tLatch", "args": 2},
+            "tLatch": {"name": "st.tLatch", "args": 2},
+            "compose": {"name": "st.compose", "args": 2},
+            "line": {"name": "st.line", "args": 2},
+            "linseg": {"name": "st.linseg", "args": [3, 4]},
+            "mup-walk": {"name": "st.mupWalk", "args": 2},
+            "bounded-walk": {"name": "st.boundedWalk", "args": 3},
+            "bouncy-walk": {"name": "st.bouncyWalk", "args": 3},
+            "bounded-list-walk": {"name": "st.boundedListWalk", "args": [1, 2, 3, 4]},
+            "bounded-mup-walk": {"name": "st.boundedMupWalk", "args": [3, 4]},
+            "bouncy-list-walk": {"name": "st.bouncyListWalk", "args": 2},
+            "list-walk": {"name": "st.walkList", "args": [1, 2]},
+            "list-walk-lin": {"name": "st.listWalkLin", "args": 2},
+            "write": {"name": "st.write", "args": [3, 4]},  # table, value, index
+            "writeover": {
+                "name": "st.writeover",
+                "args": [4, 5],
+            },  # table , value, index, mix
+            "collatz": {"name": "st.collatz", "args": 1},
+            "loop": {"name": "st.loop", "args": 3},
+            "t": {"name": "st.t", "args": 2},
+            "count": {"name": "st.count", "args": 1},
+            "count2": {"name": "st.count2", "args": [1, 2]},
+            "list": {"name": "list", "args": inf},
+            "st": {"name": "st.s", "args": 1},
+            "+": {"name": "st.sum", "args": inf},
+            "-": {"name": "st.sub", "args": inf},
+            "*": {"name": "st.mup", "args": inf},
+            "/": {"name": "st.div", "args": inf},
+            "modulo": {"name": "st.modulo", "args": 2},
+            "<<": {"name": "st.bitShiftL", "args": 2},
+            ">>": {"name": "st.bitShiftR", "args": 2},
+            "&&": {"name": "st.bitAnd", "args": 2},
+            "||": {"name": "st.bitOr", "args": 2},
+            "^": {"name": "st.pow", "args": 2},
+            ">": {"name": "st.bigger", "args": [1, 2]},
+            "<": {"name": "st.smaller", "args": [1, 2]},
+            "q": {"name": "st.q", "args": 2},
+            "overwrite": {"name": "st.overwrite", "args": 1},
+            "=": {"name": "st.overwrite", "args": 1},
+            "pow": {"name": "st.pow", "args": 2},
+            "cycle": {"name": "st.sine", "args": 1},
+            "sin": {"name": "st.sin", "args": 1},
+            "tanh": {"name": "st.tanh", "args": 1},
+            "linlin": {"name": "st.linlin", "args": 5},
+            "map": {"name": "st.map", "args": 5},
+            "scaleAC": {"name": "st.scaleAC", "args": 3},
+            "step-gen": {"name": "StepSynth", "args": 2, "class": DirectSynth},
+            "pulse-gen": {"name": "PulseSynth", "args": 2, "class": DirectSynth},
+            "line-gen": {"name": "LineSynth", "args": 2, "class": DirectSynth},
+            "channel-synth": {
+                "name": "ChannelSynth",
+                "args": [3, 4],
+                "class": ChannelSynth,
+            },
+            "pulse-fb-gen": {"name": "PulseFBSynth", "args": [5, 6], "class": FBSynth},
+            "pulse-fb-gen2": {
+                "name": "PulseFBSynth2",
+                "args": [5, 6],
+                "class": FBSynth,
+            },
+            "step-pan-gen": {"name": "StepPanSynth", "args": 3, "class": PanSynth},
+            "pulse-pan-gen": {"name": "PulsePanSynth", "args": 3, "class": PanSynth},
+            "line-pan-gen": {"name": "LinePanSynth", "args": 3, "class": PanSynth},
+            "pulse-fb-synth": {
+                "name": "PulseFBSynth",
+                "args": [5, 6],
+                "class": FBSynth,
+            },
+            "pulse-fb-synth2": {
+                "name": "PulseFBSynth2",
+                "args": [5, 6],
+                "class": FBSynth,
+            },
+            "sci": {"name": "sci", "args": [1, 2, 3, 4, 5, 6], "class": SuperChuckInst},
+            "sci2": {
+                "name": "sci",
+                "args": range(1, 64),
+                "class": SuperChuckInstStrClass,
+            },
+            "osc-stream": {
+                "name": "OscStream",
+                "args": range(1, 64),
+                "class": OscStreamInstr,
+            },
+            "osc-in": {"name": "st.oscin", "args": 2},
+            "midi-note": {
+                "name": "MidiNoteStream",
+                "args": [3, 4],
+                "class": MidiNoteStream,
+            },
+            "midi-note-channel": {
+                "name": "midi-note-channel",
+                "args": 5,
+                "class": MidiNoteChannelStream,
+            },
+            "midi-note-channel-sync": {
+                "name": "midi-note-channel-sync",
+                "args": 4,
+                "class": MidiNoteChannelSyncStream,
+            },
+            "midi-note-channel-trigger": {
+                "name": "midi-note-channel-trigger",
+                "args": 5,
+                "class": MidiNoteChannelSyncTriggerStream,
+            },
+            "midi-sync": {
+                "name": "midi-sync-stream",
+                "args": 7,
+                "class": MidiSyncStream,
+            },
+            "midi-ctrl": {
+                "name": "MidiControlStream",
+                "args": [3, 4],
+                "class": MidiControlStream,
+            },
+            # timer pitch dur velo ctrlNumber Ctrlvalue option:channel
+            "midi-note-ctrl": {
+                "name": "MidiNoteCtrlStream",
+                "args": [6, 7],
+                "class": MidiNoteCtrlStream,
+            },
+            "slider": {"name": "st.midiCtrl", "args": [1, 2, 3]},
+            "keyboard": {"name": "st.keyboard", "args": 1},
+            "single-key": {"name": "st.singleKey", "args": 2},
+            "bus": {"name": "st.bus", "args": 2},
+            "~": {"name": "st.bus", "args": 2},
+            "collect": {
+                "name": "st.collect",
+                "args": 2,
+            },
+            "fill": {
+                "name": "cs.fill",
+                "args": 3,
+                "type": "intArray",
+                "class": ArrayGen,
+            },
+            "fillf": {
+                "name": "cs.fillf",
+                "args": 3,
+                "type": "floatArray",
+                "class": ArrayGen,
+            },
+            "sine": {
+                "name": "cs.sine",
+                "args": 2,
+                "type": "floatArray",
+                "class": ArrayGen,
+            },
+            "alloc": {
+                "name": "cs.alloc",
+                "args": 1,
+                "type": "floatArray",
+                "class": ArrayGen,
+            },
+            "phasor": {"name": "st.phasor", "args": 1},
+            "#": {"name": "makeTable", "args": 2, "class": MakeTable},
+            "makeTable": {"name": "makeTable", "args": 2, "class": MakeTable},
+            "read": {"name": "cs.buffToArray", "args": 1},
+            "procedure": {"name": "Procedure", "args": 2, "class": MakeProcedure},
+            "schedule": {"name": "st.schedule", "args": 2, "class": SingleStatement},
+            "print": {"name": "cs.printf", "args": 1, "class": SingleStatement},
+            "clone": {"name": "cloner", "args": [1, 2], "class": Cloner},
+            "fractRandTimer": {"name": "st.fractRandTimer", "args": inf},
+            "grow": {"name": "cs.grow", "args": 3},
+            "geo": {"name": "cs.geo", "args": 3},
+            "num": {"name": "cs.number", "args": 1},
+            "number": {"name": "cs.number", "args": 1},
+            "flt": {"name": "cs.float", "args": 1},
+            "rvi": {"name": "cs.rv", "args": 2},
+            "rvfi": {"name": "cs.rvf", "args": 2},
+            "chi": {"name": "cs.choose", "args": inf},
+            "chfi": {"name": "cs.choosef", "args": inf},
+            "replacef": {"name": "cs.replacef", "args": 2},
+            "replace": {"name": "cs.replace", "args": 2},
+            "wr": {"name": "st.wr", "args": 2, "class": Wr},
+            "rd": {"name": "st.rd", "args": 1, "class": Rd},
+            "take": {"name": "st.take", "args": 1},
+            "diff": {"name": "st.diff", "args": 1},
+            "normalize": {
+                "name": "st.normStream",
+                "args": inf,
+                "class": ListStreamCall,
+            },
+            "OSC.table1": {"name": "OSC.table1", "args": 0, "class": Literal},
+            "OSC.table2": {"name": "OSC.table2", "args": 0, "class": Literal},
+            "OSC.table3": {"name": "OSC.table3", "args": 0, "class": Literal},
+            "OSC.table4": {"name": "OSC.table4", "args": 0, "class": Literal},
+            "OSC.table5": {"name": "OSC.table5", "args": 0, "class": Literal},
+            "OSC.table6": {"name": "OSC.table6", "args": 0, "class": Literal},
+            "OSC.table7": {"name": "OSC.table7", "args": 0, "class": Literal},
+            "OSC.table8": {"name": "OSC.table8", "args": 0, "class": Literal},
+            "OSC.table9": {"name": "OSC.table9", "args": 0, "class": Literal},
+            "read-write": {"name": "st.readWrite", "args": [3, 4, 5]},
+            "write-schedule": {
+                "name": "WriteSchedule",
+                "args": 2,
+                "class": WriteSchedule,
+            },
+            "onepole": {"name": "st.onepole", "args": 2},
+            "waveoscl": {"name": "st.waveOscL", "args": 2},
+            "waveOscL": {"name": "st.waveOscL", "args": 2},
+            "waveosc": {"name": "st.waveOsc", "args": 2},
+            "table-cap": {"name": "st.tableCap", "args": 1},
+            "table-size": {"name": "st.tableCap", "args": 1},
+            "hzPhasor": {"name": "st.hzPhasor", "args": 1},
+            "rampgen": {"name": "st.rampGen", "args": 2},
+            "sineseg": {"name": "st.sineseg", "args": [1, 2]},
+            "hzSineseg": {"name": "st.hzSineseg", "args": [1, 2]},
+            "impulse": {"name": "st.impulse", "args": [1, 2]},
+            "couple": {"name": "st.couple", "args": 2},
+            "solo": {
+                "name": "ShredEventStack.popAll",
+                "args": 0,
+                "class": SingleCall,
+                "isFunction": True,
+            },
+            "guard": {"name": "st.guard", "args": 1},
+            "guardTest": {"name": "st.guardTest", "args": 2},
+            "otherwise": {"name": "st.otherwise", "args": 1},
+            "|": {"name": "st.guardTest", "args": 2},
+            "|=": {"name": "st.guardTestValue", "args": 2},
+            "guardControl": {"name": "st.guardControl", "args": 2},
+            "guardedWalk": {"name": "st.guardedWalk", "args": 2},
+            "apply": {"name": "st.apply", "args": 2},
+            "define": {"name": "st.define", "args": 2, "class": Define},
+            "customOperator": {
+                "name": "customOperator",
+                "args": 2,
+                "class": CustomOperator,
+            },
+            "delay": {"name": "st.delay", "args": 3},
+            "delayi": {"name": "st.delayi", "args": 3},
+            "biquad": {"name": " st.biquad", "args": 5},
+            "diff": {"name": "st.diff", "args": 1},
+            "audioIn": {"name": "st.audioIn", "args": 1},
+            "dacin": {"name": "st.dacin", "args": 1},
+            "zeroCount": {"name": "st.zeroCount", "args": [1, 2]},
+            "avg": {"name": "st.avg", "args": [1, 2]},
+            "freqCount": {"name": "st.freqCount", "args": [1, 2]},
+            "trig": {"name": "st.trig", "args": 2},
+            "steno": {"name": "steno", "args": 1, "type": "intArray", "class": Steno},
+            "samp-schedule": {"name": "st.sampSchedule", "class": SingleStatement},
+            "beat": {"name": "st.beat", "args": 2},
+            "beati": {"name": "st.beati", "args": 2},
+            "leakDC": {"name": "st.leakDC", "args": 2},
+            "lowpass": {"name": "st.lowpass", "args": 4},
+            "node": {"name": "NodeSynth", "args": 10, "class": NodeSynth},
+            "reset-node": {"name": "st.resetNode", "args": 0, "class": SingleStatement},
+        }
+    )
     return env
 
 
@@ -1742,6 +2241,7 @@ def is_number(s):
 
 def matchStrings(haystack, needle):
     "tries to find a needle in a haystack, recursevely"
+
     def testFunc(string):
         try:
             string.index(needle)
@@ -1749,6 +2249,7 @@ def matchStrings(haystack, needle):
         except ValueError:
             return False
         return testFunc
+
     return recursiveTestAny(haystack, testFunc)
 
 
@@ -1769,8 +2270,10 @@ def recursiveTestAny(item, test):
 
 def makeStringFinder(arg):
     "a higher level function, not used for now"
+
     def g(string):
         return string.find(arg) != -1
+
     return g
 
 
@@ -1783,52 +2286,52 @@ def makeStringFinder(arg):
 
 
 def eval(x, env=global_env, depth=0, listlist=False):
-    #env = global_env
+    # env = global_env
     "Evaluate an expression in an environment. This is the actual parsing of tokens/symbols corresponding objects that generate chuck code"
     # print "eval this",x
-    if isinstance(x, Symbol):      # variable reference, not a function call
+    if isinstance(x, Symbol):  # variable reference, not a function call
         # print "x is detected as sumbol"
         if x[0] == '"' and x[-1] == '"':  # it may be a path
             print("it's a path !!", x)
             return x  # return the path, don't try to eval
         symbol_object = env.find(x)[x]  # return the name
-        if ('isFunction' in symbol_object.keys()):
-            call = '()'
+        if "isFunction" in symbol_object.keys():
+            call = "()"
         else:
-            call = ''
+            call = ""
         # call functions immediately, saving some parenthesis.
-        return symbol_object['name'] + call
+        return symbol_object["name"] + call
     # if first is number, the list is probably a list of things.
     elif isinstance(x, Number):
         if x % 1.0 == 0:
             return str(x)
         # enforce non-scientific notation for floats (chuck does not understand 0.23e-4)
-        return '{:.12f}'.format(x)
+        return "{:.12f}".format(x)
     elif not isinstance(x, List):  # constant literal
         return x
-    elif x[0] == '\'':          # (quote exp)
+    elif x[0] == "'":  # (quote exp)
         (_, exp) = x
         return exp
     elif is_number(x[0]) or isinstance(x[0], List):  # if list with numbers or streams
         string = streamArray(x, env, 0)
         return string
-    elif x[0] == 'list':
+    elif x[0] == "list":
         # this is an emergency solution, Ignores the 'list' word, treats as stream array.
         return streamArray(x[1:], env, depth)
-    elif x[0] == 'fun':  # this should be moved into its own class.
+    elif x[0] == "fun":  # this should be moved into its own class.
         return str(StreamFuncDef(x, env, 0))
-    elif x[0] in ['bus', '~']:  # this should be moved into its own class
+    elif x[0] in ["bus", "~"]:  # this should be moved into its own class
         if len(x[1:]) > 1:
             # if there is a second argument, this is a new bus def
-            return ('  '*depth)+makeNewBus(x[1], eval(x[2])) + ';\n\n'
+            return ("  " * depth) + makeNewBus(x[1], eval(x[2])) + ";\n\n"
         else:
             # return the old bus
             len(x[1:]) == 1
-            return ('  '*depth)+returnOldBus(x[1])
+            return ("  " * depth) + returnOldBus(x[1])
     else:
         if len(x) == 1:
             # function without any args, get name
-            literalName = (env.find(x[0])[x[0]]).get('name')
+            literalName = (env.find(x[0])[x[0]]).get("name")
             # call it as a singleCall:
             return str(SingleCall(literalName))
 
@@ -1837,7 +2340,7 @@ def eval(x, env=global_env, depth=0, listlist=False):
         args = x[1:]
 
         # find which class to use to parse this:
-        streamType = (env.find(x[0])[x[0]]).get('class')
+        streamType = (env.find(x[0])[x[0]]).get("class")
 
         if streamType == None:
             # catch default
@@ -1845,7 +2348,7 @@ def eval(x, env=global_env, depth=0, listlist=False):
 
         calledStream = str(streamType(proc, args, env, depth + 1))
 
-        string = '\n'+('  '*depth) + calledStream
+        string = "\n" + ("  " * depth) + calledStream
 
         return string
 
@@ -1859,7 +2362,9 @@ class RunShred:
 
     def run(self):
         os.system("killall chuck")  # want to be sure
-        os.system("/usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &")
+        os.system(
+            "/usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &"
+        )
         sleep(0.5)
         os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
 
@@ -1930,21 +2435,50 @@ class All(RunShred):
 
 #     def removeShred(self,id)
 
+class ConfigManager:
+    def __init__(self, filename, default_config):
+        self.filename = filename
+        self.config = None
+        self.default_config = default_config
+        self.load_config()
+
+    def load_config(self):
+        """Load the config file or create one with default values if it doesn't exist."""
+        if os.path.exists(self.filename):
+            with open(self.filename, 'r') as file:
+                self.config = json.load(file)
+        else:
+            self.config = self.default_config
+            self.save_config()  # Save the default configuration to a file
+
+    def save_config(self):
+        """Save the current configuration to a file."""
+        with open(self.filename, 'w') as file:
+            json.dump(self.config, file, indent=4)
+
+    def get_config(self):
+        """Return the current config."""
+        return self.config
+
+    def update_config(self, new_config):
+        """Update the current configuration and save to the file."""
+        self.config.update(new_config)
+        self.save_config()
+
 
 def main(argv):
-    inputfile = ''
-    outputfile = ''
-    command = ''
+    inputfile = ""
+    outputfile = ""
+    command = ""
     try:
-        opts, args = getopt.getopt(
-            argv, "hi:o:c", ["ifile=", "ofile=", "command="])
+        opts, args = getopt.getopt(argv, "hi:o:c", ["ifile=", "ofile=", "command="])
     except getopt.GetoptError as err:
         print(str(err))
-        print('cisp.py -i <inputfile> -o <outputfile> -c <run:+:gen>')
+        print("cisp.py -i <inputfile> -o <outputfile> -c <run:+:gen>")
         sys.exit(2)
     for opt, arg in opts:
-        if opt == '-h':
-            print('cisp.py -i <inputfile> -o <outputfile> -c <run:+:gen>')
+        if opt == "-h":
+            print("cisp.py -i <inputfile> -o <outputfile> -c <run:+:gen>")
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
@@ -1953,15 +2487,15 @@ def main(argv):
         elif opt in ("-c", "--command"):
             command = arg
 
-    if outputfile == '':
+    if outputfile == "":
         print("outputfile not given, using default")
-        outputfile = 'output.ck'
-    if inputfile == '':
+        outputfile = "output.ck"
+    if inputfile == "":
         print("missing inputfile, using the default")
-        inputfile = 'test.lisp'
-    if command == '':
+        inputfile = "test.lisp"
+    if command == "":
         print("no command, using overwrite")
-        command = 'replace'
+        command = "replace"
 
     # print 'Input file is "', inputfile
     # print 'Output file is "', outputfile
@@ -1970,7 +2504,7 @@ def main(argv):
 
     print(command, ":COMMAND")
 
-    if (command in ['run', '+', 'gen', 'replace', 'all', 'oldest']):
+    if command in ["run", "+", "gen", "replace", "all"]:
         FileIO(inputfile, outputfile)
     else:
         print("skipping file generation")
@@ -1984,7 +2518,7 @@ def main(argv):
         "panic": Panic,
         "all": All,
         "oldest": Oldest,
-        "pop": Pop
+        "pop": Pop,
     }
 
     command = runshreds[command]

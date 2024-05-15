@@ -1,1 +1,0 @@
-(test (+ (seq 1 2 3 true) (seq 10 20 30)))

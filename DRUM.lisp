@@ -1,16 +1,9 @@
-(fun cycle
-	(line
-		(seq 120 30 0 80 30)
-		(ch 0 1 2 3)))
+(sync 0.14)
 
-(midi-note
-(st 0.12)
-(st 36)
-(st 0.12)
-(seq cycle cycle cycle cycle))
+(midi-note-channel
+	(st 0.14)
+	(seq 44)
+	(st 1.0)
+	(st 1.0)
+	(st 3.0))
 
-(midi-note
-	(st 0.12)
-	(st 38)
-	(st 0.12)
-	(seq cycle cycle cycle cycle :set 0))
