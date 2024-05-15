@@ -1,0 +1,49 @@
+(# localTab (alloc 128))
+
+(fun switch
+	(t
+		(ch 1 2 3 4 5)
+		(t (ch 11 33) (ch 3 5 7))))
+
+(fun top
+	(t
+		(ch 0.00001 0.001 0.1 0.5)
+		(ch .1 .3 .7)))
+
+(fun a
+	(line
+		(seq 1 -1)
+		(ch 1 3 6)))
+
+(fun b
+	(t 
+		(rv 1 100)
+		(fractRandTimer (ch 0.0001 0.01 0.1 0.2 0.4))))
+
+
+(samp-schedule
+	(write localTab (clip (+ (index localTab (count 128)) (hold (ch (* -1 top) top) b) ) -1 1) (count 128))
+	b)
+
+
+(fun steppy
+	(t
+		(reset (bounded-mup-walk 0.25 10.0 (seq 0.6666667 0.99999 (ch 1 2) (ch 0.6667 1.5) 1.5)) (st 1.0) (rv 8 23))
+		(t (rv 1 5) (ch 3 5 7))))
+
+(step-gen
+	(clip (index-lin localTab (bounded-walk 0 128 steppy)) a 1)
+	switch
+	:pan (rvfi -1 1))
+
+(step-gen
+	(clip (index-lin localTab (bounded-walk 0 128 steppy)) a 1)
+	switch
+	:pan (rvfi -1 1))
+
+(step-gen
+	(clip (index-lin localTab (bounded-walk 0 128 steppy)) a 1)
+	switch
+	:pan (rvfi -1 1))
+
+
