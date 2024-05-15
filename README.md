@@ -10,14 +10,8 @@ Cisp is my live coding tool that is specifically targeted at:
 
 # Requirements / Setup
 
+Install Chuck, which has both the MiniAudicle and the ChucK command line (building from source no longer required).
 [ChucK Command Line]https://github.com/ccrma/chuck<br>
-
-Build chuck:
-1. Clone the chuck repo
-2. `make osx|windowns|linux`
-3. `sudo make install`
-
-*installing the binary version seems to cause a conflict with the chugins, so build from source.*
 
 Build my chugins:
 1. [My chugins](https://github.com/casperschipper/chugins-2019) (specifically: Linseg, DelayC)<br> 
