@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# 29-03-2024
+# 26/07/2024
 
 import math
 import operator as op
@@ -15,6 +15,8 @@ from time import sleep
 from time import time
 import uuid
 from string import Template
+import subprocess
+import shutil
 
 # TODO
 
@@ -60,12 +62,25 @@ Number = (int, float)
 # usage: FileIO( inputFile, outputFile)
 
 
+def get_filename_without_extension(filepath):
+    # Get the base name of the file
+    basename = os.path.basename(filepath)
+    # Split the base name to remove the extension
+    filename_without_extension = os.path.splitext(basename)[0]
+    return filename_without_extension
+
+
+def quote(string):
+    return f'"{string}"'
+
+
 class FileIO(object):
     "File input output module"
 
     def __init__(self, fileInName, fileOutName):
         self.inFile = open(fileInName, "r")
         self.outFile = open(fileOutName, "w")
+        self.inFileName = fileInName.replace(".lisp", "")
 
         unique_filename = "tmp"
 
@@ -131,7 +146,13 @@ class FileIO(object):
         self.outFile.write('\n<<<"shred id: ",me.id()>>>;')
         # add an end event
         self.outFile.write(
-            "\nEvent end;\n(new ShredEventStack).push(end);\nend => now;"
+            f"""
+            ShredEvent end;
+            "{get_filename_without_extension(self.inFileName)}" @=> end.name;
+            ShredEventStack stack;
+            stack.push(end);
+            end => now;
+            """
         )
         self.outFile.close()
 
@@ -2356,23 +2377,89 @@ def eval(x, env=global_env, depth=0, listlist=False):
 class RunShred:
     "this is a class that contains different styles of running chuck shreds"
 
-    def __init__(self, outputfile):
+    def __init__(self, inputfile, outputfile):
+        self.inputfile = inputfile
         self.outputfile = outputfile
         self.run()
 
     def run(self):
-        os.system("killall chuck")  # want to be sure
-        os.system(
-            "/usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &"
+        print("+")
+        process = subprocess.run(
+            ["/usr/local/bin/chuck", "+", self.outputfile],
+            capture_output=True,
+            text=True,
         )
-        sleep(0.5)
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+        exit_code = process.returncode
+        full_input_path = self.inputfile
+        if exit_code == 0:
+            archive_file(full_input_path, "archive")
+        else:
+            print(f"other exit code {exit_code}")
+
+    # def run(self):
+    #     os.system("killall chuck")  # want to be sure
+    #     os.system(
+    #         "/usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &"
+    #     )
+    #     sleep(0.5)
+    #     os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+
+
+def count_files_with_name(full_path):
+    file_name = os.path.basename(full_path)
+    path = os.path.dirname(full_path)
+    files = os.listdir(path)
+    count = 0
+
+    for file in files:
+        if file == file_name:
+            count += 1
+
+    return count
+
+
+def archive_file(file_path, archive_dir):
+    # Ensure the archive directory exists
+    if not os.path.exists(archive_dir):
+        os.makedirs(archive_dir)
+
+    # Get the base file name without extension
+    base_name = os.path.basename(file_path)
+    file_name, file_extension = os.path.splitext(base_name)
+
+    # Create a folder in the archive directory with the base file name
+    archive_subdir = os.path.join(archive_dir, file_name)
+    print("archive subdir", archive_subdir)
+    if not os.path.exists(archive_subdir):
+        os.makedirs(archive_subdir)
+
+    # Determine the next version number by checking existing files in the archive subdirectory
+    existing_files = os.listdir(archive_subdir)
+    print("existing files", existing_files)
+    version_pattern = re.compile(
+        rf"^{re.escape(file_name)}(\d+){re.escape(file_extension)}$"
+    )
+    existing_versions = [
+        int(version_pattern.match(f).group(1))
+        for f in existing_files
+        if version_pattern.match(f)
+    ]
+    print("existing versions", existing_versions)
+    next_version = max(existing_versions) + 1 if existing_versions else 1
+
+    # Create the new file name with the incremented version number
+    new_file_name = f"{file_name}{next_version}{file_extension}"
+    new_file_path = os.path.join(archive_subdir, new_file_name)
+
+    # Copy the original file to the new location, preserving metadata
+    shutil.copy2(file_path, new_file_path)
+    print(f"File archived as: {new_file_path}")
 
 
 class AddShred(RunShred):
     def run(self):
-        print("+")
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+        print("add shred")
+        super().run()
 
 
 class GenerateCode(RunShred):
@@ -2387,8 +2474,8 @@ class ReplaceShred(RunShred):
 
     def run(self):
         os.system("/usr/local/bin/chuck + pop.ck")
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
-        # print "code replace " + self.outputfile
+        print("add shred")
+        super().run()
 
 
 class Stop(RunShred):
@@ -2419,7 +2506,8 @@ class Panic(RunShred):
 class All(RunShred):
     def run(self):
         os.system("/usr/local/bin/chuck + removeAll.ck")
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+        print("add shred")
+        super().run()
 
 
 # class ShredRegister(object):
@@ -2435,6 +2523,7 @@ class All(RunShred):
 
 #     def removeShred(self,id)
 
+
 class ConfigManager:
     def __init__(self, filename, default_config):
         self.filename = filename
@@ -2445,7 +2534,7 @@ class ConfigManager:
     def load_config(self):
         """Load the config file or create one with default values if it doesn't exist."""
         if os.path.exists(self.filename):
-            with open(self.filename, 'r') as file:
+            with open(self.filename, "r") as file:
                 self.config = json.load(file)
         else:
             self.config = self.default_config
@@ -2453,7 +2542,7 @@ class ConfigManager:
 
     def save_config(self):
         """Save the current configuration to a file."""
-        with open(self.filename, 'w') as file:
+        with open(self.filename, "w") as file:
             json.dump(self.config, file, indent=4)
 
     def get_config(self):
@@ -2523,7 +2612,7 @@ def main(argv):
 
     command = runshreds[command]
 
-    command(outputfile)
+    command(inputfile, outputfile)
 
 
 if __name__ == "__main__":
