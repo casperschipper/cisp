@@ -1,4 +1,8 @@
-# Cisp is a simple (scheme inspired) interpreter that translates "Cisp" code into ChucK code.
+# Cisp 
+
+__C__asper's __I__nstant __S__ound __P__rograms
+
+*cisp is a simple (scheme inspired) interpreter that translates "Cisp" code into ChucK code*
 
 Cisp is my live coding tool that is specifically targeted at:
 1. Non-standard synthesis (the use of compositional techniques directly on generating waveforms).
