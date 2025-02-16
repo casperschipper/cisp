@@ -19,23 +19,22 @@ Or use homebrew
 
 # 1. Build my chugins.
 
-Cisp uses a number of custom unit generator:
-Chugins are DLL plugins for chuck.
-1. [https://github.com/casperschipper/chugins](https://github.com/casperschipper/chugins) (specifically: Buffer, Linseg, DelayC)<br> 
+Cisp uses a number of custom unit generators, known in chuck as *"chugins"*
+1. Clone this repo: [https://github.com/casperschipper/chugins](https://github.com/casperschipper/chugins)
 2. `make mac|windows|linux`
 3. `sudo make install`
 
-Note: sometimes the API of Chugins is changed. 
-In this case you will need to merge the chugin repo with from https://github.com/ccrma/chugins so you have the correct headers (the /chuck folder).
+Note: sometimes the API of Chugins is changed, you will see a warning when you try to run chuck.
+In this case you will need to merge the chugin repo with from https://github.com/ccrma/chugins so you have the correct up-to-date headers (the /chuck folder).
 
 # 2. Download the "Chuck-Tools"
 
 You will also need to fetch a bunch of Chuck classes, which are collected in my repo Chuck-Tools.[1]
-CISP uses a lot of these classes in the generated code.
+CISP uses a these classes in the generated code.
 [My chuck Tools](https://github.com/casperschipper/ChucK-Tools)<br>
-There is a tools.ck in the root folder, which loads all the other classes.
+We can load these when we start the chuck virtual machine (see next point).
 
-[^1]: Actually, Cisp started life as this library, as I ran into limitations of syntax, I created the transpiler.
+[^1]: actually, Cisp started life as this library, as I ran into limitations of syntax, I created the transpiler.
 
 # 3. Live coding setup
 
@@ -49,9 +48,33 @@ Replace ~/devel/chuck/tools/tools.ck with your own path to my __chuck-tools__.
 You may need to adjust this, if you want to use a different audio device (see chuck --help & chuck --probe-devices).
 It may also be that on windows or linux, the chugins are installed elsewhere.
 
+Create new textfile and name it test.lisp
+
+```lisp
+(step-gen
+   (seq -1 1)
+   (ch 1 2 4 8 16 32))
+```
+
+You can now run cisp as follows:
+
+Run a script (adding to anything that is running already)
+`cisp.py -i test.lisp -o output.ck -c run`
+
+Run a script, but remove anything that is running already
+`cisp.py -i test.lisp -o output.ck -c all`
+
+Replace the last added script
+`cisp.py -i test.lisp -o output.ck -c replace`
+
+
+ 
+
 # Using sublime build script or visual studio code:
 
-To ease running this
+While live coding, I use build scripts of my code editor (sublime text) to send the .lisp code to the cisp.py script. 
+
+
 
 # Basic syntax
 
