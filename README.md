@@ -6,34 +6,52 @@ Cisp is my live coding tool that is specifically targeted at:
 
 [video demo](https://www.casperschipper.nl/v2/uncategorized/a-few-noisy-etudes-in-cisp/)
 
-[performance at Segmod event]
-
 # Requirements / Setup
 
-Install Chuck, which has both the MiniAudicle and the ChucK command line (building from source no longer required).
-[ChucK Command Line]https://github.com/ccrma/chuck<br>
+Before you can run CISP, you need to install a couple of dependencies. 
 
-Build my chugins:
-1. [My chugins](https://github.com/casperschipper/chugins-2019) (specifically: Linseg, DelayC)<br> 
-2. `make osx|windows|linux`
-3. `make install`
+# 0. Install Chuck
 
-Clone my tools:
+You can just use the official installer, https://chuck.stanford.edu/release/
+Or use homebrew 
+
+`brew install chuck`
+
+# 1. Build my chugins.
+
+Cisp uses a number of custom unit generator:
+Chugins are DLL plugins for chuck.
+1. [https://github.com/casperschipper/chugins](https://github.com/casperschipper/chugins) (specifically: Buffer, Linseg, DelayC)<br> 
+2. `make mac|windows|linux`
+3. `sudo make install`
+
+Note: sometimes the API of Chugins is changed. 
+In this case you will need to merge the chugin repo with from https://github.com/ccrma/chugins so you have the correct headers (the /chuck folder).
+
+# 2. Download the "Chuck-Tools"
+
+You will also need to fetch a bunch of Chuck classes, which are collected in my repo Chuck-Tools.[1]
+CISP uses a lot of these classes in the generated code.
 [My chuck Tools](https://github.com/casperschipper/ChucK-Tools)<br>
+There is a tools.ck in the root folder, which loads all the other classes.
 
-__My live coding sessions are set up like this:__
+[^1]: Actually, Cisp started life as this library, as I ran into limitations of syntax, I created the transpiler.
 
-Cisp.py takes a scheme like input file (example.lisp), and translates it to a chuck file (output.ck), which is added to the chuck virtual machine (by Cisp). Output.ck is not in "vanilla" chuck, it is using my Chuck-Tools library and chugins (for non-standard synthesis).
+# 3. Live coding setup
 
-You will need to start chuck in loop mode, with my chugins and tools loaded, something like this:
+To run a CISP program, we will want to start the ChucK virtual machine, with the chugins and __chuck-tools__ classes loaded.
+I do this on my own machine with the following:
 
-`chuck --loop --chugin-path:yourChuginPath ~/pathToChuckTools/tools.ck`
+`chuck --bufsize:1024 --loop --chugin-load:auto --chugin-path:/usr/local/lib/chuck --verbose:1 ~/devel/chuck/tools/tools.ck"`
 
-yourChuginPath is probably /usr/local/lib/chuck 
+Replace ~/devel/chuck/tools/tools.ck with your own path to my __chuck-tools__.
 
-# Using sublime build script
+You may need to adjust this, if you want to use a different audio device (see chuck --help & chuck --probe-devices).
+It may also be that on windows or linux, the chugins are installed elsewhere.
 
-To make coding faster, I use a build script wich runs the .lisp file into cisp.
+# Using sublime build script or visual studio code:
+
+To ease running this
 
 # Basic syntax
 
