@@ -29,12 +29,12 @@ In this case you will need to merge the chugin repo with from https://github.com
 
 # 2. Download the "Chuck-Tools"
 
-You will also need to fetch a bunch of Chuck classes, which are collected in my repo Chuck-Tools.[1]
+You will also need to fetch a bunch of Chuck classes, which are collected in my repo Chuck-Tools [^1].
 CISP uses a these classes in the generated code.
 [My chuck Tools](https://github.com/casperschipper/ChucK-Tools)<br>
 We can load these when we start the chuck virtual machine (see next point).
 
-[^1]: actually, Cisp started life as this library, as I ran into limitations of syntax, I created the transpiler.
+[^1]: In fact, cisp started life as this library, as I ran into limitations of syntax, I created the transpiler.
 
 # 3. Live coding setup
 
