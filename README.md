@@ -1,4 +1,4 @@
-### Cisp is a simple (scheme inspired) interpreter that translates "Cisp" code into ChucK code.
+# Cisp is a simple (scheme inspired) interpreter that translates "Cisp" code into ChucK code.
 
 Cisp is my live coding tool that is specifically targeted at:
 1. Non-standard synthesis (the use of compositional techniques directly on generating waveforms).
@@ -6,18 +6,18 @@ Cisp is my live coding tool that is specifically targeted at:
 
 [video demo](https://www.casperschipper.nl/v2/uncategorized/a-few-noisy-etudes-in-cisp/)
 
-# Requirements / Setup
+## Requirements / Setup
 
 Before you can run CISP, you need to install a couple of dependencies. 
 
-# 0. Install Chuck
+### 1. Install Chuck
 
 You can just use the official installer, https://chuck.stanford.edu/release/
 Or use homebrew 
 
 `brew install chuck`
 
-# 1. Build my chugins.
+### 2. Build my chugins.
 
 Cisp uses a number of custom unit generators, known in chuck as *"chugins"*
 1. Clone this repo: [https://github.com/casperschipper/chugins](https://github.com/casperschipper/chugins)
@@ -27,7 +27,7 @@ Cisp uses a number of custom unit generators, known in chuck as *"chugins"*
 Note: sometimes the API of Chugins is changed, you will see a warning when you try to run chuck.
 In this case you will need to merge the chugin repo with from https://github.com/ccrma/chugins so you have the correct up-to-date headers (the /chuck folder).
 
-# 2. Download the "Chuck-Tools"
+### 3. Download the "Chuck-Tools"
 
 You will also need to fetch a bunch of Chuck classes, which are collected in my repo Chuck-Tools [^1].
 CISP uses a these classes in the generated code.
@@ -36,7 +36,7 @@ We can load these when we start the chuck virtual machine (see next point).
 
 [^1]: In fact, cisp started life as this library, as I ran into limitations of syntax, I created the transpiler.
 
-# 3. Live coding setup
+### 4. Live coding setup
 
 To run a CISP program, we will want to start the ChucK virtual machine, with the chugins and __chuck-tools__ classes loaded.
 I do this on my own machine with the following:
@@ -58,28 +58,23 @@ Create new textfile and name it test.lisp
 
 You can now run cisp as follows:
 
-Run a script (adding to anything that is running already)
+Run a script (adding to anything that is running already)  
 `cisp.py -i test.lisp -o output.ck -c run`
 
-Run a script, but remove anything that is running already
+Run a script, but remove anything that is running already  
 `cisp.py -i test.lisp -o output.ck -c all`
 
-Replace the last added script
+Replace the last added script  
 `cisp.py -i test.lisp -o output.ck -c replace`
 
 
- 
-
 # Using sublime build script or visual studio code:
 
-While live coding, I use build scripts of my code editor (sublime text) to send the .lisp code to the cisp.py script. 
-
-
+While live coding, I use build-scripts of my code editor (sublime text) to send the .lisp code to the cisp.py script. 
 
 # Basic syntax
 
 ## non-standard synthesis
-
 
 `(step-gen [amp] [number-of-samples])`
 
