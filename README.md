@@ -45,9 +45,11 @@ We can load these when we start the chuck virtual machine (see next point).
 To run a CISP program, we will want to start the ChucK virtual machine, with the chugins and __chuck-tools__ classes loaded.
 I do this on my own machine with the following:
 
-`chuck --bufsize:1024 --loop --chugin-load:auto --chugin-path:/usr/local/lib/chuck --verbose:1 ~/devel/chuck/tools/tools.ck"`
+`chuck --bufsize:1024 --loop --chugin-load:auto --chugin-path:/usr/local/lib/chuck --verbose:1 ~/devel/chuck/tools/Tools.ck`
 
-Replace ~/devel/chuck/tools/tools.ck with your own path to my __chuck-tools__.
+You should see a whole bunch of classes being loaded in the virtual machine.
+
+Replace ~/devel/chuck/tools/Tools.ck with your own path to my __chuck-tools__.
 
 You may need to adjust this, if you want to use a different audio device (see chuck --help & chuck --probe-devices).
 It may also be that on windows or linux, the chugins are installed elsewhere.
