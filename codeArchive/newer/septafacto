@@ -1,0 +1,15 @@
+(~ pit (st 60))
+
+(~ dura (st 1.0))
+
+(~ velo (st 100))
+
+(~ timr (st 0.14))
+
+(midi-note-channel
+	(~ timr)
+	(~ pit)
+	(~ dura)
+	(~ velo)
+	(st 1)
+	)

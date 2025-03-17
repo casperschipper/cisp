@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lisp Random Tree Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            font-family: monospace;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Lisp Random Tree Generator</h1>
+
+    <label for="lispInput">Enter Base Lisp Code (optional):</label>
+    <textarea id="lispInput" placeholder="(defun square (x) (* x x))"></textarea>
+
+    <button onclick="generateTree()">Generate Random Tree</button>
+
+    <h2>Random Lisp Tree:</h2>
+    <textarea id="treeOutput" readonly></textarea>
+
+    <script>
+        function getRandomElement(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function randomOperator() {
+            return getRandomElement(['+', '-', '*', '/']);
+        }
+
+        function randomFunctionName() {
+            return 'fn' + Math.floor(Math.random() * 100);
+        }
+
+        function randomNumber() {
+            return Math.floor(Math.random() * 100);
+        }
+
+        function extractSymbols(lispCode) {
+            const symbolPattern = /\b[a-zA-Z][a-zA-Z0-9]*\b/g;
+            const symbols = [...new Set(lispCode.match(symbolPattern))];
+            return symbols.length > 0 ? symbols : ['x', 'y', 'z']; // default symbols
+        }
+
+        function generateRandomExpression(symbols, depth) {
+            if (depth === 0) {
+                return getRandomElement([randomNumber(), getRandomElement(symbols)]);
+            }
+
+            let operator = randomOperator();
+            let numOperands = Math.floor(Math.random() * 3) + 2; // 2 or 3 operands
+            let operands = [];
+
+            for (let i = 0; i < numOperands; i++) {
+                if (Math.random() > 0.5 || depth === 1) {
+                    operands.push(generateRandomExpression(symbols, depth - 1));
+                } else {
+                    operands.push(getRandomElement(symbols));
+                }
+            }
+
+            return `(${operator} ${operands.join(' ')})`;
+        }
+
+        function generateRandomTree(symbols, depth) {
+            let rootFunction = randomFunctionName();
+            let numArgs = Math.floor(Math.random() * 3) + 1; // 1 to 3 arguments
+            let args = symbols.slice(0, numArgs);
+
+            let body = generateRandomExpression(symbols, depth);
+
+            return `(defun ${rootFunction} (${args.join(' ')}) ${body})`;
+        }
+
+        function generateTree() {
+            const lispCode = document.getElementById('lispInput').value.trim();
+            const symbols = extractSymbols(lispCode);
+            const depth = Math.floor(Math.random() * 12) + 12; // Random depth between 2 and 4
+            const lispTree = generateRandomTree(symbols, depth);
+            document.getElementById('treeOutput').value = lispTree;
+        }
+    </script>
+
+</body>
+</html>

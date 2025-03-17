@@ -1,0 +1,19 @@
+(fun a
+	(index 
+		(list (seq 55 (ch 50 60 55) 53) (seq (ch 59 57 60) 57 53))
+		(seq 
+			(latch (st 0) (st 6))
+			(latch (st 1) (st 6)))))
+
+(fun b
+	(seq 
+		(latch (seq 67 69 70) (st 9))
+		(latch (seq 69 67 72) (st 9))))
+
+
+(midi-note-channel
+	(seq 0.15 0.1)
+	(index (list a (ch 62 64) b) (reset (walk 0 (st 1)) (st 0) (seq 3 3 2)))
+	(seq 0.2 0.2 0.1)
+	(rv 80 120)
+	(st 1.0))
