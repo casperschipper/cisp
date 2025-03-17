@@ -1,0 +1,19 @@
+(midi-note-channel-multi
+(walk 60 (ch -2 2 -12 12))
+(ch 0.1 0.2 0.3)
+(rv 40 128)
+(rv 9 16)
+(ch 10)
+(st 2)
+)
+
+/* begin:
+(midi-note-channel-multi
+(rv 1 128)
+(ch 0.1 0.2 0.3)
+(rv 40 128)
+(rv 1 8)
+(ch 1 0 0 0 0 0 0 0 0 )
+(st 2)
+)
+*/

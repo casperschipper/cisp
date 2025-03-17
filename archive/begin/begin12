@@ -1,0 +1,8 @@
+(midi-note-channel-multi
+(q (rv 1 128)  12)
+(ch 0.1 0.3)
+(rv 100 128)
+(rv 16 16)
+(ch 1)
+(st 2)
+)

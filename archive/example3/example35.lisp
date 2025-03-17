@@ -1,0 +1,1 @@
+(~ fish (list-walk (0 4 7) (hold (seq 0 1) (seq 3 4))))

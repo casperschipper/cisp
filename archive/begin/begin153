@@ -1,0 +1,21 @@
+(midi-note-channel-multi
+(walk 60 (ch -12 12))
+(ch 0.01 0.02 0.3)
+(rv 40 100)
+(ch 4 4 9 9 10 10)
+(ch 1 1 2  )
+(st 2)
+)
+
+// !!! flip !!!
+/* _.*-.
+
+(midi-note-channel-multi
+(rv 1 128)
+(ch 0.1 0.2 0.3)
+(rv 40 128)
+(rv 1 8)
+(ch 1 0 0 0 )
+(st 2)
+)
+*/

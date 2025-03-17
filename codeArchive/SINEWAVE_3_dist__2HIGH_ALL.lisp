@@ -25,7 +25,7 @@ SynthDef(\sin, { | freq = 220, amp = 0.1, dur = 0.5, pos = 0.0 |
 	(t (rv 1 100) (ch 1 3 7 11)))
 
 (samp-schedule
-	(write mytab (bounded-walk 1100 1200 (ch (* -1 la) la)) (count (table-cap mytab)))
+	(write mytab (bounded-walk 200 1200 (ch (* -1 la) la)) (count (table-cap mytab)))
 	(st 40))
 
 (fun clocker
@@ -43,7 +43,7 @@ SynthDef(\sin, { | freq = 220, amp = 0.1, dur = 0.5, pos = 0.0 |
 
 (sci2
 	sin
-	(fractRandTimer (line (ch 0.050 0.001) (ch 1 2 3)))
+	(fractRandTimer (line (ch 0.01 0.3) (ch 1 2 3)))
 	:freq (ch mytab)
 
 	:amp (st 0.05)

@@ -1,47 +1,54 @@
-fun Stream a () {
+
+
+    cs.fillf(128,-1,1) @=> float tab1[];
+
+
+st.sampSchedule(
+    st.write(tab1,
+        st.rv(-1,1),
+        st.rv(0,
+            st.tableCap(tab1))),
+    st.rv(1,1000));
+
+fun Stream abstract () {
 return 
-st.line(
-    st.seq([0.010000000000,1.0]),
-    st.s(10));
-}
-fun Stream b () {
-return 
-st.line(
-    st.seq([0.010000000000,1.0]),
-    st.s(7));
+st.t(
+    st.ch([0.001000000000,0.020000000000,0.300000000000,0.000100000000,0.020000000000,0.030000000000]),
+    st.fractRandTimer(
+        st.ch([0.001000000000,0.020000000000,0.300000000000,0.000100000000,0.020000000000,0.030000000000,0.200000000000,0.500000000000,0.900000000000,1.300000000000])));
 }
 
 
+fun void shred_1() {
+StepPanSynth s;
 
-function void midi_chuck_channel_streams_1() {
-    MidiNoteChannelStream s;
-    
-    s.timer(
-    st.ch([0.100000000000,0.101100000000]));
-    s.pitch(
-    st.sum(
-        st.seq([70.,77,82]),
-        st.hold(
-            st.walk(0,
-                st.ch([-2.,2])),
-            st.rv(4,11))));
-    s.dura(
-    st.s(1.0));
-    s.velo(
-    st.s(100));
-    s.channel(
-    st.s(1));
-    s.start();
+s.init(
+    st.indexLin(tab1,
+        st.line(
+            st.seq([st.s(0),
+  st.tableCap(tab1)]),
+            st.t(
+                st.div(1.0,
+                    st.mtof(
+                        st.q(
+                            st.rv(1,130),7))),abstract())))
+,
+    st.s(1)
+,
+    st.hold(
+        st.seq(tab1),
+        st.t(
+            st.seq([1.,1000]),
+            st.ch([1.,3,5,7])))
+);
 
-    365*day => now;
-
+day => now;
 }
-spork ~ midi_chuck_channel_streams_1 ();
-
+spork ~ shred_1();
 
 <<<"shred id: ",me.id()>>>;
             ShredEvent end;
-            "sunday" @=> end.name;
+            "writer_2" @=> end.name;
             ShredEventStack stack;
             stack.push(end);
             end => now;

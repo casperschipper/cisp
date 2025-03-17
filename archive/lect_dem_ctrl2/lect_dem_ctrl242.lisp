@@ -1,0 +1,1 @@
+(~ pit (ch 60 65 70)) // will random pick one

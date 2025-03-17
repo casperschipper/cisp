@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# 26/07/2024
+# 20/08/2024
 
 import math
 import operator as op
@@ -17,6 +17,10 @@ import uuid
 from string import Template
 import subprocess
 import shutil
+
+chuck_binary_path = "/opt/homebrew/bin/chuck"
+
+print("using chuck binary path: " + chuck_binary_path)
 
 # TODO
 
@@ -499,7 +503,7 @@ class StreamCall(object):
                 + " args, expects: "
                 + str(numOfArgs)
                 + "\n"
-                + "argumnets were:"
+                + "arguments were:"
                 + str(self.arguments)
                 + "\n"
             )
@@ -1194,6 +1198,57 @@ spork ~ $funcName ();
             deferedPars=self.deferedParsFormatted(),
         )
 
+class MidiNoteChannelMulti(EventGenerator):
+    "this will also do deffered parameters"
+    chuckTemplate = Template(
+        """
+
+function void $funcName() {
+    MidiNoteChannelTriggerMulti s;
+    $deferedPars
+    s.pitch($pitch);
+    s.dura($dura);
+    s.velo($velo);
+    s.channel($channel);
+    s.trigger($trigger);
+    s.inChannel($inChannel);
+    s.start();
+
+    365*day => now;
+
+}
+spork ~ $funcName ();
+
+"""
+    )
+
+    def __repr__(self):
+        "this is the central construction of the function call"
+        return self.printTemplate()
+
+    def printTemplate(self):
+        return self.chuckMidiNoteChannelStream(*self.arguments)
+
+    def chuckMidiNoteChannelStream(
+        self,
+        st_pitch="st.s(59)",
+        st_dur="st.s(0.25)",
+        st_velo="st.s(80)",
+        st_channel="st.s(1)",
+        st_trigger="st.s(1)",
+        st_inChannel="st.s(1)",
+    ):
+        funcName = unique.name("midi_chuck_channel_streams")
+        return self.chuckTemplate.substitute(
+            funcName=funcName,
+            pitch=st_pitch,
+            dura=st_dur,
+            velo=st_velo,
+            channel=st_channel,
+            trigger=st_trigger,
+            inChannel=st_inChannel,
+            deferedPars=self.deferedParsFormatted(),
+        )
 
 class MidiNoteChannelSyncStream(EventGenerator):
     "this will also do deffered parameters"
@@ -2097,6 +2152,11 @@ def standard_env():
                 "args": 5,
                 "class": MidiNoteChannelSyncTriggerStream,
             },
+            "midi-note-channel-multi" : {
+                "name" : "midi-note-channel-multi",
+                "args" : 6,
+                "class": MidiNoteChannelMulti,
+            },
             "midi-sync": {
                 "name": "midi-sync-stream",
                 "args": 7,
@@ -2224,7 +2284,7 @@ def standard_env():
             },
             "delay": {"name": "st.delay", "args": 3},
             "delayi": {"name": "st.delayi", "args": 3},
-            "biquad": {"name": " st.biquad", "args": 5},
+            "biquad": {"name": "st.biquad", "args": 5},
             "diff": {"name": "st.diff", "args": 1},
             "audioIn": {"name": "st.audioIn", "args": 1},
             "dacin": {"name": "st.dacin", "args": 1},
@@ -2240,6 +2300,8 @@ def standard_env():
             "lowpass": {"name": "st.lowpass", "args": 4},
             "node": {"name": "NodeSynth", "args": 10, "class": NodeSynth},
             "reset-node": {"name": "st.resetNode", "args": 0, "class": SingleStatement},
+            "flip" : {"name": "st.flip", "args" : 3 },
+            "flop" : {"name": "st.flop", "args" : 3 }
         }
     )
     return env
@@ -2385,7 +2447,7 @@ class RunShred:
     def run(self):
         print("+")
         process = subprocess.run(
-            ["/usr/local/bin/chuck", "+", self.outputfile],
+            [chuck_binary_path, "+", self.outputfile],
             capture_output=True,
             text=True,
         )
@@ -2399,10 +2461,10 @@ class RunShred:
     # def run(self):
     #     os.system("killall chuck")  # want to be sure
     #     os.system(
-    #         "/usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &"
+    #         chuck_binary_path --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &"
     #     )
     #     sleep(0.5)
-    #     os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+    #     os.system(chuck_binary_path + " + self.outputfile + "&")
 
 
 def count_files_with_name(full_path):
@@ -2473,7 +2535,7 @@ class ReplaceShred(RunShred):
     "replace the last shred"
 
     def run(self):
-        os.system("/usr/local/bin/chuck + pop.ck")
+        os.system(chuck_binary_path + " + popNotKill.ck")
         print("add shred")
         super().run()
 
@@ -2482,30 +2544,30 @@ class Stop(RunShred):
     "remove all"
 
     def run(self):
-        os.system("/usr/local/bin/chuck + removeAll.ck")
+        os.system(chuck_binary_path + " + removeAll.ck")
         # print "code replace " + self.outputfile
 
 
 class Oldest(RunShred):
     def run(self):
-        os.system("/usr/local/bin/chuck + popOldest.ck")
+        os.system(chuck_binary_path + " + popOldest.ck")
 
 
 class Pop(RunShred):
     def run(self):
-        os.system("/usr/local/bin/chuck + pop.ck")
+        os.system(chuck_binary_path + " + pop.ck")
 
 
 class Panic(RunShred):
     "removall add new"
 
     def run(self):
-        os.system("/usr/local/bin/chuck --kill")
+        os.system(chuck_binary_path + " --kill")
 
 
 class All(RunShred):
     def run(self):
-        os.system("/usr/local/bin/chuck + removeAll.ck")
+        os.system(chuck_binary_path + " + removeAll.ck")
         print("add shred")
         super().run()
 

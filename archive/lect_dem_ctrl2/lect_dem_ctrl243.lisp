@@ -1,0 +1,1 @@
+(~ pit (series 60 65 70 74)) // we can also do a series (without repetition)
