@@ -18,6 +18,8 @@ from string import Template
 
 # TODO
 
+chuckpath = "chuck"
+
 # bug: latch cannot do zero times an element ?
 # adding streams to an already ongoing process.
 
@@ -131,7 +133,7 @@ class FileIO(object):
         self.outFile.write('\n<<<"shred id: ",me.id()>>>;')
         # add an end event
         self.outFile.write(
-            "\nEvent end;\n(new ShredEventStack).push(end);\nend => now;"
+            "ShredEventStack stack;\nShredEvent end;\nstack.push(end);\nend => now;"
         )
         self.outFile.close()
 
@@ -2363,16 +2365,16 @@ class RunShred:
     def run(self):
         os.system("killall chuck")  # want to be sure
         os.system(
-            "/usr/local/bin/chuck --srate:44100 --out:4 --chugin-path:/Users/casperschipper/Library/Application\ Support/ChucK/ChuGins --loop /Users/casperschipper/Google\ Drive/ChucK/tools/Tools.ck &"
+            chuckpath + " --srate:44100 --out:4 --chugin-path:/usr/local/lib/chuck --loop submodules/chuck-tools/tools.ck &"
         )
         sleep(0.5)
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+        os.system(chuckpath + " + " + self.outputfile + "&")
 
 
 class AddShred(RunShred):
     def run(self):
         print("+")
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+        os.system(chuckpath + " + " + self.outputfile + "&")
 
 
 class GenerateCode(RunShred):
@@ -2386,8 +2388,8 @@ class ReplaceShred(RunShred):
     "replace the last shred"
 
     def run(self):
-        os.system("/usr/local/bin/chuck + pop.ck")
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+        os.system(chuckpath + " + pop.ck")
+        os.system(chuckpath + " + " + self.outputfile + "&")
         # print "code replace " + self.outputfile
 
 
@@ -2395,31 +2397,31 @@ class Stop(RunShred):
     "remove all"
 
     def run(self):
-        os.system("/usr/local/bin/chuck + removeAll.ck")
+        os.system(chuckpath + " + removeAll.ck")
         # print "code replace " + self.outputfile
 
 
 class Oldest(RunShred):
     def run(self):
-        os.system("/usr/local/bin/chuck + popOldest.ck")
+        os.system(chuckpath + " + popOldest.ck")
 
 
 class Pop(RunShred):
     def run(self):
-        os.system("/usr/local/bin/chuck + pop.ck")
+        os.system(chuckpath + " + pop.ck")
 
 
 class Panic(RunShred):
     "removall add new"
 
     def run(self):
-        os.system("/usr/local/bin/chuck --kill")
+        os.system(chuckpath + " --kill")
 
 
 class All(RunShred):
     def run(self):
-        os.system("/usr/local/bin/chuck + removeAll.ck")
-        os.system("/usr/local/bin/chuck + " + self.outputfile + "&")
+        os.system(chuckpath + " + removeAll.ck")
+        os.system(chuckpath + " + " + self.outputfile + "&")
 
 
 # class ShredRegister(object):

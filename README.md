@@ -21,24 +21,20 @@ Or use homebrew
 
 `brew install chuck`
 
+Fetch the submodules:
+
+git submodule update --init --recursive
+This will fetch [chuck-tools](https://github.com/casperschipper/ChucK-Tools) and [chugins](https://github.com/casperschipper/chugins). 
+
 ### 2. Build my chugins.
 
-Cisp uses a number of custom unit generators, known in chuck as *"chugins"*
-1. Clone this repo: [https://github.com/casperschipper/chugins](https://github.com/casperschipper/chugins)
+Cisp uses a number of custom unit generators, known in ChucK as *"chugins"*
+1. `cd submodules/chugins`
 2. `make mac|windows|linux`
 3. `sudo make install`
 
-Note: sometimes the API of Chugins is changed, you will see a warning when you try to run chuck.
-In this case you will need to merge the chugin repo with from https://github.com/ccrma/chugins so you have the correct up-to-date headers (the /chuck folder).
-
-### 3. Download the "Chuck-Tools"
-
-You will also need to fetch a bunch of Chuck classes, which are collected in my repo Chuck-Tools [^1].
-CISP uses a these classes in the generated code.
-[My chuck Tools](https://github.com/casperschipper/ChucK-Tools)<br>
-We can load these when we start the chuck virtual machine (see next point).
-
-[^1]: In fact, cisp started life as this library, as I ran into limitations of syntax, I created the transpiler.
+Note: a common error happens when sometimes the API of Chugins is updated to a new version, you will see a warning when you try to run ChucK with my chugins. To see those errors you need to run ChucK in verbose mode: `chuck --verbose:9`.
+In this case you will need to fetch the updated version from https://github.com/ccrma/chugins so you have the correct up-to-date headers (the /chuck folder). In some cases you may even need to change some code (if they drastically change the API for chugins :-). But in most cases my chugins are rather simple.
 
 ### 4. Live coding setup
 
@@ -48,6 +44,7 @@ I do this on my own machine with the following:
 `chuck --bufsize:1024 --loop --chugin-load:auto --chugin-path:/usr/local/lib/chuck --verbose:1 ~/devel/chuck/tools/Tools.ck`
 
 You should see a whole bunch of classes being loaded in the virtual machine.
+<span style="color:red">watch out: paths can be case sensitive!!!</span>
 
 Replace ~/devel/chuck/tools/Tools.ck with your own path to my __chuck-tools__.
 
