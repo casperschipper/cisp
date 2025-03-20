@@ -12,41 +12,51 @@ Cisp is my live coding tool that is specifically targeted at:
 
 ## Requirements / Setup
 
-Before you can run CISP, you need to install a couple of dependencies. 
-
-### 1. Install Chuck
+### Install Chuck
 
 You can just use the official installer, https://chuck.stanford.edu/release/
 Or use homebrew 
 
 `brew install chuck`
 
-Fetch the submodules:
+### Fetch CISP dependencies
+
+CISP relies on a set of classes I wrote for Chuck ("Chuck-Tools"), and a bunch of personal "Chugins", which are audio-rate plugins for chuck.
+
+You can fetch both by just grabbing the submodules:
 
 git submodule update --init --recursive
 This will fetch [chuck-tools](https://github.com/casperschipper/ChucK-Tools) and [chugins](https://github.com/casperschipper/chugins). 
 
-### 2. Build my chugins.
+Naturally you will need to have installed git to be able to do this (on mac, I again recommend using Homebrew for this).
 
-Cisp uses a number of custom unit generators, known in ChucK as *"chugins"*
-1. `cd submodules/chugins`
-2. `make mac|windows|linux`
-3. `sudo make install`
+### Build my chugins.
 
-Note: a common error happens when sometimes the API of Chugins is updated to a new version, you will see a warning when you try to run ChucK with my chugins. To see those errors you need to run ChucK in verbose mode: `chuck --verbose:9`.
+Cisp uses a number of custom unit generators, known in ChucK as *"chugins"*.
+You will need to build them from source. The most important are Buffer, Clip and Linseg.
+
+1. Within the CISP folder, go to `cd submodules/chugins`
+2. make `make mac|windows|linux`
+3. install them with `sudo make install`
+
+I am currently using ChucK version 1.5.5.0.
+A common error happens when sometimes the API of Chugins is updated to a new version, and is different from the version of ChucK you have installed. You will see a warning when you try to run ChucK with my chugins. To see those errors you need to run ChucK in verbose mode: `chuck --verbose:5`.
 In this case you will need to fetch the updated version from https://github.com/ccrma/chugins so you have the correct up-to-date headers (the /chuck folder). In some cases you may even need to change some code (if they drastically change the API for chugins :-). But in most cases my chugins are rather simple.
 
-### 4. Live coding setup
+### Live coding setup
+
+Good you are now ready to test CISP.
 
 To run a CISP program, we will want to start the ChucK virtual machine, with the chugins and __chuck-tools__ classes loaded.
 I do this on my own machine with the following:
 
-`chuck --bufsize:1024 --loop --chugin-load:auto --chugin-path:/usr/local/lib/chuck --verbose:1 ~/devel/chuck/tools/Tools.ck`
+`chuck --bufsize:1024 --loop --chugin-load:auto --chugin-path:/usr/local/lib/chuck --verbose:1 ~/devel/chuck/cisp/submodules/chuck-tools/tools.ck`
 
 You should see a whole bunch of classes being loaded in the virtual machine.
+You only want to see green lines in the prompt, no orange or red.
 <span style="color:red">watch out: paths can be case sensitive!!!</span>
 
-Replace ~/devel/chuck/tools/Tools.ck with your own path to my __chuck-tools__.
+You will want to replace ~/devel/chuck/cisp with your own location to where you cloned the CISP repo.
 
 You may need to adjust this, if you want to use a different audio device (see chuck --help & chuck --probe-devices).
 It may also be that on windows or linux, the chugins are installed elsewhere.
