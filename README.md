@@ -62,7 +62,7 @@ Create new textfile and name it test.lisp
 You can now run cisp as follows:
 
 Run a script (adding to anything that is running already)  
-`cisp.py -i test.lisp -o output.ck -c run`
+`cisp.py -i test.lisp -o output.ck -c +`
 
 Run a script, but remove anything that is running already  
 `cisp.py -i test.lisp -o output.ck -c all`
@@ -74,6 +74,7 @@ Replace the last added script
 # Using sublime build script or visual studio code:
 
 While live coding, I use build-scripts of my code editor (sublime text) to send the .lisp code to the cisp.py script. 
+You can find the example setup as cisp.sublime-build, although you will have to adjust paths to your own system.
 
 # Basic syntax
 
