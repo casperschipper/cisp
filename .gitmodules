@@ -1,0 +1,6 @@
+[submodule "submodules/chuck-tools"]
+	path = submodules/chuck-tools
+	url = https://github.com/casperschipper/ChucK-Tools.git
+[submodule "submodules/chugins"]
+	path = submodules/chugins
+	url = https://github.com/casperschipper/chugins.git
