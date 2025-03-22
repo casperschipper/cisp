@@ -27,7 +27,7 @@ You can fetch both by just grabbing the submodules:
 
 ```shell 
 git submodule update --init --recursive
-`  
+```
 
 This will fetch [chuck-tools](https://github.com/casperschipper/ChucK-Tools) and [chugins](https://github.com/casperschipper/chugins). 
 
