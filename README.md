@@ -25,7 +25,10 @@ CISP relies on a set of classes I wrote for Chuck ("Chuck-Tools"), and a bunch o
 
 You can fetch both by just grabbing the submodules:
 
+```shell 
 git submodule update --init --recursive
+`  
+
 This will fetch [chuck-tools](https://github.com/casperschipper/ChucK-Tools) and [chugins](https://github.com/casperschipper/chugins). 
 
 Naturally you will need to have installed git to be able to do this (on mac, I again recommend using Homebrew for this).
