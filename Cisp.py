@@ -317,6 +317,7 @@ class StringParser:
                                 # print result
                                 break
                         else:
+                            print("item=",item)
                             print("ERROR unexpected string break")
                         # print "9. next token"
                         item = self.nextToken()  # get next token
@@ -2058,7 +2059,7 @@ def standard_env():
                 "args": range(1, 64),
                 "class": OscStreamInstr,
             },
-            "osc-in": {"name": "st.oscin", "args": 2},
+            "osc-in": {"name": "st.oscin", "args": [1,2]},
             "midi-note": {
                 "name": "MidiNoteStream",
                 "args": [3, 4],

@@ -4,34 +4,204 @@
 
 
 
-fun void shred_1() {
+    cs.sine(256,[1.0]) @=> float si[];
+
+
+
+    
+fun void shred_2() {
 StepSynth s => Safe safe =>Pan4 p => dac;
 
 
 s.init(
-    st.mup(0.010000000000,
-        st.write(tab1,
-            st.boundedWalk(0,100,
-                st.boundedWalk(0,100,
-                    st.indexLin(OSC.table4,
-                        st.sum(
-                            st.seq(tab1),
-                            st.line(
-                                st.ch([0.0,1]),
-                                st.ch([1.,2,3,4,5])))))),
-            st.s(0)))
+        st.index(si,
+            st.lowpass(
+                st.write(tab1,
+                    st.boundedWalk(0,2048,
+                        st.boundedWalk(
+                            st.mup(-1.0,st.oscin();
+
+),st.oscin();
+
 ,
-    st.s(1)
+                            st.index(OSC.table9,
+                                st.seq(tab1)))),
+                    st.count(
+                        st.tableCap(tab1))),st.oscin();
+
+,st.oscin();
+
+,st.oscin();
+
+))
+,
+        st.s(1)
 
 );
 
 
 p.pan(
-  cs.rvf(-1,1));
+      cs.rvf(-1.0,1.0));
 
 day => now;
 }
-spork ~ shred_1();
+spork ~ shred_2();
+
+    
+fun void shred_3() {
+StepSynth s => Safe safe =>Pan4 p => dac;
+
+
+s.init(
+        st.index(si,
+            st.lowpass(
+                st.write(tab1,
+                    st.boundedWalk(0,2048,
+                        st.boundedWalk(
+                            st.mup(-1.0,st.oscin();
+
+),st.oscin();
+
+,
+                            st.index(OSC.table9,
+                                st.seq(tab1)))),
+                    st.count(
+                        st.tableCap(tab1))),st.oscin();
+
+,st.oscin();
+
+,st.oscin();
+
+))
+,
+        st.s(1)
+
+);
+
+
+p.pan(
+      cs.rvf(-1.0,1.0));
+
+day => now;
+}
+spork ~ shred_3();
+
+    
+fun void shred_4() {
+StepSynth s => Safe safe =>Pan4 p => dac;
+
+
+s.init(
+        st.index(si,
+            st.lowpass(
+                st.write(tab1,
+                    st.boundedWalk(0,2048,
+                        st.boundedWalk(
+                            st.mup(-1.0,st.oscin();
+
+),st.oscin();
+
+,
+                            st.index(OSC.table9,
+                                st.seq(tab1)))),
+                    st.count(
+                        st.tableCap(tab1))),st.oscin();
+
+,st.oscin();
+
+,st.oscin();
+
+))
+,
+        st.s(1)
+
+);
+
+
+p.pan(
+      cs.rvf(-1.0,1.0));
+
+day => now;
+}
+spork ~ shred_4();
+
+    
+fun void shred_5() {
+StepSynth s => Safe safe =>Pan4 p => dac;
+
+
+s.init(
+        st.index(si,
+            st.lowpass(
+                st.write(tab1,
+                    st.boundedWalk(0,2048,
+                        st.boundedWalk(
+                            st.mup(-1.0,st.oscin();
+
+),st.oscin();
+
+,
+                            st.index(OSC.table9,
+                                st.seq(tab1)))),
+                    st.count(
+                        st.tableCap(tab1))),st.oscin();
+
+,st.oscin();
+
+,st.oscin();
+
+))
+,
+        st.s(1)
+
+);
+
+
+p.pan(
+      cs.rvf(-1.0,1.0));
+
+day => now;
+}
+spork ~ shred_5();
+
+    
+fun void shred_6() {
+StepSynth s => Safe safe =>Pan4 p => dac;
+
+
+s.init(
+        st.index(si,
+            st.lowpass(
+                st.write(tab1,
+                    st.boundedWalk(0,2048,
+                        st.boundedWalk(
+                            st.mup(-1.0,st.oscin();
+
+),st.oscin();
+
+,
+                            st.index(OSC.table9,
+                                st.seq(tab1)))),
+                    st.count(
+                        st.tableCap(tab1))),st.oscin();
+
+,st.oscin();
+
+,st.oscin();
+
+))
+,
+        st.s(1)
+
+);
+
+
+p.pan(
+      cs.rvf(-1.0,1.0));
+
+day => now;
+}
+spork ~ shred_6();
 
 <<<"shred id: ",me.id()>>>;ShredEventStack stack;
 ShredEvent end;
