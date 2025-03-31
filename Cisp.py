@@ -298,30 +298,23 @@ class StringParser:
             elif type(item) == type(""):  # if the item is a string
                 # print "4. item is a string", item
                 if item[0] == '"':
-                    # print "5. oooh, the first character is a quotation", item
-                    combined = item  # start a combined
-                    # print "6. combined =", combined
-                    item = self.nextToken()  # move on to next
-                    if item is False:
-                        # this is really silly coding.. :-/
-                        result = result + [combined]
-
-                    while item is not False:  # if there is one
-                        # print item, "7. item not false"
-                        if type(item) == type(""):
-                            combined = combined + " " + item
-                            if item[-1] == '"':  # we reached the end
-                                # print "8. we reached the end", item
-                                # store the combined result
-                                result = result + [combined]
-                                # print result
-                                break
-                        else:
-                            print("item=",item)
-                            print("ERROR unexpected string break")
-                        # print "9. next token"
-                        item = self.nextToken()  # get next token
-                    # print "while finished NEED TO FIX HERE", result
+                    if item[-1] == '"':  # it's a full quoted string in one token
+                        result = result + [item]
+                    else:
+                        combined = item
+                        item = self.nextToken()
+                        if item is False:
+                            result = result + [combined]
+                        while item is not False:
+                            if type(item) == type(""):
+                                combined = combined + " " + item
+                                if item[-1] == '"':
+                                    result = result + [combined]
+                                    break
+                            else:
+                                print("item=", item)
+                                print("ERROR unexpected string break")
+                            item = self.nextToken()
 
                     break
                 else:  # it is just a string not a special one

@@ -1,0 +1,9 @@
+(step-gen
+	(lowpass
+		(rv -1 1)
+		(st 100)
+		(st 1.0)
+		(st 1.0)
+	)
+	(st 1)
+)
