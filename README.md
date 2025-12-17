@@ -14,8 +14,8 @@ Cisp is my live coding tool that is specifically targeted at:
 
 ### Install Chuck
 
-You can just use the official installer, https://chuck.stanford.edu/release/
-Or use homebrew 
+You can use the official installer, https://chuck.stanford.edu/release/
+Or use homebrew on MacOS
 
 `brew install chuck`
 
@@ -31,7 +31,7 @@ git submodule update --init --recursive
 
 This will fetch [chuck-tools](https://github.com/casperschipper/ChucK-Tools) and [chugins](https://github.com/casperschipper/chugins). 
 
-Naturally you will need to have installed git to be able to do this (on mac, I again recommend using Homebrew for this).
+Naturally you will need to have installed git to be able to do this (on MacOS, I again recommend using Homebrew for this).
 
 ### Build my chugins.
 
@@ -43,7 +43,7 @@ You will need to build them from source. The most important are Buffer, Clip and
 3. install them with `sudo make install`
 
 I am currently using ChucK version 1.5.5.0.
-A common error happens when sometimes the API of Chugins is updated to a new version, and is different from the version of ChucK you have installed. You will see a warning when you try to run ChucK with my chugins. To see those errors you need to run ChucK in verbose mode: `chuck --verbose:5`.
+A common error happens when the API of Chugins is updated to a new version, and is different from the version of ChucK you have installed. You will see a warning when you try to run ChucK with my chugins. To see those errors you need to run ChucK in verbose mode: `chuck --verbose:5`.
 In this case you will need to fetch the updated version from https://github.com/ccrma/chugins so you have the correct up-to-date headers (the /chuck folder). In some cases you may even need to change some code (if they drastically change the API for chugins :-). But in most cases my chugins are rather simple.
 
 ### Live coding setup
